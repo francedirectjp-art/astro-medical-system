@@ -504,7 +504,7 @@ def generate_detailed_diagnosis():
 
         return jsonify({
             'success': True,
-            'detailed_report': full_diagnosis,
+            'generate-detailed-report': full_diagnosis,
             'sections': sections,
             'character_count': len(full_diagnosis),
             'archetype': archetype,
