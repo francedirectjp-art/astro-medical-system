@@ -697,17 +697,19 @@
                 const minute = parseInt(document.getElementById('birthMinute').value);
                 const prefecture = document.getElementById('birthPrefecture').value;
 
-                const response = await fetch(`${API_BASE_URL}/api/generate-detailed-report`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Beta-Key': BETA_KEY
-                    },
-                    body: JSON.stringify({
-                        name: name,
-                        birth_date: `${year}年${month}月${day}日`,
-                        birth_time: `${hour}時${minute}分`,
-                        birth_place: prefecture,
+                const response = await fetch(`http://localhost:8107/api/generate-detailed-report`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: name,
+                year: parseInt(year),
+                month: parseInt(month),
+                day: parseInt(day),  
+                hour: parseInt(hour),
+                minute: parseInt(minute),
+                birth_prefecture: prefecture
                         planets: planetsData
                     })
                 });
