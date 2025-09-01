@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>占星医学体質鑑定システム - Phase 1 MVP版</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .gradient-gold {
+            background: linear-gradient(135deg, #ffd700, #ffb347);
+        }
+        
+        .gradient-card {
+            background: linear-gradient(135deg, #f8f9ff, #e8f0ff);
+        }
+        
+        .element-fire { 
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24); 
+        }
+        
+        .element-earth { 
+            background: linear-gradient(135deg, #26de81, #20bf6b); 
+        }
+        
+        .element-air { 
+            background: linear-gradient(135deg, #74b9ff, #0984e3); 
+        }
+        
+        .element-water { 
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7); 
+        }
+        
+        .animate-fadeIn {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        .animate-slideIn {
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        .animate-spin-slow {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .step-line {
+            transition: all 0.3s ease;
+        }
+        
+        .step-line.completed {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+        
+        .beta-warning {
+            background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+        }
+        
+        .legal-notice {
+            background: linear-gradient(135deg, #fff5f5, #fed7d7);
+            border-left: 4px solid #f56565;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <!-- Beta Access Modal -->
+    <div id="betaModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl animate-fadeIn">
+            <div class="text-center mb-6">
+                <i class="fas fa-key text-4xl text-purple-600 mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">ベータ版アクセス</h2>
+                <p class="text-gray-600">このシステムは現在ベータ版です。アクセスキーを入力してください。</p>
+            </div>
+            
+            <div class="space-y-4">
+                <input type="password" id="betaKey" placeholder="ベータアクセスキーを入力" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <button onclick="validateBetaAccess()" 
+                        class="w-full gradient-gold text-white font-semibold py-3 rounded-lg hover:shadow-lg transition-all">
+                    <i class="fas fa-unlock mr-2"></i>アクセス
+                </button>
+                <p class="text-sm text-gray-500 text-center">
+                    テスト用キー: <code class="bg-gray-100 px-2 py-1 rounded">astro2024beta</code>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div id="mainContainer" class="hidden">
+        <div class="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+            <!-- Beta Notice -->
+            <div class="beta-warning rounded-lg p-4 mb-6 text-center">
+                <i class="fas fa-flask mr-2"></i>
+                <strong>ベータ版</strong> - テスト目的での利用となります
+            </div>
+
+            <!-- Header -->
+            <div class="bg-white rounded-t-2xl shadow-2xl animate-fadeIn">
+                <div class="gradient-bg text-white p-8 text-center rounded-t-2xl">
+                    <h1 class="text-3xl sm:text-4xl font-light mb-3">
+                        <i class="fas fa-star mr-2"></i>占星医学体質鑑定システム<i class="fas fa-star ml-2"></i>
+                    </h1>
+                    <p class="text-lg opacity-90">あなたの出生時の天体配置から体質を診断します</p>
+                </div>
+
+                <!-- Legal Notice -->
+                <div class="legal-notice mx-8 -mt-4 p-6 rounded-lg relative z-10">
+                    <h3 class="font-bold text-red-700 mb-3 flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>重要な注意事項
+                    </h3>
+                    <div class="text-sm space-y-2 text-red-600">
+                        <p><i class="fas fa-check mr-2"></i>本サービスは<strong>エンターテインメント目的</strong>です</p>
+                        <p><i class="fas fa-check mr-2"></i><strong>医療診断ではありません</strong></p>
+                        <p><i class="fas fa-check mr-2"></i>医師の診断や治療を代替するものではありません</p>
+                        <p><i class="fas fa-check mr-2"></i>体調に関する相談は必ず医療機関にご相談ください</p>
+                    </div>
+                    <label class="flex items-center mt-4 cursor-pointer">
+                        <input type="checkbox" id="termsAgreement" class="mr-3 w-4 h-4" required>
+                        <span class="text-sm font-semibold">上記内容に同意して利用します</span>
+                    </label>
+                </div>
+
+                <!-- Step Indicator -->
+                <div class="flex justify-center items-center py-8 space-x-4">
+                    <div class="step w-10 h-10 rounded-full flex items-center justify-center font-bold text-white gradient-gold shadow-lg" id="step1">1</div>
+                    <div class="step-line w-12 h-1 bg-gray-300 rounded" id="line1"></div>
+                    <div class="step w-10 h-10 rounded-full flex items-center justify-center font-bold bg-gray-300 text-gray-600" id="step2">2</div>
+                    <div class="step-line w-12 h-1 bg-gray-300 rounded" id="line2"></div>
+                    <div class="step w-10 h-10 rounded-full flex items-center justify-center font-bold bg-gray-300 text-gray-600" id="step3">3</div>
+                </div>
+
+                <!-- Content Area -->
+                <div class="p-8">
+                    <!-- Step 1: Personal Information -->
+                    <div class="form-section animate-slideIn" id="section1">
+                        <h2 class="text-2xl font-semibold text-purple-700 mb-6 flex items-center">
+                            <i class="fas fa-user-edit mr-3"></i>基本情報をご入力ください
+                        </h2>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">お名前</label>
+                                <input type="text" id="name" placeholder="例：山田太郎" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">生年月日</label>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <select id="birthYear" class="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                        <option value="">年</option>
+                                    </select>
+                                    <select id="birthMonth" class="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                        <option value="">月</option>
+                                    </select>
+                                    <select id="birthDay" class="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                        <option value="">日</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">出生時間</label>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <select id="birthHour" class="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                        <option value="">時</option>
+                                    </select>
+                                    <select id="birthMinute" class="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                        <option value="">分</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">出生地（都道府県）</label>
+                                <select id="birthPrefecture" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                    <option value="">都道府県を選択</option>
+                                    <option value="北海道">北海道</option>
+                                    <option value="青森県">青森県</option>
+                                    <option value="岩手県">岩手県</option>
+                                    <option value="宮城県">宮城県</option>
+                                    <option value="秋田県">秋田県</option>
+                                    <option value="山形県">山形県</option>
+                                    <option value="福島県">福島県</option>
+                                    <option value="茨城県">茨城県</option>
+                                    <option value="栃木県">栃木県</option>
+                                    <option value="群馬県">群馬県</option>
+                                    <option value="埼玉県">埼玉県</option>
+                                    <option value="千葉県">千葉県</option>
+                                    <option value="東京都">東京都</option>
+                                    <option value="神奈川県">神奈川県</option>
+                                    <option value="新潟県">新潟県</option>
+                                    <option value="富山県">富山県</option>
+                                    <option value="石川県">石川県</option>
+                                    <option value="福井県">福井県</option>
+                                    <option value="山梨県">山梨県</option>
+                                    <option value="長野県">長野県</option>
+                                    <option value="岐阜県">岐阜県</option>
+                                    <option value="静岡県">静岡県</option>
+                                    <option value="愛知県">愛知県</option>
+                                    <option value="三重県">三重県</option>
+                                    <option value="滋賀県">滋賀県</option>
+                                    <option value="京都府">京都府</option>
+                                    <option value="大阪府">大阪府</option>
+                                    <option value="兵庫県">兵庫県</option>
+                                    <option value="奈良県">奈良県</option>
+                                    <option value="和歌山県">和歌山県</option>
+                                    <option value="鳥取県">鳥取県</option>
+                                    <option value="島根県">島根県</option>
+                                    <option value="岡山県">岡山県</option>
+                                    <option value="広島県">広島県</option>
+                                    <option value="山口県">山口県</option>
+                                    <option value="徳島県">徳島県</option>
+                                    <option value="香川県">香川県</option>
+                                    <option value="愛媛県">愛媛県</option>
+                                    <option value="高知県">高知県</option>
+                                    <option value="福岡県">福岡県</option>
+                                    <option value="佐賀県">佐賀県</option>
+                                    <option value="長崎県">長崎県</option>
+                                    <option value="熊本県">熊本県</option>
+                                    <option value="大分県">大分県</option>
+                                    <option value="宮崎県">宮崎県</option>
+                                    <option value="鹿児島県">鹿児島県</option>
+                                    <option value="沖縄県">沖縄県</option>
+                                </select>
+                            </div>
+
+                            <button onclick="calculatePlanets()" 
+                                    class="w-full gradient-gold text-white font-semibold py-4 rounded-lg hover:shadow-lg transition-all flex items-center justify-center">
+                                <i class="fas fa-calculator mr-2"></i>天体位置を計算する
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Planet Positions -->
+                    <div class="form-section hidden" id="section2">
+                        <h2 class="text-2xl font-semibold text-purple-700 mb-6 flex items-center">
+                            <i class="fas fa-satellite mr-3"></i>あなたの天体配置
+                        </h2>
+                        <div id="planetsGrid" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"></div>
+                        <button onclick="performDiagnosis()" id="diagnosisBtn" 
+                                class="hidden w-full gradient-gold text-white font-semibold py-4 rounded-lg hover:shadow-lg transition-all flex items-center justify-center mt-6">
+                            <i class="fas fa-magic mr-2"></i>体質診断をする
+                        </button>
+                    </div>
+
+                    <!-- Step 3: Diagnosis Result -->
+                    <div class="form-section hidden" id="section3">
+                        <h2 class="text-2xl font-semibold text-purple-700 mb-6 flex items-center">
+                            <i class="fas fa-user-md mr-3"></i><span id="userName"></span>さんの体質診断
+                        </h2>
+                        <div id="diagnosisResult" class="gradient-card rounded-xl p-6 border-2 border-purple-200"></div>
+                        <button onclick="generateDetailedReport()" id="detailedReportBtn"
+                                class="hidden w-full gradient-gold text-white font-semibold py-4 rounded-lg hover:shadow-lg transition-all flex items-center justify-center mt-6">
+                            <i class="fas fa-scroll mr-2"></i>詳細鑑定書を生成する（12,000文字）
+                        </button>
+                    </div>
+
+                    <!-- Step 4: Detailed Report -->
+                    <div class="form-section hidden" id="section4">
+                        <h2 class="text-2xl font-semibold text-purple-700 mb-6 flex items-center">
+                            <i class="fas fa-scroll mr-3"></i>詳細鑑定書（12,000文字）
+                        </h2>
+                        <div id="detailedReportResult" class="bg-white rounded-xl p-8 shadow-inner border border-gray-200"></div>
+                    </div>
+
+                    <!-- Loading -->
+                    <div class="loading hidden text-center py-12" id="loading">
+                        <div class="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin-slow mx-auto mb-4"></div>
+                        <p class="text-gray-600">
+                            <i class="fas fa-hourglass-half mr-2"></i>計算中です...しばらくお待ちください
+                        </p>
+                    </div>
+
+                    <!-- Error Display -->
+                    <div class="error hidden bg-red-50 border-l-4 border-red-400 p-4 my-4 rounded" id="error">
+                        <div class="flex">
+                            <i class="fas fa-exclamation-circle text-red-400 mr-3 mt-1"></i>
+                            <div class="text-red-700" id="errorMessage"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE_URL = 'https://8107-ik6n5hodb4l1013l4yqlz-e0010f42.manusvm.computer';
+        const BETA_KEY = 'astro2024beta';
+        
+        // Global variables
+        let planetsData = null;
+        let currentStep = 1;
+        let requestCount = 0;
+        const MAX_REQUESTS = 10;
+
+        // Beta access validation
+        function validateBetaAccess() {
+            const inputKey = document.getElementById('betaKey').value;
+            if (inputKey === BETA_KEY) {
+                document.getElementById('betaModal').style.display = 'none';
+                document.getElementById('mainContainer').classList.remove('hidden');
+                initializeApp();
+            } else {
+                showError('無効なアクセスキーです。');
+            }
+        }
+
+        // Initialize application
+        function initializeApp() {
+            initializeSelects();
+            
+            // Terms agreement validation
+            const termsCheckbox = document.getElementById('termsAgreement');
+            termsCheckbox.addEventListener('change', function() {
+                const calculateBtn = document.querySelector('button[onclick="calculatePlanets()"]');
+                calculateBtn.disabled = !this.checked;
+                if (this.checked) {
+                    calculateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else {
+                    calculateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            });
+            
+            // Initial state
+            document.querySelector('button[onclick="calculatePlanets()"]').disabled = true;
+            document.querySelector('button[onclick="calculatePlanets()"]').classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
+        // Initialize select boxes
+        function initializeSelects() {
+            // Year
+            const yearSelect = document.getElementById('birthYear');
+            for (let year = 2030; year >= 1900; year--) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year + '年';
+                yearSelect.appendChild(option);
+            }
+
+            // Month
+            const monthSelect = document.getElementById('birthMonth');
+            for (let month = 1; month <= 12; month++) {
+                const option = document.createElement('option');
+                option.value = month;
+                option.textContent = month + '月';
+                monthSelect.appendChild(option);
+            }
+
+            // Day
+            const daySelect = document.getElementById('birthDay');
+            for (let day = 1; day <= 31; day++) {
+                const option = document.createElement('option');
+                option.value = day;
+                option.textContent = day + '日';
+                daySelect.appendChild(option);
+            }
+
+            // Hour
+            const hourSelect = document.getElementById('birthHour');
+            for (let hour = 0; hour <= 23; hour++) {
+                const option = document.createElement('option');
+                option.value = hour;
+                option.textContent = hour + '時';
+                hourSelect.appendChild(option);
+            }
+
+            // Minute
+            const minuteSelect = document.getElementById('birthMinute');
+            for (let minute = 0; minute <= 59; minute++) {
+                const option = document.createElement('option');
+                option.value = minute;
+                option.textContent = minute + '分';
+                minuteSelect.appendChild(option);
+            }
+        }
+
+        // Rate limiting
+        function checkRateLimit() {
+            requestCount++;
+            if (requestCount > MAX_REQUESTS) {
+                throw new Error('リクエスト制限に達しました。しばらく待ってから再度お試しください。');
+            }
+        }
+
+        // Step navigation
+        function goToStep(step) {
+            // Hide current section
+            document.getElementById(`section${currentStep}`).classList.add('hidden');
+            document.getElementById(`section${currentStep}`).classList.remove('animate-slideIn');
+            
+            // Show new section
+            document.getElementById(`section${step}`).classList.remove('hidden');
+            document.getElementById(`section${step}`).classList.add('animate-slideIn');
+            
+            // Update step indicator
+            updateStepIndicator(step);
+            
+            currentStep = step;
+        }
+
+        // Update step indicator
+        function updateStepIndicator(activeStep) {
+            for (let i = 1; i <= 3; i++) {
+                const stepElement = document.getElementById(`step${i}`);
+                const lineElement = document.getElementById(`line${i}`);
+                
+                if (i < activeStep) {
+                    stepElement.className = 'step w-10 h-10 rounded-full flex items-center justify-center font-bold text-white bg-green-500 shadow-lg';
+                    if (lineElement) lineElement.classList.add('completed');
+                } else if (i === activeStep) {
+                    stepElement.className = 'step w-10 h-10 rounded-full flex items-center justify-center font-bold text-white gradient-gold shadow-lg';
+                } else {
+                    stepElement.className = 'step w-10 h-10 rounded-full flex items-center justify-center font-bold bg-gray-300 text-gray-600';
+                    if (lineElement) lineElement.classList.remove('completed');
+                }
+            }
+        }
+
+        // Calculate planets
+        async function calculatePlanets() {
+            try {
+                checkRateLimit();
+                
+                const name = document.getElementById('name').value;
+                const year = parseInt(document.getElementById('birthYear').value);
+                const month = parseInt(document.getElementById('birthMonth').value);
+                const day = parseInt(document.getElementById('birthDay').value);
+                const hour = parseInt(document.getElementById('birthHour').value);
+                const minute = parseInt(document.getElementById('birthMinute').value);
+                const prefecture = document.getElementById('birthPrefecture').value;
+
+                // Validation
+                if (!name || !year || !month || !day || hour === '' || minute === '' || !prefecture) {
+                    throw new Error('すべての項目を入力してください。');
+                }
+
+                showLoading(true);
+                hideError();
+
+                const response = await fetch(`${API_BASE_URL}/api/calculate-planets`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Beta-Key': BETA_KEY
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        birth_year: year,
+                        birth_month: month,
+                        birth_day: day,
+                        birth_hour: hour,
+                        birth_minute: minute,
+                        birth_prefecture: prefecture
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`サーバーエラー: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    planetsData = data.planets;
+                    displayPlanets(data.planets);
+                    goToStep(2);
+                } else {
+                    throw new Error(data.error || '計算エラーが発生しました。');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Display planets
+        function displayPlanets(planets) {
+            const planetsGrid = document.getElementById('planetsGrid');
+            planetsGrid.innerHTML = '';
+
+            const planetNames = {
+                'sun': '太陽 ☉',
+                'moon': '月 ☽',
+                'mercury': '水星 ☿',
+                'venus': '金星 ♀',
+                'mars': '火星 ♂',
+                'jupiter': '木星 ♃',
+                'saturn': '土星 ♄'
+            };
+
+            const elementClasses = {
+                '火': 'element-fire',
+                '地': 'element-earth',
+                '風': 'element-air',
+                '水': 'element-water'
+            };
+
+            Object.entries(planets).forEach(([planetKey, planetData]) => {
+                const planetCard = document.createElement('div');
+                planetCard.className = 'gradient-card rounded-xl p-6 border-2 border-purple-200 hover:shadow-lg transition-all hover:-translate-y-1';
+                
+                planetCard.innerHTML = `
+                    <div class="text-xl font-semibold text-purple-700 mb-3">${planetNames[planetKey]}</div>
+                    <div class="space-y-2 text-gray-700">
+                        <div class="flex justify-between">
+                            <span>星座:</span>
+                            <span class="font-semibold">${planetData.sign}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>度数:</span>
+                            <span class="font-semibold">${planetData.degree}°</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>経度:</span>
+                            <span class="font-semibold">${planetData.longitude}°</span>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <span class="inline-block px-3 py-1 rounded-full text-white text-sm font-semibold ${elementClasses[planetData.element]}">
+                            エレメント: ${planetData.element}
+                        </span>
+                    </div>
+                `;
+                
+                planetsGrid.appendChild(planetCard);
+            });
+
+            document.getElementById('diagnosisBtn').classList.remove('hidden');
+        }
+
+        // Perform diagnosis
+        async function performDiagnosis() {
+            try {
+                checkRateLimit();
+                
+                if (!planetsData) {
+                    throw new Error('天体位置データがありません。');
+                }
+
+                const name = document.getElementById('name').value;
+                
+                showLoading(true);
+                hideError();
+
+                const response = await fetch(`${API_BASE_URL}/api/simple-diagnosis`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Beta-Key': BETA_KEY
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        planets: planetsData,
+                        sun_element: planetsData.sun.element,
+                        moon_element: planetsData.moon.element
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`サーバーエラー: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayDiagnosis(data);
+                    document.getElementById('userName').textContent = name;
+                    goToStep(3);
+                } else {
+                    throw new Error(data.error || '診断エラーが発生しました。');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Display diagnosis
+        function displayDiagnosis(data) {
+            const resultDiv = document.getElementById('diagnosisResult');
+            
+            // Handle element balance (support both Japanese and English keys)
+            const elementBalance = {};
+            const keyMap = { 'fire': '火', 'earth': '地', 'air': '風', 'water': '水' };
+            
+            Object.entries(data.element_balance).forEach(([key, value]) => {
+                const japaneseKey = keyMap[key] || key;
+                elementBalance[japaneseKey] = value;
+            });
+
+            const elementBars = Object.entries(elementBalance).map(([element, percentage]) => {
+                const elementClasses = {
+                    '火': 'element-fire',
+                    '地': 'element-earth',
+                    '風': 'element-air',
+                    '水': 'element-water'
+                };
+                
+                return `
+                    <div class="flex items-center space-x-4 mb-3">
+                        <div class="w-12 text-center font-semibold text-gray-700">${element}</div>
+                        <div class="flex-1 bg-gray-200 rounded-full h-6 overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-1000 ${elementClasses[element]}" 
+                                 style="width: ${percentage}%"></div>
+                        </div>
+                        <div class="w-16 text-right font-semibold text-gray-700">${percentage}%</div>
+                    </div>
+                `;
+            }).join('');
+
+            resultDiv.innerHTML = `
+                <div class="text-center mb-6">
+                    <h3 class="text-3xl font-bold text-purple-700 mb-2">${data.archetype}</h3>
+                    <p class="text-gray-600">あなたの16元型</p>
+                </div>
+                
+                <div class="mb-8">
+                    <h4 class="text-xl font-semibold text-purple-700 mb-4 flex items-center">
+                        <i class="fas fa-chart-bar mr-2"></i>エレメントバランス
+                    </h4>
+                    <div class="bg-white rounded-lg p-6 shadow-inner">
+                        ${elementBars}
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg p-6 shadow-inner">
+                    <h4 class="text-xl font-semibold text-purple-700 mb-4 flex items-center">
+                        <i class="fas fa-scroll mr-2"></i>診断結果
+                    </h4>
+                    <div class="text-gray-800 leading-relaxed whitespace-pre-line">
+                        ${data.diagnosis_text}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('detailedReportBtn').classList.remove('hidden');
+
+            // Animate element bars
+            setTimeout(() => {
+                const bars = resultDiv.querySelectorAll('[style*="width"]');
+                bars.forEach(bar => {
+                    const width = bar.style.width;
+                    bar.style.width = '0%';
+                    setTimeout(() => {
+                        bar.style.width = width;
+                    }, 100);
+                });
+            }, 100);
+        }
+
+        // Generate detailed report
+        async function generateDetailedReport() {
+            try {
+                checkRateLimit();
+                
+                showLoading(true);
+                hideError();
+
+                const name = document.getElementById('name').value;
+                const year = parseInt(document.getElementById('birthYear').value);
+                const month = parseInt(document.getElementById('birthMonth').value);
+                const day = parseInt(document.getElementById('birthDay').value);
+                const hour = parseInt(document.getElementById('birthHour').value);
+                const minute = parseInt(document.getElementById('birthMinute').value);
+                const prefecture = document.getElementById('birthPrefecture').value;
+
+                const response = await fetch(`${API_BASE_URL}/api/detailed-diagnosis`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Beta-Key': BETA_KEY
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        birth_date: `${year}年${month}月${day}日`,
+                        birth_time: `${hour}時${minute}分`,
+                        birth_place: prefecture,
+                        planets: planetsData
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`サーバーエラー: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayDetailedReport(data);
+                    // Show section 4
+                    document.getElementById('section4').classList.remove('hidden');
+                    document.getElementById('section4').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    throw new Error(data.error || '詳細鑑定書の生成に失敗しました。');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Display detailed report
+        function displayDetailedReport(data) {
+            const resultDiv = document.getElementById('detailedReportResult');
+            
+            resultDiv.innerHTML = `
+                <div class="prose prose-lg max-w-none">
+                    <div class="bg-purple-50 p-6 rounded-lg mb-6">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xl font-semibold text-purple-700">
+                                <i class="fas fa-scroll mr-2"></i>詳細鑑定書完成
+                            </h3>
+                            <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-semibold">
+                                ${data.character_count || 0}文字
+                            </span>
+                        </div>
+                        <p class="text-purple-600 mt-2">
+                            16元型: <strong>${data.archetype || '不明'}</strong>
+                        </p>
+                    </div>
+                    
+                    <div class="whitespace-pre-line text-gray-800 leading-relaxed">
+                        ${data.diagnosis}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Utility functions
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            if (show) {
+                loading.classList.remove('hidden');
+            } else {
+                loading.classList.add('hidden');
+            }
+        }
+
+        function showError(message) {
+            const error = document.getElementById('error');
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            error.classList.remove('hidden');
+            setTimeout(() => {
+                error.classList.add('hidden');
+            }, 5000);
+        }
+
+        function hideError() {
+            const error = document.getElementById('error');
+            error.classList.add('hidden');
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show beta modal on load
+            document.getElementById('betaModal').style.display = 'flex';
+            
+            // Enable enter key for beta access
+            document.getElementById('betaKey').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    validateBetaAccess();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+    <script id="html_badge_script1">
+        window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
+            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDrE5nALevne0UXTqg04VOi0%2BE5TFICxJd7QQ19f%2B%2F15qI2VwT3Az718Aexwb8xX%2B4ivW69yaLXCGs1kX%2BfIsnJsBFOBMMdDIhxrNqbCub%2B%2BIRHclyJ4eMIqP5qBUG%2BzjReyPPtZTzPrBC9sClvtDDOqlr6vARU3zYug3ZrdUC8cYcUc7xWxiNRWngFBT7puTmUZqWwhEYHvsZY3DLKpcIY2AGoaNuXwZAcBLgycgiJp8vEmAyqEcIF1yVJ71ioZjTSLxb8aSlFefIohAkbTz%2FP8139GeciGUAR1AGIr6gGLEk6cvYHK3%2BS9n%2B9e5DjXyWAuj%2BunvyGun6vlQT68H%2B79Q88srjB7XghENb35Y6mCJestocfhAtMBnG6mKjrwZPk547p%2FK9xXLAy8Gsp9TM4%2F7d0lqCxAw0sjEb7vZbPfpJJgLBZTXVqUxtNPzdjgTU1yp%2FI7c3kTcu9xj9mmMj9LGYO%2F9XCp36Xg0rG2qtWdy7cqfzrtlLQ9SEHuZsa3eFG7WTyxMP60alq3fwKzclfE%3D";
+        window.__genspark_locale = "ja-JP";
+        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDrE5nALevne0UXTqg04VOi0+E5TFICxJd7QQ19f+/15qI2VwT3Az718Aexwb8xX+4ivW69yaLXCGs1kX+fIsnJsBFOBMMdDIhxrNqbCub++IRHclyJ4eMIqP5qBUG+zjReyPPtZTzPrBC9sClvtDDOqlr6vARU3zYug3ZrdUC8cYcUc7xWxiNRWngFBT7puTmUZqWwhEYHvsZY3DLKpcIY2AGoaNuXwZAcBLgycgiJp8vEmAyqEcIF1yVJ71ioZjTSLxb8aSlFefIohAkbTz/P8139GeciGUAR1AGIr6gGLEk6cvYHK3+S9n+9e5DjXyWAuj+unvyGun6vlQT68H+79Q88srjB7XghENb35Y6mCJestocfhAtMBnG6mKjrwZPk547p/K9xXLAy8Gsp9TM4/7d0lqCxAw0sjEb7vZbPfpJJgLBZTXVqUxtNPzdjgTU1yp/I7c3kTcu9xj9mmMj9LGYO/9XCp36Xg0rG2qtWdy7cqfzrtlLQ9SEHuZsa3eFG7WTyxMP60alq3fwKzclfE=";
+    </script>
+    
+    <script id="html_notice_dialog_script" src="https://www.genspark.ai/notice_dialog.js"></script>
+    
