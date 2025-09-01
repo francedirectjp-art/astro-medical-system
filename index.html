@@ -311,7 +311,7 @@
 
     <script>
         // Configuration
-        const API_BASE_URL = 'https://astro-medical-system-s.up.railway.app';
+        const API_BASE_URL = 'http://localhost:8107';
         const BETA_KEY = 'astro2024beta';
         
         // Global variables
@@ -697,7 +697,7 @@
                 const minute = parseInt(document.getElementById('birthMinute').value);
                 const prefecture = document.getElementById('birthPrefecture').value;
 
-                const response = await fetch(`${API_BASE_URL}/api/detailed-diagnosis`, {
+                const response = await fetch(`${API_BASE_URL}/api/generate-detailed-report`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
