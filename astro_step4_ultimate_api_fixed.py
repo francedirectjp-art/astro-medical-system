@@ -52,9 +52,10 @@ CORS(app,
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 BETA_PASSWORD = os.getenv('BETA_PASSWORD', 'astro2024beta')
 
-if not GEMINI_API_KEY:
-    logger.error("GEMINI_API_KEY環境変数が設定されていません")
-    raise ValueError("GEMINI_API_KEY環境変数が必要です")
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'AIzaSyCXc3ZZ3uJPy-TvB4T5Zq1BBbYDNKfh9u4')
+# 一時的にハードコード
+genai.configure(api_key=GEMINI_API_KEY)
+
 
 # Gemini API設定
 try:
