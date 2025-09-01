@@ -14,8 +14,8 @@
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+# from flask_limiter import Limiter
+# from flask_limiter.util import get_remote_address
 import swisseph as swe
 from datetime import datetime, timezone, timedelta
 import os
@@ -38,8 +38,11 @@ CORS(app,
      allow_headers=["Content-Type", "Authorization", "X-Beta-Key"])
 
 # レート制限設定
-limiter = Limiter(
-    app,
+# limiter = Limiter(
+#     key_func=get_remote_address,
+#     default_limits=["100 per hour"]
+# )
+# limiter.init_app(app)
     key_func=get_remote_address,
     default_limits=["100 per hour", "10 per minute"],
     storage_uri="memory://"
@@ -217,7 +220,7 @@ def calculate_planet_position(julian_day, planet_id):
         return None
 
 @app.route('/api/calculate-planets', methods=['POST'])
-@limiter.limit("5 per minute")
+#@limiter.limit("5 per minute")
 @beta_required
 def calculate_planets():
     """7天体位置計算API"""
@@ -313,7 +316,7 @@ def calculate_planets():
         return jsonify({'success': False, 'error': f'計算エラー: システム管理者にお問い合わせください'}), 500
 
 @app.route('/api/simple-diagnosis', methods=['POST'])
-@limiter.limit("3 per minute")
+#@limiter.limit("3 per minute")
 @beta_required
 def simple_diagnosis():
     """簡易診断API"""
@@ -443,7 +446,7 @@ def generate_diagnosis_text(name, archetype, sun_element, moon_element, element_
 
 # 修正：エンドポイント名を統一
 @app.route('/api/generate-detailed-report', methods=['POST'])
-@limiter.limit("1 per minute")
+#@limiter.limit("1 per minute")
 @beta_required
 def generate_detailed_diagnosis():
     """12,000文字詳細鑑定書を分割生成で作成（修正版）"""
