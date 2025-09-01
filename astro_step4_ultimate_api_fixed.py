@@ -15,8 +15,6 @@
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-# from flask_limiter import Limiter
-# from flask_limiter.util import get_remote_address
 import swisseph as swe
 from datetime import datetime, timezone, timedelta
 import os
@@ -402,24 +400,6 @@ def generate_diagnosis_text(name, archetype, sun_element, moon_element, element_
 - 風: {element_balance.get('風', 0)}%
 - 水: {element_balance.get('水', 0)}%
 
-【7天体の配置】
-- 太陽: {planets['sun']['sign']} ({sun_element})
-- 月: {planets['moon']['sign']} ({planets['moon']['element']})
-- 水星: {planets['mercury']['sign']} ({planets['mercury']['element']})
-- 金星: {planets['venus']['sign']} ({planets['venus']['element']})
-- 火星: {planets['mars']['sign']} ({planets['mars']['element']})
-- 木星: {planets['jupiter']['sign']} ({planets['jupiter']['element']})
-- 土星: {planets['saturn']['sign']} ({planets['saturn']['element']})
-
-【診断文章の要件】
-1. 16元型の特徴を中心に説明
-2. エレメントバランスの特徴を分析
-3. 体質的な傾向と注意点（医療診断ではないことを明記）
-4. 日常生活でのアドバイス
-5. 温かく励ましのある文体
-6. 1,000文字程度
-7. 「傾向がある」「可能性がある」などの表現を使用
-
 診断文章を作成してください。
 """
 
@@ -433,13 +413,7 @@ def generate_diagnosis_text(name, archetype, sun_element, moon_element, element_
 
 あなたの16元型は「{archetype}」の傾向を示しています。太陽が{sun_element}のエレメント、月が{moon_element}のエレメントという組み合わせから、この特別な元型の可能性が導き出されました。
 
-エレメントバランスを見ると、火が{element_balance['火']}%、地が{element_balance['地']}%、風が{element_balance['風']}%、水が{element_balance['水']}%となっています。
-
-この配置は、あなたの内なる情熱と外向きの表現が調和した、バランスの取れた体質傾向を示している可能性があります。日常生活では、自分の直感を大切にしながらも、現実的な判断力を活かすことで、より充実した人生を送ることができるかもしれません。
-
-体質的には、季節の変化に敏感な傾向があり、特に気温や湿度の変化に注意を払うことが大切です。規則正しい生活リズムを心がけ、適度な運動と十分な休息を取ることで、本来の力を発揮できる可能性があります。
-
-あなたの持つ独特な魅力と才能を信じて、自分らしい道を歩んでください。
+この配置は、あなたの内なる情熱と外向きの表現が調和した、バランスの取れた体質傾向を示している可能性があります。
 
 ※本結果はエンターテインメント目的の体質傾向分析です。医療診断ではありません。
 """
