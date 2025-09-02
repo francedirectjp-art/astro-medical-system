@@ -1,0 +1,434 @@
+\xef\xbb\xbf{
+  "Warrior": {
+    "combination": "Fire_Fire",
+    "sun_element": "Fire",
+    "moon_element": "Fire",
+    "japanese_name": "戦士型",
+    "core_nature": "情熱的で積極的、直感的な行動力を持つリーダータイプ",
+    "strengths": [
+      "強い意志力",
+      "迅速な判断力",
+      "天然の指導力",
+      "勇敢さ"
+    ],
+    "challenges": [
+      "短気",
+      "衝動的行動",
+      "忍耐力不足",
+      "他者への配慮不足"
+    ],
+    "health_tendencies": "頭部・心臓系に注意。エネルギー過多による燃え尽き症候群",
+    "recommended_herbs": [
+      "ローズマリー",
+      "ジンジャー",
+      "カモミール",
+      "ラベンダー"
+    ],
+    "body_constitution": "胆汁質優位・熱性体質"
+  },
+  "Builder": {
+    "combination": "Fire_Earth",
+    "sun_element": "Fire",
+    "moon_element": "Earth",
+    "japanese_name": "建設者型",
+    "core_nature": "情熱と実用性を兼ね備え、具体的な成果を生み出す実行力",
+    "strengths": [
+      "計画実行力",
+      "持続的努力",
+      "実用的判断",
+      "責任感"
+    ],
+    "challenges": [
+      "頑固さ",
+      "変化への抵抗",
+      "完璧主義",
+      "ストレス蓄積"
+    ],
+    "health_tendencies": "消化器系・筋骨格系に注意。過労による体調不良",
+    "recommended_herbs": [
+      "タイム",
+      "オレガノ",
+      "ダンデライオン",
+      "ミルクシスル"
+    ],
+    "body_constitution": "胆汁質・憂鬱質混合型"
+  },
+  "Catalyst": {
+    "combination": "Fire_Air",
+    "sun_element": "Fire",
+    "moon_element": "Air",
+    "japanese_name": "触媒型",
+    "core_nature": "情熱と知性で周囲を活性化し、変化を促進する革新者",
+    "strengths": [
+      "創造性",
+      "コミュニケーション力",
+      "適応性",
+      "インスピレーション"
+    ],
+    "challenges": [
+      "集中力散漫",
+      "一貫性不足",
+      "表面的理解",
+      "感情的不安定"
+    ],
+    "health_tendencies": "神経系・呼吸器系に注意。精神的緊張による不調",
+    "recommended_herbs": [
+      "ペパーミント",
+      "レモンバーム",
+      "ギンコ",
+      "ゴツコーラ"
+    ],
+    "body_constitution": "胆汁質・多血質混合型"
+  },
+  "Intuitive": {
+    "combination": "Fire_Water",
+    "sun_element": "Fire",
+    "moon_element": "Water",
+    "japanese_name": "直感型",
+    "core_nature": "情熱と感受性を併せ持つ、深い洞察力を持つ芸術的タイプ",
+    "strengths": [
+      "直感力",
+      "創造性",
+      "共感能力",
+      "芸術的才能"
+    ],
+    "challenges": [
+      "感情の激しさ",
+      "気分の変動",
+      "現実逃避傾向",
+      "過敏さ"
+    ],
+    "health_tendencies": "循環器系・泌尿器系に注意。感情的ストレスによる不調",
+    "recommended_herbs": [
+      "ローズ",
+      "ジャスミン",
+      "ネトル",
+      "ホーソン"
+    ],
+    "body_constitution": "胆汁質・粘液質混合型"
+  },
+  "Pioneer": {
+    "combination": "Earth_Fire",
+    "sun_element": "Earth",
+    "moon_element": "Fire",
+    "japanese_name": "開拓者型",
+    "core_nature": "安定性と行動力で新しい領域を切り開く実践的革新者",
+    "strengths": [
+      "実行力",
+      "忍耐力",
+      "現実的判断",
+      "開拓精神"
+    ],
+    "challenges": [
+      "保守性",
+      "リスク回避",
+      "変化への恐れ",
+      "感情表現不足"
+    ],
+    "health_tendencies": "筋骨格系・消化器系に注意。過度な緊張による身体の硬直",
+    "recommended_herbs": [
+      "アルニカ",
+      "コンフリー",
+      "イエロードック",
+      "バードック"
+    ],
+    "body_constitution": "憂鬱質・胆汁質混合型"
+  },
+  "Guardian": {
+    "combination": "Earth_Earth",
+    "sun_element": "Earth",
+    "moon_element": "Earth",
+    "japanese_name": "守護者型",
+    "core_nature": "強固な安定性と責任感で周囲を支える信頼できる支援者",
+    "strengths": [
+      "安定性",
+      "責任感",
+      "忠実さ",
+      "実用性"
+    ],
+    "challenges": [
+      "頑固さ",
+      "変化への抵抗",
+      "柔軟性不足",
+      "自己表現不足"
+    ],
+    "health_tendencies": "消化器系・関節に注意。代謝の低下と冷え性",
+    "recommended_herbs": [
+      "ジンジャー",
+      "シナモン",
+      "カルダモン",
+      "フェンネル"
+    ],
+    "body_constitution": "憂鬱質優位・冷性体質"
+  },
+  "Analyst": {
+    "combination": "Earth_Air",
+    "sun_element": "Earth",
+    "moon_element": "Air",
+    "japanese_name": "分析家型",
+    "core_nature": "実用的思考と論理性で複雑な問題を解決する知的専門家",
+    "strengths": [
+      "分析力",
+      "論理思考",
+      "客観性",
+      "専門性"
+    ],
+    "challenges": [
+      "完璧主義",
+      "批判的思考過多",
+      "感情軽視",
+      "社交性不足"
+    ],
+    "health_tendencies": "神経系・消化器系に注意。過度な思考による疲労",
+    "recommended_herbs": [
+      "ブラーミ",
+      "ギンコ",
+      "カモミール",
+      "パッションフラワー"
+    ],
+    "body_constitution": "憂鬱質・多血質混合型"
+  },
+  "Nurturer": {
+    "combination": "Earth_Water",
+    "sun_element": "Earth",
+    "moon_element": "Water",
+    "japanese_name": "養育者型",
+    "core_nature": "安定性と優しさで他者を育み支える天然の癒し手",
+    "strengths": [
+      "養育能力",
+      "共感性",
+      "安定性",
+      "治癒力"
+    ],
+    "challenges": [
+      "過保護",
+      "境界線不足",
+      "自己犠牲",
+      "優柔不断"
+    ],
+    "health_tendencies": "消化器系・泌尿器系に注意。感情の蓄積による内臓負担",
+    "recommended_herbs": [
+      "マシュマロウ",
+      "スリッパリーエルム",
+      "レッドクローバー",
+      "アルファルファ"
+    ],
+    "body_constitution": "憂鬱質・粘液質混合型"
+  },
+  "Innovator": {
+    "combination": "Air_Fire",
+    "sun_element": "Air",
+    "moon_element": "Fire",
+    "japanese_name": "革新者型",
+    "core_nature": "知性と情熱で未来を創造する先進的なアイデア実現者",
+    "strengths": [
+      "創造性",
+      "先見性",
+      "行動力",
+      "革新性"
+    ],
+    "challenges": [
+      "一貫性不足",
+      "衝動性",
+      "現実離れ",
+      "持続力不足"
+    ],
+    "health_tendencies": "神経系・循環器系に注意。過度な興奮による消耗",
+    "recommended_herbs": [
+      "ロスマリニックアシッド系ハーブ",
+      "セージ",
+      "タイム",
+      "オレガノ"
+    ],
+    "body_constitution": "多血質・胆汁質混合型"
+  },
+  "Organizer": {
+    "combination": "Air_Earth",
+    "sun_element": "Air",
+    "moon_element": "Earth",
+    "japanese_name": "組織者型",
+    "core_nature": "知性と実用性で効率的なシステムを構築する管理専門家",
+    "strengths": [
+      "組織力",
+      "効率性",
+      "計画性",
+      "合理性"
+    ],
+    "challenges": [
+      "融通性不足",
+      "感情軽視",
+      "完璧主義",
+      "ストレス蓄積"
+    ],
+    "health_tendencies": "神経系・筋骨格系に注意。精神的緊張による身体の硬直",
+    "recommended_herbs": [
+      "ラベンダー",
+      "レモンバーム",
+      "パッションフラワー",
+      "バレリアン"
+    ],
+    "body_constitution": "多血質・憂鬱質混合型"
+  },
+  "Communicator": {
+    "combination": "Air_Air",
+    "sun_element": "Air",
+    "moon_element": "Air",
+    "japanese_name": "伝達者型",
+    "core_nature": "純粋な知性と表現力で情報と知識を伝える天然の教師",
+    "strengths": [
+      "コミュニケーション力",
+      "学習能力",
+      "適応性",
+      "客観性"
+    ],
+    "challenges": [
+      "表面性",
+      "感情軽視",
+      "一貫性不足",
+      "現実逃避"
+    ],
+    "health_tendencies": "神経系・呼吸器系に注意。過度な思考活動による疲労",
+    "recommended_herbs": [
+      "ギンコ",
+      "ゴツコーラ",
+      "ブラーミ",
+      "ペパーミント"
+    ],
+    "body_constitution": "多血質優位・風性体質"
+  },
+  "Harmonizer": {
+    "combination": "Air_Water",
+    "sun_element": "Air",
+    "moon_element": "Water",
+    "japanese_name": "調和者型",
+    "core_nature": "知性と感受性で人々の心を繋ぐ天然の仲裁者・癒し手",
+    "strengths": [
+      "調和能力",
+      "共感性",
+      "柔軟性",
+      "美的感覚"
+    ],
+    "challenges": [
+      "優柔不断",
+      "境界線不足",
+      "感情的不安定",
+      "現実逃避"
+    ],
+    "health_tendencies": "神経系・泌尿器系に注意。感情的ストレスによる不調",
+    "recommended_herbs": [
+      "カモミール",
+      "レモンバーム",
+      "ローズ",
+      "ラベンダー"
+    ],
+    "body_constitution": "多血質・粘液質混合型"
+  },
+  "Transformer": {
+    "combination": "Water_Fire",
+    "sun_element": "Water",
+    "moon_element": "Fire",
+    "japanese_name": "変容者型",
+    "core_nature": "感受性と情熱で深い変化を促進する霊的な変革者",
+    "strengths": [
+      "変容力",
+      "直感力",
+      "情熱",
+      "霊性"
+    ],
+    "challenges": [
+      "感情の激しさ",
+      "極端さ",
+      "不安定さ",
+      "現実逃避"
+    ],
+    "health_tendencies": "循環器系・神経系に注意。感情の激変による体調変動",
+    "recommended_herbs": [
+      "ホーソン",
+      "マザーワート",
+      "スカルキャップ",
+      "木苺葉"
+    ],
+    "body_constitution": "粘液質・胆汁質混合型"
+  },
+  "Stabilizer": {
+    "combination": "Water_Earth",
+    "sun_element": "Water",
+    "moon_element": "Earth",
+    "japanese_name": "安定化者型",
+    "core_nature": "感受性と実用性で持続的な成長を支える堅実な支援者",
+    "strengths": [
+      "安定性",
+      "持続力",
+      "養育能力",
+      "実用性"
+    ],
+    "challenges": [
+      "変化への抵抗",
+      "過度な慎重さ",
+      "自己表現不足",
+      "停滞"
+    ],
+    "health_tendencies": "消化器系・泌尿器系に注意。代謝低下と水分代謝不良",
+    "recommended_herbs": [
+      "ダンデライオン",
+      "ネトル",
+      "クリーバーズ",
+      "コーンシルク"
+    ],
+    "body_constitution": "粘液質・憂鬱質混合型"
+  },
+  "Mediator": {
+    "combination": "Water_Air",
+    "sun_element": "Water",
+    "moon_element": "Air",
+    "japanese_name": "仲介者型",
+    "core_nature": "感受性と知性で異なる世界を繋ぐ霊的なブリッジビルダー",
+    "strengths": [
+      "仲介能力",
+      "理解力",
+      "柔軟性",
+      "霊性"
+    ],
+    "challenges": [
+      "優柔不断",
+      "感情的不安定",
+      "現実逃避",
+      "境界線不足"
+    ],
+    "health_tendencies": "神経系・泌尿器系に注意。精神的ストレスによる不調",
+    "recommended_herbs": [
+      "パッションフラワー",
+      "スカルキャップ",
+      "レモンバーム",
+      "オート麦"
+    ],
+    "body_constitution": "粘液質・多血質混合型"
+  },
+  "Mystic": {
+    "combination": "Water_Water",
+    "sun_element": "Water",
+    "moon_element": "Water",
+    "japanese_name": "神秘家型",
+    "core_nature": "純粋な感受性と霊性で深い精神世界を探求する直感的賢者",
+    "strengths": [
+      "直感力",
+      "霊性",
+      "共感能力",
+      "治癒力"
+    ],
+    "challenges": [
+      "現実逃避",
+      "感情的不安定",
+      "境界線不足",
+      "優柔不断"
+    ],
+    "health_tendencies": "泌尿器系・リンパ系に注意。感情的蓄積による身体の停滞",
+    "recommended_herbs": [
+      "ムーンワート",
+      "ヤロウ",
+      "エルダーフラワー",
+      "ローズヒップ"
+    ],
+    "body_constitution": "粘液質優位・水性体質"
+  }
+}

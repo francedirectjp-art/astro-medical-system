@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASTRO-BODY TYPE REPORT - 基本診断</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e8e8e8;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: #d4af37;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            font-weight: normal;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            color: #b8860b;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .patient-info {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .section h2 {
+            color: #d4af37;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .archetype-title {
+            font-size: 1.8rem;
+            color: #ffd700;
+            text-align: center;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .constitution-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .constitution-item {
+            background: rgba(212, 175, 55, 0.1);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .constitution-item h3 {
+            color: #d4af37;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .wellness-tips {
+            background: linear-gradient(45deg, rgba(212, 175, 55, 0.1), rgba(184, 134, 11, 0.1));
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .wellness-tips h3 {
+            color: #ffd700;
+            margin-bottom: 12px;
+        }
+
+        .wellness-tips ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .wellness-tips li {
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .wellness-tips li::before {
+            content: "✧";
+            color: #d4af37;
+            position: absolute;
+            left: 0;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            border-top: 1px solid rgba(212, 175, 55, 0.3);
+            color: #b8860b;
+            font-style: italic;
+        }
+
+        .detailed-link {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .detailed-link a {
+            color: #d4af37;
+            text-decoration: none;
+            font-size: 1.1rem;
+            padding: 12px 25px;
+            border: 2px solid #d4af37;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .detailed-link a:hover {
+            background: #d4af37;
+            color: #1a1a2e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ASTRO-BODY TYPE REPORT</h1>
+            <div class="subtitle">基本診断レポート - Basic Analysis</div>
+        </div>
+
+        <div class="patient-info">
+            <h2>診断対象者情報</h2>
+            <p><strong>生年月日:</strong> {{ data.birth_date }}</p>
+            <p><strong>出生時刻:</strong> {{ data.birth_time }}</p>
+            <p><strong>出生地:</strong> {{ data.birth_place }}</p>
+        </div>
+
+        <div class="section">
+            <h2>🌟 主要アーキタイプ</h2>
+            <div class="archetype-title">{{ data.primary_archetype }}</div>
+            <p>{{ data.archetype_description }}</p>
+        </div>
+
+        <div class="section">
+            <h2>⚡ 体質的特徴</h2>
+            <div class="constitution-grid">
+                <div class="constitution-item">
+                    <h3>エネルギータイプ</h3>
+                    <p>{{ data.energy_type }}</p>
+                </div>
+                <div class="constitution-item">
+                    <h3>代謝特性</h3>
+                    <p>{{ data.metabolism_type }}</p>
+                </div>
+                <div class="constitution-item">
+                    <h3>循環系の特徴</h3>
+                    <p>{{ data.circulation_type }}</p>
+                </div>
+                <div class="constitution-item">
+                    <h3>神経系の傾向</h3>
+                    <p>{{ data.nervous_system_type }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎯 健康上の注意点</h2>
+            <p>{{ data.health_warnings }}</p>
+        </div>
+
+        <div class="wellness-tips">
+            <h3>💫 推奨ウェルネス習慣</h3>
+            <ul>
+                {% for tip in data.wellness_tips %}
+                <li>{{ tip }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🌙 月相との関係</h2>
+            <p>{{ data.lunar_influence }}</p>
+        </div>
+
+        <div class="detailed-link">
+            <a href="/detailed">詳細診断レポートを見る</a>
+        </div>
+
+        <div class="footer">
+            <p>このレポートは占星医学の原理に基づく体質分析です。</p>
+            <p>医学的診断に代わるものではありません。</p>
+        </div>
+    </div>
+</body>
+</html>

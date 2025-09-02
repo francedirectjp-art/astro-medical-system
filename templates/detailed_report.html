@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASTRO-BODY TYPE REPORT - 詳細診断</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e8e8e8;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            color: #d4af37;
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+            font-weight: normal;
+        }
+
+        .header .subtitle {
+            font-size: 1.3rem;
+            color: #b8860b;
+            letter-spacing: 1.5px;
+            margin-bottom: 30px;
+        }
+
+        .patient-info {
+            background: rgba(212, 175, 55, 0.15);
+            border: 2px solid rgba(212, 175, 55, 0.4);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 12px;
+            padding: 35px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(15px);
+        }
+
+        .section h2 {
+            color: #d4af37;
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            border-bottom: 3px solid rgba(212, 175, 55, 0.4);
+            padding-bottom: 15px;
+            position: relative;
+        }
+
+        .section h2::before {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: #d4af37;
+        }
+
+        .archetype-title {
+            font-size: 2.2rem;
+            color: #ffd700;
+            text-align: center;
+            margin: 30px 0;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .constitution-detailed {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .constitution-card {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(184, 134, 11, 0.1));
+            padding: 25px;
+            border-radius: 10px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .constitution-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, #d4af37, #b8860b);
+        }
+
+        .constitution-card h3 {
+            color: #d4af37;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            padding-left: 20px;
+        }
+
+        .constitution-card p {
+            padding-left: 20px;
+            margin-bottom: 12px;
+        }
+
+        .planetary-section {
+            background: linear-gradient(45deg, rgba(212, 175, 55, 0.05), rgba(184, 134, 11, 0.05));
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        .planetary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .planet-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .planet-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(212, 175, 55, 0.4);
+        }
+
+        .planet-card h4 {
+            color: #ffd700;
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        .planet-icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+
+        .wellness-comprehensive {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(184, 134, 11, 0.05));
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        .wellness-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin: 25px 0;
+        }
+
+        .wellness-category {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 8px;
+            padding: 25px;
+        }
+
+        .wellness-category h4 {
+            color: #d4af37;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            padding-bottom: 8px;
+        }
+
+        .wellness-category ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .wellness-category li {
+            margin: 10px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .wellness-category li::before {
+            content: "✧";
+            color: #d4af37;
+            position: absolute;
+            left: 0;
+            font-size: 1.2rem;
+        }
+
+        .sabian-section {
+            background: rgba(212, 175, 55, 0.08);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 12px;
+            padding: 35px;
+            margin: 35px 0;
+        }
+
+        .sabian-symbol {
+            text-align: center;
+            margin: 25px 0;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .sabian-degree {
+            font-size: 1.5rem;
+            color: #ffd700;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .sabian-description {
+            font-style: italic;
+            font-size: 1.1rem;
+            color: #e8e8e8;
+            line-height: 1.8;
+        }
+
+        .medical-warnings {
+            background: linear-gradient(45deg, rgba(220, 20, 60, 0.1), rgba(255, 69, 0, 0.1));
+            border: 2px solid rgba(220, 20, 60, 0.3);
+            border-radius: 10px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+
+        .medical-warnings h3 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+
+        .timing-section {
+            background: rgba(75, 0, 130, 0.1);
+            border: 1px solid rgba(75, 0, 130, 0.3);
+            border-radius: 10px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+
+        .timing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .timing-period {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #9370db;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px;
+            border-top: 2px solid rgba(212, 175, 55, 0.3);
+            color: #b8860b;
+            font-style: italic;
+        }
+
+        .back-link {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .back-link a {
+            color: #d4af37;
+            text-decoration: none;
+            font-size: 1.1rem;
+            padding: 15px 30px;
+            border: 2px solid #d4af37;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link a:hover {
+            background: #d4af37;
+            color: #1a1a2e;
+        }
+
+        .chart-placeholder {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px dashed rgba(212, 175, 55, 0.3);
+            border-radius: 10px;
+            padding: 40px;
+            margin: 30px 0;
+            color: #b8860b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ASTRO-BODY TYPE REPORT</h1>
+            <div class="subtitle">詳細診断レポート - Comprehensive Analysis</div>
+        </div>
+
+        <div class="patient-info">
+            <h2>診断対象者詳細情報</h2>
+            <p><strong>生年月日:</strong> {{ data.birth_date }}</p>
+            <p><strong>出生時刻:</strong> {{ data.birth_time }}</p>
+            <p><strong>出生地:</strong> {{ data.birth_place }}</p>
+            <p><strong>診断実行日時:</strong> {{ data.diagnosis_timestamp }}</p>
+        </div>
+
+        <div class="section">
+            <h2>🌟 主要アーキタイプ詳細分析</h2>
+            <div class="archetype-title">{{ data.primary_archetype }}</div>
+            <p>{{ data.archetype_detailed_description }}</p>
+
+            <h3 style="color: #d4af37; margin: 25px 0 15px 0;">補助アーキタイプ</h3>
+            <div class="constitution-detailed">
+                {% for archetype in data.secondary_archetypes %}
+                <div class="constitution-card">
+                    <h3>{{ archetype.name }}</h3>
+                    <p>{{ archetype.description }}</p>
+                    <p><strong>影響度:</strong> {{ archetype.influence_level }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🪐 惑星配置による体質分析</h2>
+            <div class="planetary-section">
+                <div class="planetary-grid">
+                    {% for planet in data.planetary_analysis %}
+                    <div class="planet-card">
+                        <h4><span class="planet-icon">{{ planet.symbol }}</span>{{ planet.name }}</h4>
+                        <p><strong>位置:</strong> {{ planet.position }}</p>
+                        <p><strong>健康への影響:</strong> {{ planet.health_influence }}</p>
+                        <p><strong>体質的特徴:</strong> {{ planet.constitutional_trait }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>⚡ 詳細体質分析</h2>
+            <div class="constitution-detailed">
+                <div class="constitution-card">
+                    <h3>エネルギー系統</h3>
+                    <p><strong>基本タイプ:</strong> {{ data.detailed_constitution.energy_type }}</p>
+                    <p><strong>活動パターン:</strong> {{ data.detailed_constitution.activity_pattern }}</p>
+                    <p><strong>疲労の特徴:</strong> {{ data.detailed_constitution.fatigue_pattern }}</p>
+                    <p><strong>回復方法:</strong> {{ data.detailed_constitution.recovery_method }}</p>
+                </div>
+
+                <div class="constitution-card">
+                    <h3>代謝系統</h3>
+                    <p><strong>代謝タイプ:</strong> {{ data.detailed_constitution.metabolism_type }}</p>
+                    <p><strong>消化特性:</strong> {{ data.detailed_constitution.digestion_trait }}</p>
+                    <p><strong>栄養吸収:</strong> {{ data.detailed_constitution.nutrient_absorption }}</p>
+                    <p><strong>適性食材:</strong> {{ data.detailed_constitution.suitable_foods }}</p>
+                </div>
+
+                <div class="constitution-card">
+                    <h3>循環器系統</h3>
+                    <p><strong>循環タイプ:</strong> {{ data.detailed_constitution.circulation_type }}</p>
+                    <p><strong>血圧傾向:</strong> {{ data.detailed_constitution.blood_pressure_tendency }}</p>
+                    <p><strong>心拍特性:</strong> {{ data.detailed_constitution.heart_rate_trait }}</p>
+                    <p><strong>運動適性:</strong> {{ data.detailed_constitution.exercise_suitability }}</p>
+                </div>
+
+                <div class="constitution-card">
+                    <h3>神経系統</h3>
+                    <p><strong>神経タイプ:</strong> {{ data.detailed_constitution.nervous_system_type }}</p>
+                    <p><strong>ストレス反応:</strong> {{ data.detailed_constitution.stress_response }}</p>
+                    <p><strong>睡眠パターン:</strong> {{ data.detailed_constitution.sleep_pattern }}</p>
+                    <p><strong>精神的傾向:</strong> {{ data.detailed_constitution.mental_tendency }}</p>
+                </div>
+
+                <div class="constitution-card">
+                    <h3>免疫系統</h3>
+                    <p><strong>免疫タイプ:</strong> {{ data.detailed_constitution.immune_type }}</p>
+                    <p><strong>感染抵抗性:</strong> {{ data.detailed_constitution.infection_resistance }}</p>
+                    <p><strong>アレルギー傾向:</strong> {{ data.detailed_constitution.allergy_tendency }}</p>
+                    <p><strong>回復力:</strong> {{ data.detailed_constitution.healing_capacity }}</p>
+                </div>
+
+                <div class="constitution-card">
+                    <h3>内分泌系統</h3>
+                    <p><strong>ホルモンバランス:</strong> {{ data.detailed_constitution.hormone_balance }}</p>
+                    <p><strong>体温調節:</strong> {{ data.detailed_constitution.temperature_regulation }}</p>
+                    <p><strong>水分代謝:</strong> {{ data.detailed_constitution.fluid_metabolism }}</p>
+                    <p><strong>年齢変化:</strong> {{ data.detailed_constitution.age_related_changes }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="medical-warnings">
+            <h3>🎯 重要な健康注意事項</h3>
+            <p>{{ data.detailed_health_warnings.primary_concerns }}</p>
+
+            <h4 style="color: #ff9999; margin: 20px 0 10px 0;">特に注意すべき時期</h4>
+            <ul style="list-style: none; padding-left: 20px;">
+                {% for period in data.detailed_health_warnings.critical_periods %}
+                <li style="margin: 8px 0;">• {{ period }}</li>
+                {% endfor %}
+            </ul>
+
+            <h4 style="color: #ff9999; margin: 20px 0 10px 0;">予防的対策</h4>
+            <ul style="list-style: none; padding-left: 20px;">
+                {% for measure in data.detailed_health_warnings.preventive_measures %}
+                <li style="margin: 8px 0;">• {{ measure }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>💫 包括的ウェルネス指導</h2>
+            <div class="wellness-comprehensive">
+                <div class="wellness-grid">
+                    <div class="wellness-category">
+                        <h4>🍎 栄養・食事指導</h4>
+                        <ul>
+                            {% for nutrition in data.comprehensive_wellness.nutrition %}
+                            <li>{{ nutrition }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="wellness-category">
+                        <h4>🏃‍♂️ 運動・活動指導</h4>
+                        <ul>
+                            {% for exercise in data.comprehensive_wellness.exercise %}
+                            <li>{{ exercise }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="wellness-category">
+                        <h4>😴 休息・睡眠指導</h4>
+                        <ul>
+                            {% for rest in data.comprehensive_wellness.rest %}
+                            <li>{{ rest }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="wellness-category">
+                        <h4>🧘‍♀️ 精神・心理ケア</h4>
+                        <ul>
+                            {% for mental in data.comprehensive_wellness.mental_care %}
+                            <li>{{ mental }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="wellness-category">
+                        <h4>🌿 代替療法・自然療法</h4>
+                        <ul>
+                            {% for alternative in data.comprehensive_wellness.alternative_therapy %}
+                            <li>{{ alternative }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="wellness-category">
+                        <h4>⚖️ ライフスタイル調整</h4>
+                        <ul>
+                            {% for lifestyle in data.comprehensive_wellness.lifestyle %}
+                            <li>{{ lifestyle }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sabian-section">
+            <h2>📜 サビアンシンボル健康解釈</h2>
+            {% for symbol in data.sabian_symbols %}
+            <div class="sabian-symbol">
+                <div class="sabian-degree">{{ symbol.planet }} - {{ symbol.degree }}°{{ symbol.sign }}</div>
+                <div class="sabian-description">
+                    <strong>シンボル:</strong> {{ symbol.symbol_text }}<br>
+                    <strong>健康的意味:</strong> {{ symbol.health_meaning }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="timing-section">
+            <h2>⏰ 健康管理タイミング指導</h2>
+            <div class="timing-grid">
+                {% for timing in data.health_timing %}
+                <div class="timing-period">
+                    <h4 style="color: #9370db; margin-bottom: 10px;">{{ timing.period }}</h4>
+                    <p><strong>推奨活動:</strong> {{ timing.recommended_activities }}</p>
+                    <p><strong>注意事項:</strong> {{ timing.precautions }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🌙 月相・季節との調和</h2>
+            <p>{{ data.lunar_seasonal_guidance.overview }}</p>
+
+            <h3 style="color: #d4af37; margin: 25px 0 15px 0;">月相別健康管理</h3>
+            <div class="timing-grid">
+                {% for phase in data.lunar_seasonal_guidance.moon_phases %}
+                <div class="timing-period">
+                    <h4 style="color: #9370db;">{{ phase.phase_name }}</h4>
+                    <p>{{ phase.health_guidance }}</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <h3 style="color: #d4af37; margin: 25px 0 15px 0;">季節別体調管理</h3>
+            <div class="timing-grid">
+                {% for season in data.lunar_seasonal_guidance.seasons %}
+                <div class="timing-period">
+                    <h4 style="color: #9370db;">{{ season.season_name }}</h4>
+                    <p>{{ season.health_guidance }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="chart-placeholder">
+            <h3 style="color: #d4af37; margin-bottom: 15px;">ネイタルチャート表示エリア</h3>
+            <p>占星術チャートがここに表示されます</p>
+            <p>（実装時にSVGまたはCanvas要素で表示）</p>
+        </div>
+
+        <div class="back-link">
+            <a href="/basic">基本診断に戻る</a> | 
+            <a href="/">新しい診断を開始</a>
+        </div>
+
+        <div class="footer">
+            <p>この詳細レポートは占星医学の高度な原理に基づく包括的体質分析です。</p>
+            <p>個人の健康状態や既往歴を考慮し、医学的診断と併用することを推奨します。</p>
+            <p>緊急の健康問題については必ず医療機関にご相談ください。</p>
+        </div>
+    </div>
+</body>
+</html>

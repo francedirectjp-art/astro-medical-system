@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASTRO-MEDICAL REPORT System - 完全プロジェクト引き継ぎ資料</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600;700&display=swap');
+        body { font-family: 'Noto Serif JP', serif; }
+        .gradient-bg { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+        .gold-accent { color: #d4af37; }
+        .gold-border { border-color: #d4af37; }
+        .code-block { background: #1e1e1e; color: #e8e8e8; }
+         { body { -webkit-print-color-adjust: exact; } }
+    </style>
+</head>
+<body class="gradient-bg text-gray-100 leading-relaxed">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        
+        <!-- ヘッダー -->
+        <header class="text-center mb-12 border-b-2 gold-border pb-8">
+            <h1 class="text-5xl font-bold gold-accent mb-4">
+                <i class="fas fa-star-and-crescent mr-4"></i>
+                ASTRO-MEDICAL REPORT SYSTEM
+            </h1>
+            <h2 class="text-2xl text-yellow-400 mb-4">完全プロジェクト引き継ぎ資料</h2>
+            <p class="text-lg text-gray-300">織田先生の「次世代占星医学体質鑑定システム」開発プロジェクト</p>
+            <div class="mt-4 text-sm text-gray-400">
+                <i class="fas fa-calendar mr-2"></i>作成日時: 2024年最新版
+                <span class="mx-4">|</span>
+                <i class="fas fa-user mr-2"></i>プロジェクトリーダー: 織田先生
+            </div>
+        </header>
+
+        <!-- プロジェクト概要 -->
+        <section class="mb-12 bg-gray-800 bg-opacity-50 rounded-lg p-8 border gold-border">
+            <h2 class="text-3xl font-bold gold-accent mb-6">
+                <i class="fas fa-project-diagram mr-3"></i>プロジェクト概要
+            </h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold gold-accent mb-4">システム目標</h3>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><i class="fas fa-check text-green-400 mr-2"></i>12,000文字レベルの本格的体質診断レポート生成</li>
+                        <li><i class="fas fa-check text-green-400 mr-2"></i>16元型理論による個人体質分類システム</li>
+                        <li><i class="fas fa-check text-green-400 mr-2"></li>占星医学と四体液説の統合アプローチ</li>
+                        <li><i class="fas fa-check text-green-400 mr-2"></i>Swiss Ephemeris天体計算エンジン統合</li>
+                        <li><i class="fas fa-check text-green-400 mr-2"></i>検収ループによる品質保証システム</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold gold-accent mb-4">技術仕様</h3>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><i class="fab fa-python mr-2 text-blue-400"></i>Python + Flask Framework</li>
+                        <li><i class="fas fa-globe mr-2 text-green-400"></i>Railway Cloud デプロイ対応</li>
+                        <li><i class="fas fa-mobile-alt mr-2 text-purple-400"></i>レスポンシブデザイン</li>
+                        <li><i class="fas fa-language mr-2 text-yellow-400"></i>BOM付きUTF-8エンコーディング</li>
+                        <li><i class="fas fa-shield-alt mr-2 text-red-400"></i>品質検証システム統合</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 現在の進捗状況 -->
+        <section class="mb-12 bg-gray-800 bg-opacity-50 rounded-lg p-8 border gold-border">
+            <h2 class="text-3xl font-bold gold-accent mb-6">
+                <i class="fas fa-tasks mr-3"></i>現在の進捗状況
+            </h2>
+            <div class="mb-6">
+                <div style="height: 400px;">
+                    <canvas id="progressChart"></canvas>
+                </div>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-green-900 bg-opacity-50 p-6 rounded-lg border border-green-500">
+                    <h3 class="text-xl font-semibold text-green-400 mb-3">
+                        <i class="fas fa-check-circle mr-2"></i>完成済み
+                    </h3>
+                    <ul class="space-y-1 text-sm">
+                        <li>✅ Flask メインアプリケーション</li>
+                        <li>✅ 16元型完全データベース</li>
+                        <li>✅ 360度サビアンシンボルデータ</li>
+                        <li>✅ 超シンプル入力ページ</li>
+                        <li>✅ 基本診断ページ（2,000文字）</li>
+                        <li>✅ 詳細診断ページ（12,000文字）</li>
+                        <li>✅ 検収ループシステム</li>
+                        <li>✅ 47都道府県座標データ</li>
+                    </ul>
+                </div>
+                <div class="bg-yellow-900 bg-opacity-50 p-6 rounded-lg border border-yellow-500">
+                    <h3 class="text-xl font-semibold text-yellow-400 mb-3">
+                        <i class="fas fa-clock mr-2"></i>準備完了
+                    </h3>
+                    <ul class="space-y-1 text-sm">
+                        <li>🟡 Railway デプロイ設定</li>
+                        <li>🟡 Requirements.txt</li>
+                        <li>🟡 README.md デプロイ手順</li>
+                        <li>🟡 BOM付きUTF-8対応</li>
+                        <li>🟡 ファイル構造最適化</li>
+                    </ul>
+                </div>
+                <div class="bg-blue-900 bg-opacity-50 p-6 rounded-lg border border-blue-500">
+                    <h3 class="text-xl font-semibold text-blue-400 mb-3">
+                        <i class="fas fa-rocket mr-2"></i>次のステップ
+                    </h3>
+                    <ul class="space-y-1 text-sm">
+                        <li>🚀 Railway 即時デプロイ</li>
+                        <li>🔧 本番環境動作確認</li>
+                        <li>🌍 世界公開最終調整</li>
+                        <li>📊 パフォーマンス最適化</li>
+                        <li>🔍 ユーザビリティテスト</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 重要な決定事項 -->
+        <section class="mb-12 bg-gray-800 bg-opacity-50 rounded-lg p-8 border gold-border">
+            <h2 class="text-3xl font-bold gold-accent mb-6">
+                <i class="fas fa-gavel mr-3"></i>重要な決定事項
+            </h2>
+            <div class="space-y-6">
+                <div class="bg-purple-900 bg-opacity-30 p-4 rounded-lg border-l-4 border-purple-500">
+                    <h3 class="font-semibold gold-accent mb-2">プロジェクト方針転換</h3>
+                    <p class="text-gray-300">当初のPage1/Page2先行実装から「今日中に12,000文字まで完成」に方針変更。プロトタイプレベルでの完全システム構築を決定。</p>
+                </div>
+                <div class="bg-purple-900 bg-opacity-30 p-4 rounded-lg border-l-4 border-purple-500">
+                    <h3 class="font-semibold gold-accent mb-2">デザイン基準</h3>
+                    <p class="text-gray-300">「絵文字は使わない」「クラシカルでインテリジェンスな雰囲気」「商品価格と直接関わる高品質」を要求。</p>
+                </div>
+                <div class="bg-purple-900 bg-opacity-30 p-4 rounded-lg border-l-4 border-purple-500">
+                    <h3 class="font-semibold gold-accent mb-2">用語変更</h3>
+                    <p class="text-gray-300">「医学」用語を「ASTRO-BODY TYPE REPORT」に変更することを決定。</p>
+                </div>
+                <div class="bg-purple-900 bg-opacity-30 p-4 rounded-lg border-l-4 border-purple-500">
+                    <h3 class="font-semibold gold-accent mb-2">検収ループ実装</h3>
+                    <p class="text-gray-300">品質保証システムの重要性を認識し、章別文字数チェック、必須セクション検証、禁止語フィルタリングを統合。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 完成ファイル詳細 -->
+        <section class="mb-12 bg-gray-800 bg-opacity-50 rounded-lg p-8 border gold-border">
+            <h2 class="text-3xl font-bold gold-accent mb-6">
+                <i class="fas fa-folder-open mr-3"></i>完成ファイル詳細
+            </h2>
+            <div class="space-y-6">
+                
+                <!-- app.py -->
+                <div class="bg-gray-900 p-6 rounded-lg border border-gray-600">
+                    <h3 class="text-xl font-semibold gold-accent mb-3">
+                        <i class="fab fa-python mr-2"></i>app.py - メインアプリケーション
+                    </h3>
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <p class="text-sm text-gray-400 mb-2">主な機能:</p>
+                            <ul class="text-sm space-y-1">
+                                <li>• Flask Webアプリケーション</li>
+                                <li>• Swiss Ephemeris天体計算</li>
+                                <li>• 47都道府県座標データベース</li>
+                                <li>• 16元型判定システム</li>
+                                <li>• 基本・詳細診断ルーティング</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-400 mb-2">技術詳細:</p>
+                            <ul class="text-sm space-y-1">
+                                <li>• pyephem ライブラリ使用</li>
+                                <li>• BOM付きUTF-8対応</li>
+                                <li>• Railway デプロイ設定</li>
+                                <li>• エラーハンドリング完備</li>
+                                <li>• 文字化け完全解決済み</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded text-xs overflow-x-auto">
+                        <code class="text-green-400">Status: ✅ 完成・テスト済み | Location: /astro_medical_system_deploy/app.py</code>
+                    </div>
+                </div>
+
+                <!-- sixteen_archetypes_complete.json -->
+                <div class="bg-gray-900 p-6 rounded-lg border border-gray-600">
+                    <h3 class="text-xl font-semibold gold-accent mb-3">
+                        <i class="fas fa-database mr-2"></i>sixteen_archetypes_complete.json
+                    </h3>
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <p class="text-sm text-gray-400 mb-2">データ内容:</p>
+                            <ul class="text-sm space-y-1">
+                                <li>• 16元型完全データベース</li>
+                                <li>• 太陽×月元素組み合わせ</li>
+                                <li>• 体質傾向・健康指針</li>
+                                <li>• 推奨ハーブ処方</li>
+                                <li>• 四体液バランス情報</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-400 mb-2">16元型リスト:</p>
+                            <ul class="text-xs space-y-1">
+                                <li>• Warrior（戦士型）</li>
+                                <li>• Builder（建設者型）</li>
+                                <li>• Catalyst（触媒型）</li>
+                                <li>• Intuitive（直感型）</li>
+                                <li>• その他12元型...</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded text-xs">
+                        <code class="text-green-400">Status: ✅ 完成 | Size: 12,347 bytes | Format: BOM付きUTF-8</code>
+                    </div>
+                </div>
+
+                <!-- sabian_symbols_360.json -->
+                <div class="bg-gray-900 p-6 rounded-lg border border-gray-600">
+                    <h3 class="text-xl font-semibold gold-accent mb-3">
+                        <i class="fas fa-compass mr-2"></i>sabian_symbols_360.json
+                    </h3>
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <p class="text-sm text-gray-400 mb-2">データ構造:</p>
+                            <ul class="text-sm space-y-1">
+                                <li>• 360度完全カバー</li>
+                                <li>• 各度数の象徴的意味</li>
+                                <li>• キーワード・解釈</li>
+                                <li>• 星座別分類</li>
+                                <li>• 重要度数マーキング</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-400 mb-2">活用方法:</p>
+                            <ul class="text-sm space-y-1">
+                                <li>• 惑星度数解釈</li>
+                                <li>• 詳細レポート生成</li>
+                                <li>• サビアンシンボル占星学</li>
+                                <li>• 12,000文字レポート素材</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded text-xs">
+                        <code class="text-green-400">Status: ✅ 完成 | Size: 153,424 bytes | Records: 360度数</code>
+                    </div>
+                </div>
+
+                <!-- templates/input.html -->
+                <div class="bg-gray-900 p-6 rounded-lg border border-gray-600">
+                    <h3 class="text-xl font-semibold gold-accent mb-3">
+                        <i class="fas fa-keyboard mr-2"></i>templates/input.html - 超シンプル入力ページ
+                    </h3>
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <p class="text-sm text-gray-400 mb-2">デザイン特徴:</p>
+                            <ul class="text-sm space-y-1">
+                                <li>• 絵文字完全排除</li>
+                                <li>• クラシカル&インテリジェンス</li>
+                                <li>• 商品価格連動品質</li>
+                                <li>• ゴールドアクセント配色</li>
+                                <li>• レスポンシブ対応</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-400 mb-2">機能:</p>
+                            <ul class="text-sm space-y-1">
+                                <li>• 47都道府県プルダウン</li>
+                                <li>• 生年月日・出生時刻入力</li>
+                                <li>• 基本/詳細診断選択</li>
+                                <li>• バリデーション機能</li>
+                                <li>• 美しいUI/UX</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded text-xs">
+                        <code class="text-green-400">Status: ✅ 織田先生承認済み | 参考: https://hysbhzay.manus.space/ のシンプルさ実現</code>
+                    </div>
+                </div>
+
+                <!-- その他のファイル -->
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-gray-900 p-4 rounded-lg border border-gray-600">
+                        <h4 class="text-lg font-semibold gold-accent mb-2">
+                            <i class="fas fa-file-alt mr-2"></i>basic_report.html
+                        </h4>
+                        <p class="text-sm text-gray-400 mb-2">2,000文字基本診断ページ</p>
+                        <ul class="text-xs space-y-1">
+                            <li>• 16元型表示</li>
+                            <li>• 基本体質情報</li>
+                            <li>• 詳細診断誘導</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg border border-gray-600">
+                        <h4 class="text-lg font-semibold gold-accent mb-2">
+                            <i class="fas fa-file-medical mr-2"></i>detailed_report.html
+                        </h4>
+                        <p class="text-sm text-gray-400 mb-2">12,000文字詳細診断ページ</p>
+                        <ul class="text-xs space-y-1">
+                            <li>• 12章構成レポート</li>
+                            <li>• 模範ページ構造一致</li>
+                            <li>• 包括的体質分析</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 技術的解決事項 -->
+        <section class="mb-12 bg-gray-800 bg-opacity-50 rounded-lg p-8 border gold-border">
+            <h2 class="text-3xl font-bold gold-accent mb-6">
+                <i class="fas fa-wrench mr-3"></i>技術的解決事項
+            </h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-xl font-semibold gold-accent mb-4">解決済み問題</h3>
+                    <div class="space-y-3">
+                        <div class="bg-green-900 bg-opacity-30 p-3 rounded border-l-4 border-green-500">
+                            <h4 class="font-semibold text-green-400">文字化け問題</h4>
+                            <p class="text-sm text-gray-300">BOM付きUTF-8エンコーディングで完全解決</p>
+                        </div>
+                        <div class="bg-green-900 bg-opacity-30 p-3 rounded border-l-4 border-green-500">
+                            <h4 class="font-semibold text-green-400">Swiss Ephemeris統合</h4>
+                            <p class="text-sm text-gray-300">pyephemライブラリで正確な天体計算実現</p>
+                        </div>
+                        <div class="bg-green-900 bg-opacity-30 p-3 rounded border-l-4 border-green-500">
+                            <h4 class="font-semibold text-green-400">47都道府県座標</h4>
+                            <p class="text-sm text-gray-300">県庁所在地の正確な緯度経度データ完備</p>
+                        </div>
+                        <div class="bg-green-900 bg-opacity-30 p-3 rounded border-l-4 border-green-500">
+                            <h4 class="font-semibold text-green-400">デザイン統一</h4>
+                            <p class="text-sm text-gray-300">standalone_perfect_japanese.htmlベースのデザインシステム</p>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold gold-accent mb-4">品質保証システム</h3>
+                    <div class="space-y-3">
+                        <div class="bg-blue-900 bg-opacity-30 p-3 rounded border-l-4 border-blue-500">
+                            <h4 class="font-semibold text-blue-400">qa/validator.py</h4>
+                            <p class="text-sm text-gray-300">章別文字数チェック、必須セクション検証実装</p>
+                        </div>
+                        <div class="bg-blue-900 bg-opacity-30 p-3 rounded border-l-4 border-blue-500">
+                            <h4 font-semibold text-blue-400">禁止語フィルタ</h4>
+                            <p class="text-sm text-gray-300">医療用語自動検出・警告システム</p>
+                        </div>
+                        <div class="bg-blue-900 bg-opacity-30 p-3 rounded border-l-4 border-blue-500">
+                            <h4 class="font-semibold text-blue-400">12,000文字検証</h4>
+                            <p class="text-sm text-gray-300">目標文字数達成確認機能</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ファイル構造 -->
+        <section class="mb-12 bg-gray-800 bg-opacity-50 rounded-lg p-8 border gold-border">
+            <h2 class="text-3xl font-bold gold-accent mb-6">
+                <i class="fas fa-sitemap mr-3"></i>プロジェクト構造
+            </h2>
+            <div class="bg-gray-900 p-6 rounded-lg font-mono text-sm">
+                <pre class="text-green-400">
+astro_medical_system_deploy/
+├── 📄 app.py                           # メインFlaskアプリケーション
+├── 📄 sixteen_archetypes_complete.json # 16元型完全データベース
+├── 📄 sabian_symbols_360.json          # 360度サビアンシンボルデータ
+├── 📄 requirements.txt                 # 必要パッケージリスト
+├── 📄 README.md                        # デプロイ手順書
+├── 📁 templates/
+│   ├── 📄 input.html                   # 超シンプル入力ページ
+│   ├── 📄 basic_report.html            # 2,000文字基本診断
+│   └── 📄 detailed_report.html         # 12,000文字詳細診断
+└── 📁 qa/
+    └── 📄 validator.py                 # 検収ループシステム
+                </pre>
+            </div>
+        </section>
+
+        <!-- デプロイ情報 -->
+        <section class="mb-12 bg-gray-800 bg-opacity-50 rounded-lg p-8 border gold-border">
+            <h2 class="text-3xl font-bold gold-accent mb-6">
+                <i class="fas fa-cloud-upload-alt mr-3"></i>デプロイ準備状況
+            </h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-xl font-semibold gold-accent mb-4">Railway設定</h3>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <h4 class="font-semibold text-yellow-400 mb-2">環境変数</h4>
+                        <div class="code-block p-3 rounded text-sm">
+                            <div>PORT=5000</div>
+                            <div>FLASK_ENV=production</div>
+                        </div>
+                        
+                        <h4 class="font-semibold text-yellow-400 mb-2 mt-4">デプロイコマンド</h4>
+                        <div class="code-block p-3 rounded text-sm">
+                            <div>railway login</div>
+                            <div>railway init</div>
+                            <div>railway up</div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold gold-accent mb-4">必要パッケージ</h3>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <div class="code-block p-3 rounded text-sm">
+                            <div>Flask==2.3.3</div>
+                            <div>pyephem==4.1.5</div>
+                            <div>python-dateutil==2.8.2</div>
+                            <div>pytz==2023.3</div>
+                            <div>Werkzeug==2.3.7</div>
+                            <div>Jinja2==3.1.2</div>
+                            <div>gunicorn==21.2.0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 重要参考資料 -->
+        <section class="mb-12 bg-gray-800 bg-opacity-50 rounded-lg p-8 border gold-border">
+            <h2 class="text-3xl font-bold gold-accent mb-6">
+                <i class="fas fa-bookmark mr-3"></i>重要参考資料
+            </h2>
+            <div class="space-y-4">
+                <div class="bg-yellow-900 bg-opacity-30 p-4 rounded-lg border-l-4 border-yellow-500">
+                    <h3 class="font-semibold gold-accent mb-2">模範ページ</h3>
+                    <p class="text-sm text-gray-300 mb-2">
+                        <i class="fas fa-link mr-2"></i>
+                        <a href="https://page.gensparksite.com/docs_agent/07f2327f-cb3e-41bc-bb7d-e36770edae7b/fc2dcb72-cb5b-489d-9f9b-193a19fbd1eb/b99a7081-90ab-4734-bbe6-7d760d568e6a.html" class="text-blue-400 underline">
+                            完璧な実例 - 田中幸代様の触媒型レポート（12,000文字レベル）
+                        </a>
+                    </p>
+                    <p class="text-xs text-gray-400">この模範ページの章構成を完全一致でdetailed_report.htmlに実装済み</p>
+                </div>
+                <div class="bg-yellow-900 bg-opacity-30 p-4 rounded-lg border-l-4 border-yellow-500">
+                    <h3 class="font-semibold gold-accent mb-2">デザイン参考</h3>
+                    <p class="text-sm text-gray-300 mb-2">
+                        <i class="fas fa-link mr-2"></i>
+                        <a href="https://hysbhzay.manus.space/" class="text-blue-400 underline">
+                            シンプルさの参考サイト
+                        </a>
+                    </p>
+                    <p class="text-xs text-gray-400">input.htmlの超シンプル化の基準として活用</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 次のアクション -->
+        <section class="mb-12 bg-red-900 bg-opacity-30 rounded-lg p-8 border border-red-500">
+            <h2 class="text-3xl font-bold text-red-400 mb-6">
+                <i class="fas fa-exclamation-triangle mr-3"></i>即座実行が必要なアクション
+            </h2>
+            <div class="space-y-4">
+                <div class="bg-red-800 bg-opacity-50 p-4 rounded-lg">
+                    <h3 class="text-xl font-semibold text-red-300 mb-2">🚀 Step 3: Railway 即時デプロイ</h3>
+                    <p class="text-gray-300 mb-2">すべてのファイルが準備完了。織田先生の指示待ち状態。</p>
+                    <p class="text-sm text-gray-400">予定時間: 30分 | 本番環境での12,000文字レポート生成テスト必須</p>
+                </div>
+                <div class="bg-orange-800 bg-opacity-50 p-4 rounded-lg">
+                    <h3 class="text-xl font-semibold text-orange-300 mb-2">🔧 本番環境動作確認</h3>
+                    <p class="text-gray-300 mb-2">デプロイ後の天体計算、レポート生成、文字化け確認</p>
+                </div>
+                <div class="bg-green-800 bg-opacity-50 p-4 rounded-lg">
+                    <h3 class="text-xl font-semibold text-green-300 mb-2">🌍 世界公開最終調整</h3>
+                    <p class="text-gray-300 mb-2">パフォーマンス最適化、ユーザビリティ確認</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 緊急時対応情報 -->
+        <section class="mb-12 bg-gray-800 bg-opacity-50 rounded-lg p-8 border gold-border">
+            <h2 class="text-3xl font-bold gold-accent mb-6">
+                <i class="fas fa-life-ring mr-3"></i>緊急時対応・トラブルシューティング
+            </h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-red-400 mb-3">想定される問題</h3>
+                    <div class="space-y-3">
+                        <div class="bg-red-900 bg-opacity-30 p-3 rounded">
+                            <h4 class="font-semibold text-red-300">文字化け再発</h4>
+                            <p class="text-xs text-gray-400">→ BOM付きUTF-8エンコーディング確認</p>
+                        </div>
+                        <div class="bg-red-900 bg-opacity-30 p-3 rounded">
+                            <h4 class="font-semibold text-red-300">天体計算エラー</h4>
+                            <p class="text-xs text-gray-400">→ pyephem バージョン・座標データ確認</p>
+                        </div>
+                        <div class="bg-red-900 bg-opacity-30 p-3 rounded">
+                            <h4 class="font-semibold text-red-300">レポート生成失敗</h4>
+                            <p class="text-xs text-gray-400">→ JSONデータファイル存在・形式確認</p>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-green-400 mb-3">バックアップ情報</h3>
+                    <div class="space-y-3">
+                        <div class="bg-green-900 bg-opacity-30 p-3 rounded">
+                            <h4 class="font-semibold text-green-300">AI Drive保存済み</h4>
+                            <p class="text-xs text-gray-400">全ファイル /astro_medical_system_deploy/ に安全保存</p>
+                        </div>
+                        <div class="bg-green-900 bg-opacity-30 p-3 rounded">
+                            <h4 class="font-semibold text-green-300">完成版参照</h4>
+                            <p class="text-xs text-gray-400">standalone_perfect_japanese.html 美しい表示確認済み</p>
+                        </div>
+                        <div class="bg-green-900 bg-opacity-30 p-3 rounded">
+                            <h4 class="font-semibold text-green-300">検証システム</h4>
+                            <p class="text-xs text-gray-400">qa/validator.py でリアルタイム品質確認可能</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 引き継ぎチェックリスト -->
+        <section class="mb-12 bg-blue-900 bg-opacity-30 rounded-lg p-8 border border-blue-500">
+            <h2 class="text-3xl font-bold text-blue-400 mb-6">
+                <i class="fas fa-clipboard-check mr-3"></i>新チャット引き継ぎチェックリスト
+            </h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-blue-300 mb-3">確認必須事項</h3>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="form-checkbox text-blue-500">
+                            <span class="text-sm">プロジェクト目標理解（12,000文字レポート生成）</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="form-checkbox text-blue-500">
+                            <span class="text-sm">現在の進捗状況確認（Railway デプロイ待ち）</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="form-checkbox text-blue-500">
+                            <span class="text-sm">完成ファイル一覧確認（9ファイル）</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="form-checkbox text-blue-500">
+                            <span class="text-sm">技術仕様確認（Flask + pyephem）</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="form-checkbox text-blue-500">
+                            <span class="text-sm">デザイン要件確認（絵文字なし・クラシカル）</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-blue-300 mb-3">即座実行タスク</h3>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="form-checkbox text-red-500">
+                            <span class="text-sm text-red-300">Railway 即時デプロイ実行</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="form-checkbox text-red-500">
+                            <span class="text-sm text-red-300">本番環境動作確認</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="form-checkbox text-red-500">
+                            <span class="text-sm text-red-300">12,000文字レポート生成テスト</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="form-checkbox text-red-500">
+                            <span class="text-sm text-red-300">文字化け・エンコーディング確認</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="form-checkbox text-red-500">
+                            <span class="text-sm text-red-300">世界公開最終調整</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 最終メッセージ -->
+        <footer class="text-center py-8 border-t-2 gold-border">
+            <div class="bg-gradient-to-r from-yellow-900 to-yellow-800 bg-opacity-50 rounded-lg p-6 border border-yellow-500">
+                <h2 class="text-2xl font-bold gold-accent mb-4">
+                    <i class="fas fa-crown mr-3"></i>織田先生へ - プロジェクト継続のために
+                </h2>
+                <p class="text-lg text-gray-300 mb-4">
+                    この引き継ぎ資料により、新しいチャットでも即座に「Step 3: Railway 即時デプロイ」から継続可能です。
+                </p>
+                <p class="text-sm text-gray-400 mb-4">
+                    すべてのファイルがAI Driveに安全保存され、技術的問題は解決済み。
+                    あとは世界公開のみです！
+                </p>
+                <div class="text-2xl gold-accent">
+                    <i class="fas fa-star mr-2"></i>
+                    12,000文字ASTRO-BODY TYPE REPORTシステム完成直前
+                    <i class="fas fa-star ml-2"></i>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // プログレスチャート
+        const ctx = document.getElementById('progressChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    'システム開発',
+                    'データベース構築', 
+                    'UI/UX デザイン',
+                    '品質保証',
+                    'デプロイ準備',
+                    '本番公開'
+                ],
+                datasets: [{
+                    data: [100, 100, 100, 100, 95, 0],
+                    backgroundColor: [
+                        '#10B981',
+                        '#10B981', 
+                        '#10B981',
+                        '#10B981',
+                        '#F59E0B',
+                        '#EF4444'
+                    ],
+                    borderColor: '#d4af37',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#e8e8e8',
+                            font: {
+                                family: 'Noto Serif JP'
+                            }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'プロジェクト進捗状況 (95%完成)',
+                        color: '#d4af37',
+                        font: {
+                            size: 18,
+                            family: 'Noto Serif JP'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+    <script id="html_badge_script1">
+        window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
+            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDhO4pDD5cbNI%2FcbQo3cDpaY%2BR6m6Nsvh1PvUipKQj3%2F9mjiOwQPkuY3gCfERKjGpAjPZTaKrGq4BdHaUysumqdXB63127mRF1pGW%2B7d5OvW%2FtX%2FpLw4bJupkdizO8D2i14HF1whvM1JtkHpM%2FSBUasuOWq%2B8lRAnKAx7JJVtNADy%2FCXa1bV5RaZ5ncVsnfW2DI6fq3pG1uaMopiN%2Fz5XcIxVzAqOn%2BpLpiEcT64ztym8Y52pFyqxU7bZILQZdj35CRJkKHyqV3HjEiAni%2BdXMRx%2BM%2Bb%2BUKe6SKHCthGFQ0LWmwlwGxCYiSOOoJFeOYkqNKi9%2BToeipGgmSVEEtszCJJy1pl3t9eWEa76%2Bq8soAP89duPm31EWnyOTKmoRd%2BCC80FJmamIui6oX3nNB2e7jrja0gt%2BB5ZMk7pDkU6LwCTiw2%2F0SC6gmg%2Fj2LLHSZJOP8zysYvzrgJ9baOQxUcuVzi7%2FaNtA7dELacQD%2BwmfEnYGetwPiPIeBK8LkG4uid9C0Y0c8Mogx0njO8sWjWtuE%3D";
+        window.__genspark_locale = "ja-JP";
+        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDhO4pDD5cbNI/cbQo3cDpaY+R6m6Nsvh1PvUipKQj3/9mjiOwQPkuY3gCfERKjGpAjPZTaKrGq4BdHaUysumqdXB63127mRF1pGW+7d5OvW/tX/pLw4bJupkdizO8D2i14HF1whvM1JtkHpM/SBUasuOWq+8lRAnKAx7JJVtNADy/CXa1bV5RaZ5ncVsnfW2DI6fq3pG1uaMopiN/z5XcIxVzAqOn+pLpiEcT64ztym8Y52pFyqxU7bZILQZdj35CRJkKHyqV3HjEiAni+dXMRx+M+b+UKe6SKHCthGFQ0LWmwlwGxCYiSOOoJFeOYkqNKi9+ToeipGgmSVEEtszCJJy1pl3t9eWEa76+q8soAP89duPm31EWnyOTKmoRd+CC80FJmamIui6oX3nNB2e7jrja0gt+B5ZMk7pDkU6LwCTiw2/0SC6gmg/j2LLHSZJOP8zysYvzrgJ9baOQxUcuVzi7/aNtA7dELacQD+wmfEnYGetwPiPIeBK8LkG4uid9C0Y0c8Mogx0njO8sWjWtuE=";
+    </script>
+    
+    <script id="html_notice_dialog_script" src="https://www.genspark.ai/notice_dialog.js"></script>
+    
