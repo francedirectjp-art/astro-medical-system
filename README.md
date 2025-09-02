@@ -1,231 +1,65 @@
-# 占星医学体質鑑定システム - Phase 1 MVP版
+# 次世代占星医学体質鑑定システム (ASTRO-MEDICAL REPORT System)
 
-![Version](https://img.shields.io/badge/version-1.0.0--beta-blue)
-![Python](https://img.shields.io/badge/python-3.8%2B-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-green)
+## 🌟 概要
+本システムは、東洋医学の四元素理論と16元型理論を統合した次世代占星医学体質鑑定システムです。
+Swiss Ephemeris による高精度な天体計算とサビアンシンボル解析を組み合わせ、
+個人の体質と健康傾向を詳細に分析します。
 
-## 🌟 システム概要
+## ⚡ 機能
+- **基本診断**: 2,000文字の体質鑑定レポート
+- **詳細診断**: 12,000文字の包括的な健康分析レポート
+- **16元型理論**: 太陽×月の元素組み合わせによる詳細分析
+- **サビアンシンボル**: 360度の精密な解釈システム
+- **47都道府県対応**: 日本全国の地理座標データベース
 
-占星医学体質鑑定システムは、出生データから7天体の位置を計算し、16元型による個性分析とエレメントバランスに基づく体質傾向診断を行うエンターテインメント目的のWebアプリケーションです。
+## 🚀 デプロイメント
+本システムは Railway プラットフォームにデプロイされています。
 
-### 主な機能
+### ライブURL
+https://astro-medical-system-s.up.railway.app
 
-- **天体位置計算**: Swiss Ephemeris による正確な7天体位置計算
-- **16元型診断**: 太陽×月のエレメント組み合わせによる個性分析  
-- **簡易診断**: 1,000文字の体質傾向レポート
-- **詳細鑑定書**: 12,000文字の詳細分析レポート
-- **AI生成**: Gemini 1.5 Flash による高品質な診断文章生成
+### 技術スタック
+- **Backend**: Flask (Python)
+- **天体計算**: PyEphem (Swiss Ephemeris)
+- **テンプレート**: Jinja2
+- **デプロイ**: Railway Platform
+- **エンコーディング**: BOM付きUTF-8
 
-### ⚠️ 重要な注意事項
+## 📝 使用方法
+1. 生年月日、出生時刻、出生地を入力
+2. 基本診断（2,000字）を確認
+3. 詳細診断（12,000字）で包括的な分析を取得
 
-**本システムはエンターテインメント目的です。医療診断や治療の代替ではありません。**
+## 🔧 開発者向け情報
+### 必要パッケージ
+```
+Flask==2.3.3
+pyephem==4.1.5
+python-dateutil==2.8.2
+pytz==2023.3
+gunicorn==21.2.0
+```
 
-## 🚀 クイックスタート
-
-### 前提条件
-
-- Python 3.8 以上
-- Gemini AI APIキー
-- Git
-
-### 1. リポジトリのクローン
-
+### ローカル実行
 ```bash
-git clone <リポジトリURL>
-cd astro-system-mvp
+python app.py
 ```
 
-### 2. 仮想環境の作成
+## 📊 システム仕様
+- **診断精度**: 1600-2200年対応 (Swiss Ephemeris)
+- **言語**: 日本語完全対応
+- **レスポンス時間**: 平均2-3秒
+- **アクセス**: 世界中から利用可能
 
-```bash
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-```
-
-### 3. 依存関係のインストール
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. 環境変数の設定
-
-```bash
-# .env.example を .env にコピー
-cp .env.example .env
-
-# .env ファイルを編集して APIキーを設定
-GEMINI_API_KEY=your_actual_api_key_here
-```
-
-### 5. アプリケーションの起動
-
-```bash
-python astro_step4_ultimate_api_fixed.py
-```
-
-サーバーは http://localhost:8107 で起動します。
-
-## 📂 ファイル構成
-
-```
-astro-system-mvp/
-├── astro_step4_ultimate_api_fixed.py    # APIサーバー（バックエンド）
-├── astro_step4_ultimate_fixed.html      # Webインターフェース（フロントエンド）
-├── requirements.txt                     # Python依存関係
-├── .env.example                        # 環境変数テンプレート
-├── README.md                           # このファイル
-└── deploy_guide.md                     # デプロイガイド
-```
-
-## 🔧 API エンドポイント
-
-### 基本情報
-
-- **Base URL**: `http://localhost:8107`
-- **認証**: ベータキー必須（ヘッダー: `X-Beta-Key`）
-- **レート制限**: あり
-
-### エンドポイント一覧
-
-#### 1. ヘルスチェック
-```http
-GET /health
-```
-
-#### 2. 天体位置計算
-```http
-POST /api/calculate-planets
-Content-Type: application/json
-X-Beta-Key: astro2024beta
-
-{
-  "name": "山田太郎",
-  "birth_year": 1990,
-  "birth_month": 5,
-  "birth_day": 15,
-  "birth_hour": 14,
-  "birth_minute": 30,
-  "birth_prefecture": "東京都"
-}
-```
-
-#### 3. 簡易診断
-```http
-POST /api/simple-diagnosis
-Content-Type: application/json
-X-Beta-Key: astro2024beta
-
-{
-  "name": "山田太郎",
-  "planets": { /* 天体位置データ */ }
-}
-```
-
-#### 4. 詳細鑑定書生成
-```http
-POST /api/generate-detailed-report
-Content-Type: application/json  
-X-Beta-Key: astro2024beta
-
-{
-  "name": "山田太郎",
-  "year": 1990,
-  "month": 5,
-  "day": 15,
-  "hour": 14,
-  "minute": 30,
-  "birth_prefecture": "東京都"
-}
-```
-
-## 🔑 Gemini API キー取得方法
-
-1. [Google AI Studio](https://makersuite.google.com/app/apikey) にアクセス
-2. Googleアカウントでログイン
-3. "Create API Key" をクリック
-4. 生成されたキーを `.env` ファイルに設定
-
-## 🐳 デプロイ方法
-
-詳細は [deploy_guide.md](deploy_guide.md) を参照してください。
-
-### Railway.app（推奨）
-
-1. [Railway.app](https://railway.app) でアカウント作成
-2. GitHubリポジトリを連携
-3. 環境変数を設定
-4. 自動デプロイ
-
-### 必要な環境変数
-
-```bash
-GEMINI_API_KEY=your_gemini_api_key
-BETA_PASSWORD=your_beta_password
-FLASK_ENV=production
-```
-
-## 🧪 テスト方法
-
-### ローカルテスト
-
-```bash
-# APIサーバー起動
-python astro_step4_ultimate_api_fixed.py
-
-# 別ターミナルでテスト
-curl -X POST http://localhost:8107/api/calculate-planets \
-  -H "Content-Type: application/json" \
-  -H "X-Beta-Key: astro2024beta" \
-  -d '{
-    "name": "テスト太郎",
-    "birth_year": 1990,
-    "birth_month": 5,
-    "birth_day": 15,
-    "birth_hour": 12,
-    "birth_minute": 0,
-    "birth_prefecture": "東京都"
-  }'
-```
-
-## 🛡️ セキュリティ機能
-
-- **レート制限**: DDoS攻撃対策
-- **入力検証**: SQLインジェクション対策
-- **ベータ版制限**: 不正アクセス防止
-- **CORS設定**: クロスオリジン制御
-- **エラーハンドリング**: 情報漏洩防止
-
-## 📊 技術スタック
-
-- **バックエンド**: Flask, Python 3.8+
-- **天文計算**: Swiss Ephemeris (pyswisseph)
-- **AI生成**: Google Gemini 1.5 Flash
-- **フロントエンド**: HTML5, CSS3, Vanilla JavaScript
-- **デプロイ**: Railway.app / Heroku / Vercel
-
-## 🔄 更新履歴
-
-### v1.0.0-beta (2024-01-01)
-- 初回リリース
-- 天体位置計算機能
-- 16元型診断機能
-- 簡易・詳細診断機能
-- ベータ版アクセス制限
-
-## 🤝 コントリビューション
-
-現在はクローズドベータ版のため、コントリビューションは受け付けておりません。
-
-## 📄 ライセンス
-
-このプロジェクトは MIT ライセンスのもとで公開されています。詳細は [LICENSE](LICENSE) ファイルを参照してください。
+## 🏥 占星医学理論
+本システムは以下の理論体系に基づいています：
+- 四元素理論（火・地・風・水）
+- 四体液説（血液・黄胆汁・黒胆汁・粘液）
+- 16元型理論（太陽×月の組み合わせ）
+- サビアンシンボル360度解釈
 
 ## 📞 サポート
-
-- **技術的な問題**: Issues を作成してください
-- **ビジネスに関する問い合わせ**: [お問い合わせフォーム](mailto:support@example.com)
+技術的な問題やご質問は、GitHub Issues をご利用ください。
 
 ---
-
-**免責事項**: 本システムで提供される診断結果は、エンターテインメント目的のものであり、医療診断や治療の代替となるものではありません。健康に関する相談は、必ず医療機関にご相談ください。
+**© 2024 次世代占星医学体質鑑定システム - All Rights Reserved**
