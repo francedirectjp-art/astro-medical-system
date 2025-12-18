@@ -296,17 +296,7 @@ function buildPromptText(name, year, month, day, hour, minute, prefecture, natal
         const sabianDegree = Math.ceil(planetData.degree);
         const retrograde = planetData.retrograde ? ' ℞（逆行）' : '';
         
-        prompt += `- **${PLANETS_JP[planetKey]}**: ${planetData.signJP} ${planetData.degree.toFixed(2)}°${retrograde} [第${planetData.house}ハウス]\n`;
-        
-        // サビアンシンボルがあれば追加
-        try {
-            const sabianSymbol = getSabianSymbol(planetData.sign, sabianDegree);
-            if (sabianSymbol) {
-                prompt += `  サビアン: ${sabianSymbol}\n`;
-            }
-        } catch (e) {
-            console.warn('Sabian symbol lookup failed:', e);
-        }
+        prompt += `- **${PLANETS_JP[planetKey]}**: ${planetData.signJP} ${planetData.degree.toFixed(2)}°${retrograde} [第${planetData.house}ハウス] (サビアン: ${sabianDegree}度)\n`;
     }
 
     // アングル
