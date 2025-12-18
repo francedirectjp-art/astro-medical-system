@@ -153,12 +153,22 @@ def calculate_chart():
             if field not in data:
                 return jsonify({'error': f'Missing required field: {field}'}), 400
         
-        # ユリウス日の計算
+        # 日本標準時（JST）をUTCに変換
+        # JST = UTC+9なので、9時間引く
+        jst_hour = data['hour'] + data['minute'] / 60.0
+        utc_hour = jst_hour - 9.0
+        
+        # 日付をまたぐ場合の処理
+        from datetime import datetime, timedelta
+        jst_datetime = datetime(data['year'], data['month'], data['day'], data['hour'], data['minute'])
+        utc_datetime = jst_datetime - timedelta(hours=9)
+        
+        # ユリウス日の計算（UTC時刻）
         jd = swe.julday(
-            data['year'],
-            data['month'],
-            data['day'],
-            data['hour'] + data['minute'] / 60.0
+            utc_datetime.year,
+            utc_datetime.month,
+            utc_datetime.day,
+            utc_datetime.hour + utc_datetime.minute / 60.0
         )
         
         # 全天体の計算
