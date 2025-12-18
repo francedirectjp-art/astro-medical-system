@@ -194,8 +194,6 @@ async function generatePrompt() {
 
 // ネイタルチャート計算
 async function calculateNatalChart(birthDate, latitude, longitude) {
-    const observer = Astronomy.MakeObserver(latitude, longitude, 0);
-    
     const chart = {
         planets: {},
         angles: {},
@@ -207,21 +205,26 @@ async function calculateNatalChart(birthDate, latitude, longitude) {
     const planets = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'];
     
     for (const planet of planets) {
-        const body = Astronomy.Body[planet];
-        const equator = Astronomy.Equator(body, birthDate, observer, true, true);
-        const ecliptic = Astronomy.Ecliptic(equator);
-        
-        const longitude = ecliptic.elon;
-        const signIndex = Math.floor(longitude / 30);
-        const degree = longitude % 30;
-        
-        chart.planets[planet] = {
-            sign: SIGNS[signIndex],
-            signJP: SIGNS_JP[signIndex],
-            degree: degree,
-            absoluteLongitude: longitude,
-            sabian: getSabianSymbol(longitude)
-        };
+        try {
+            // Astronomy Engineの正しいAPI使用
+            const ecliptic = Astronomy.EclipticGeoMoon ? 
+                (planet === 'Moon' ? Astronomy.EclipticGeoMoon(birthDate) : Astronomy.Ecliptic(planet, birthDate)) :
+                Astronomy.Ecliptic(planet, birthDate);
+            
+            const longitude = ecliptic.elon || ecliptic.lon;
+            const signIndex = Math.floor(longitude / 30);
+            const degree = longitude % 30;
+            
+            chart.planets[planet] = {
+                sign: SIGNS[signIndex],
+                signJP: SIGNS_JP[signIndex],
+                degree: degree,
+                absoluteLongitude: longitude,
+                sabian: getSabianSymbol(longitude)
+            };
+        } catch (error) {
+            console.error(`Error calculating ${planet}:`, error);
+        }
     }
     
     // ASC, MC の計算（簡易版）
@@ -421,17 +424,15 @@ function calculateProgressions(birthDate, currentDate) {
     const daysSinceBirth = (currentDate - birthDate) / (1000 * 60 * 60 * 24);
     const progressDate = new Date(birthDate.getTime() + daysSinceBirth * 24 * 60 * 60 * 1000);
     
-    const observer = Astronomy.MakeObserver(0, 0, 0);
-    
     // P-Sun
-    const pSunEq = Astronomy.Equator('Sun', progressDate, observer, true, true);
-    const pSunEcl = Astronomy.Ecliptic(pSunEq);
-    const pSunLon = pSunEcl.elon;
+    const pSunEcl = Astronomy.Ecliptic('Sun', progressDate);
+    const pSunLon = pSunEcl.elon || pSunEcl.lon;
     
     // P-Moon
-    const pMoonEq = Astronomy.Equator('Moon', progressDate, observer, true, true);
-    const pMoonEcl = Astronomy.Ecliptic(pMoonEq);
-    const pMoonLon = pMoonEcl.elon;
+    const pMoonEcl = Astronomy.EclipticGeoMoon ? 
+        Astronomy.EclipticGeoMoon(progressDate) : 
+        Astronomy.Ecliptic('Moon', progressDate);
+    const pMoonLon = pMoonEcl.elon || pMoonEcl.lon;
     
     // 月相計算
     const lunation = (pMoonLon - pSunLon + 360) % 360;
@@ -468,7 +469,6 @@ function getLunarPhase(angle) {
 
 // トランジット計算（3年間）
 function calculateTransits(currentDate, latitude, longitude) {
-    const observer = Astronomy.MakeObserver(latitude, longitude, 0);
     const transits = {
         jupiter: [],
         saturn: [],
@@ -477,16 +477,18 @@ function calculateTransits(currentDate, latitude, longitude) {
     
     // 現在の外惑星の位置
     ['Uranus', 'Neptune', 'Pluto'].forEach(planet => {
-        const body = Astronomy.Body[planet];
-        const equator = Astronomy.Equator(body, currentDate, observer, true, true);
-        const ecliptic = Astronomy.Ecliptic(equator);
-        const longitude = ecliptic.elon;
-        
-        transits.outerPlanets[planet] = {
-            sign: SIGNS[Math.floor(longitude / 30)],
-            signJP: SIGNS_JP[Math.floor(longitude / 30)],
-            degree: (longitude % 30).toFixed(2)
-        };
+        try {
+            const ecliptic = Astronomy.Ecliptic(planet, currentDate);
+            const longitude = ecliptic.elon || ecliptic.lon;
+            
+            transits.outerPlanets[planet] = {
+                sign: SIGNS[Math.floor(longitude / 30)],
+                signJP: SIGNS_JP[Math.floor(longitude / 30)],
+                degree: (longitude % 30).toFixed(2)
+            };
+        } catch (error) {
+            console.error(`Error calculating ${planet} transit:`, error);
+        }
     });
     
     // 木星と土星の3年間のサイン移動を計算
@@ -503,29 +505,30 @@ function calculateTransits(currentDate, latitude, longitude) {
 // サイン移動の計算（簡易版）
 function calculateSignTransits(planetName, startDate, years) {
     const transits = [];
-    const body = Astronomy.Body[planetName];
-    const observer = Astronomy.MakeObserver(0, 0, 0);
     
-    // 現在の位置
-    let currentEq = Astronomy.Equator(body, startDate, observer, true, true);
-    let currentEcl = Astronomy.Ecliptic(currentEq);
-    let currentSign = Math.floor(currentEcl.elon / 30);
-    
-    // 月単位でチェック
-    for (let month = 0; month <= years * 12; month += 1) {
-        const checkDate = new Date(startDate.getTime() + month * 30 * 24 * 60 * 60 * 1000);
-        const eq = Astronomy.Equator(body, checkDate, observer, true, true);
-        const ecl = Astronomy.Ecliptic(eq);
-        const sign = Math.floor(ecl.elon / 30);
+    try {
+        // 現在の位置
+        let currentEcl = Astronomy.Ecliptic(planetName, startDate);
+        let currentSign = Math.floor((currentEcl.elon || currentEcl.lon) / 30);
         
-        if (sign !== currentSign) {
-            transits.push({
-                date: checkDate.toISOString().split('T')[0],
-                sign: SIGNS[sign],
-                signJP: SIGNS_JP[sign]
-            });
-            currentSign = sign;
+        // 月単位でチェック
+        for (let month = 0; month <= years * 12; month += 1) {
+            const checkDate = new Date(startDate.getTime() + month * 30 * 24 * 60 * 60 * 1000);
+            const ecl = Astronomy.Ecliptic(planetName, checkDate);
+            const longitude = ecl.elon || ecl.lon;
+            const sign = Math.floor(longitude / 30);
+            
+            if (sign !== currentSign) {
+                transits.push({
+                    date: checkDate.toISOString().split('T')[0],
+                    sign: SIGNS[sign],
+                    signJP: SIGNS_JP[sign]
+                });
+                currentSign = sign;
+            }
         }
+    } catch (error) {
+        console.error(`Error calculating sign transits for ${planetName}:`, error);
     }
     
     return transits;
