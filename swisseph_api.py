@@ -237,7 +237,8 @@ def calculate_progressions():
         birth_hour = data.get('birth_hour', 12)
         birth_minute = data.get('birth_minute', 0)
         
-        # JST時刻をそのままUTC時刻として使用（一部ソフトウェアの方式）
+        # 一部ソフトウェアの方式：出生時刻（JST）をそのままUTC時刻として使用
+        # （UTC変換せず、JST時刻をUTCとして扱う）
         progress_jd = swe.julday(
             progress_date.year,
             progress_date.month,
