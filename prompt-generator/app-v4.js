@@ -296,7 +296,7 @@ function buildPromptText(name, year, month, day, hour, minute, prefecture, natal
         const sabianDegree = Math.ceil(planetData.degree);
         const retrograde = planetData.retrograde ? ' ℞（逆行）' : '';
         
-        prompt += `- **${PLANETS_JP[planetKey]}**: ${planetData.signJP} ${planetData.degree.toFixed(2)}°${retrograde} [第${planetData.house}ハウス] (サビアン: ${sabianDegree}度)\n`;
+        prompt += `- **${PLANETS_JP[planetKey]}**: ${planetData.signJP} ${planetData.degree.toFixed(2)}°${retrograde} [第${planetData.house}ハウス]\n`;
     }
 
     // アングル
