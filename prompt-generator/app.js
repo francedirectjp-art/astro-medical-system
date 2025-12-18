@@ -206,12 +206,8 @@ async function calculateNatalChart(birthDate, latitude, longitude) {
     
     for (const planet of planets) {
         try {
-            // Astronomy Engineの正しいAPI使用
-            const ecliptic = Astronomy.EclipticGeoMoon ? 
-                (planet === 'Moon' ? Astronomy.EclipticGeoMoon(birthDate) : Astronomy.Ecliptic(planet, birthDate)) :
-                Astronomy.Ecliptic(planet, birthDate);
-            
-            const longitude = ecliptic.elon || ecliptic.lon;
+            // 自前の天体計算ライブラリを使用
+            const longitude = Ephemeris.eclipticLongitude(planet, birthDate);
             const signIndex = Math.floor(longitude / 30);
             const degree = longitude % 30;
             
@@ -227,10 +223,9 @@ async function calculateNatalChart(birthDate, latitude, longitude) {
         }
     }
     
-    // ASC, MC の計算（簡易版）
-    const siderealTime = calculateLocalSiderealTime(birthDate, longitude);
-    const mc = calculateMC(siderealTime);
-    const asc = calculateASC(siderealTime, latitude);
+    // ASC, MC の計算
+    const asc = Ephemeris.ascendant(birthDate, latitude, longitude);
+    const mc = Ephemeris.midheaven(birthDate, longitude);
     
     chart.angles.ASC = {
         degree: asc,
@@ -425,14 +420,10 @@ function calculateProgressions(birthDate, currentDate) {
     const progressDate = new Date(birthDate.getTime() + daysSinceBirth * 24 * 60 * 60 * 1000);
     
     // P-Sun
-    const pSunEcl = Astronomy.Ecliptic('Sun', progressDate);
-    const pSunLon = pSunEcl.elon || pSunEcl.lon;
+    const pSunLon = Ephemeris.eclipticLongitude('Sun', progressDate);
     
     // P-Moon
-    const pMoonEcl = Astronomy.EclipticGeoMoon ? 
-        Astronomy.EclipticGeoMoon(progressDate) : 
-        Astronomy.Ecliptic('Moon', progressDate);
-    const pMoonLon = pMoonEcl.elon || pMoonEcl.lon;
+    const pMoonLon = Ephemeris.eclipticLongitude('Moon', progressDate);
     
     // 月相計算
     const lunation = (pMoonLon - pSunLon + 360) % 360;
@@ -478,8 +469,7 @@ function calculateTransits(currentDate, latitude, longitude) {
     // 現在の外惑星の位置
     ['Uranus', 'Neptune', 'Pluto'].forEach(planet => {
         try {
-            const ecliptic = Astronomy.Ecliptic(planet, currentDate);
-            const longitude = ecliptic.elon || ecliptic.lon;
+            const longitude = Ephemeris.eclipticLongitude(planet, currentDate);
             
             transits.outerPlanets[planet] = {
                 sign: SIGNS[Math.floor(longitude / 30)],
@@ -508,14 +498,13 @@ function calculateSignTransits(planetName, startDate, years) {
     
     try {
         // 現在の位置
-        let currentEcl = Astronomy.Ecliptic(planetName, startDate);
-        let currentSign = Math.floor((currentEcl.elon || currentEcl.lon) / 30);
+        let currentLon = Ephemeris.eclipticLongitude(planetName, startDate);
+        let currentSign = Math.floor(currentLon / 30);
         
         // 月単位でチェック
         for (let month = 0; month <= years * 12; month += 1) {
             const checkDate = new Date(startDate.getTime() + month * 30 * 24 * 60 * 60 * 1000);
-            const ecl = Astronomy.Ecliptic(planetName, checkDate);
-            const longitude = ecl.elon || ecl.lon;
+            const longitude = Ephemeris.eclipticLongitude(planetName, checkDate);
             const sign = Math.floor(longitude / 30);
             
             if (sign !== currentSign) {
