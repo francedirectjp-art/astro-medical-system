@@ -231,15 +231,20 @@ def calculate_progressions():
         current_date = datetime.fromisoformat(data['current_date'])
         birth_date = datetime(data['birth_year'], data['birth_month'], data['birth_day'])
         
-        # プログレス日の計算（1日=1年）
+        # プログレス日の計算（1日=1年のセカンダリープログレス）
         days_since_birth = (current_date - birth_date).days
-        progress_date = birth_date + timedelta(days=days_since_birth)
+        years_elapsed = days_since_birth / 365.25  # 閏年を考慮
+        progressed_days = int(years_elapsed)  # 経過年数 = プログレス日数
         
+        # プログレス日 = 出生日 + プログレス日数
+        progress_date = birth_date + timedelta(days=progressed_days)
+        
+        # プログレス計算はUTCで行う（JSTに変換しない）
         progress_jd = swe.julday(
             progress_date.year,
             progress_date.month,
             progress_date.day,
-            12.0
+            12.0  # 正午UTC
         )
         
         # P-Sun と P-Moon の計算
