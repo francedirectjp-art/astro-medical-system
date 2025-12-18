@@ -80,10 +80,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     // サビアンシンボルデータの読み込み
     try {
         const response = await fetch('sabian_symbols_360.json');
-        sabianSymbols = await response.json();
-        console.log('✅ Sabian symbols loaded:', sabianSymbols.length);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        const data = await response.json();
+        
+        if (Array.isArray(data)) {
+            sabianSymbols = data;
+        } else {
+            console.warn('⚠️ Sabian symbols is not an array, trying to extract array from object');
+            sabianSymbols = [];
+        }
+        
+        console.log('✅ Sabian symbols loaded:', sabianSymbols.length, 'symbols');
     } catch (error) {
         console.error('❌ Failed to load Sabian symbols:', error);
+        sabianSymbols = [];
     }
 
     // イベントリスナー設定
@@ -282,12 +294,18 @@ function buildPromptText(name, year, month, day, hour, minute, prefecture, natal
         }
         
         const sabianDegree = Math.ceil(planetData.degree);
-        const sabianSymbol = getSabianSymbol(planetData.sign, sabianDegree);
         const retrograde = planetData.retrograde ? ' ℞（逆行）' : '';
         
         prompt += `- **${PLANETS_JP[planetKey]}**: ${planetData.signJP} ${planetData.degree.toFixed(2)}°${retrograde} [第${planetData.house}ハウス]\n`;
-        if (sabianSymbol) {
-            prompt += `  サビアン: ${sabianSymbol}\n`;
+        
+        // サビアンシンボルがあれば追加
+        try {
+            const sabianSymbol = getSabianSymbol(planetData.sign, sabianDegree);
+            if (sabianSymbol) {
+                prompt += `  サビアン: ${sabianSymbol}\n`;
+            }
+        } catch (e) {
+            console.warn('Sabian symbol lookup failed:', e);
         }
     }
 
@@ -352,6 +370,10 @@ function buildPromptText(name, year, month, day, hour, minute, prefecture, natal
 
 function getSabianSymbol(sign, degree) {
     // サビアンシンボルを取得（度数は1-30の範囲）
+    if (!Array.isArray(sabianSymbols) || sabianSymbols.length === 0) {
+        return null;
+    }
+    
     const adjustedDegree = degree === 0 ? 30 : Math.ceil(degree);
     const symbol = sabianSymbols.find(s => s.sign === sign && s.sign_degree === adjustedDegree);
     return symbol ? `${symbol.keyword} - ${symbol.meaning}` : null;
