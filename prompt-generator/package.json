@@ -1,0 +1,17 @@
+{
+  "name": "anti-gravity-prompt-builder",
+  "version": "2.0.0",
+  "description": "High-precision astrology prompt generator",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 8080",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "astronomia": "^3.1.1"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}

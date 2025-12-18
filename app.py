@@ -1,11 +1,18 @@
 from flask import Flask, request, render_template, jsonify, redirect, url_for
+from flask_cors import CORS
 import math
 import ephem
 from datetime import datetime
 import json
 import os
 
+# Swiss Ephemeris API Blueprint のインポート
+from swisseph_api import swisseph_api
+
 app = Flask(__name__)
+
+# CORSを有効化（プロンプトジェネレータからのAPI呼び出し用）
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # 現在のスクリプトのディレクトリを取得
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -444,6 +451,9 @@ def detailed_diagnosis():
 
     except Exception as e:
         return f"エラーが発生しました: {str(e)}", 400
+
+# Swiss Ephemeris API Blueprint を登録
+app.register_blueprint(swisseph_api)
 
 if __name__ == '__main__':
     # Railway対応：PORT環境変数の動的取得
