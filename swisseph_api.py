@@ -213,19 +213,13 @@ def calculate_progressions():
         "birth_year": 1990,
         "birth_month": 3,
         "birth_day": 21,
+        "birth_hour": 15,  # JST時刻
+        "birth_minute": 30,  # JST時刻
         "current_date": "2024-12-18"  # ISO format
     }
     """
     try:
         data = request.get_json()
-        
-        # 出生日のユリウス日
-        birth_jd = swe.julday(
-            data['birth_year'],
-            data['birth_month'],
-            data['birth_day'],
-            12.0  # 正午
-        )
         
         # 現在日
         current_date = datetime.fromisoformat(data['current_date'])
@@ -239,12 +233,16 @@ def calculate_progressions():
         # プログレス日 = 出生日 + プログレス日数
         progress_date = birth_date + timedelta(days=progressed_days)
         
-        # プログレス計算はUTCで行う（JSTに変換しない）
+        # 出生時刻（JST）をプログレス計算に使用
+        birth_hour = data.get('birth_hour', 12)
+        birth_minute = data.get('birth_minute', 0)
+        
+        # JST時刻をそのままUTC時刻として使用（一部ソフトウェアの方式）
         progress_jd = swe.julday(
             progress_date.year,
             progress_date.month,
             progress_date.day,
-            12.0  # 正午UTC
+            birth_hour + birth_minute / 60.0
         )
         
         # P-Sun と P-Moon の計算

@@ -159,7 +159,7 @@ async function generatePrompt() {
             location.lat, location.lon
         );
         
-        const progressions = await calculateProgressions(year, month, day);
+        const progressions = await calculateProgressions(year, month, day, hour, minute);
         const transits = await calculateTransits();
 
         // プロンプト生成
@@ -213,7 +213,7 @@ async function calculateNatalChart(year, month, day, hour, minute, latitude, lon
     return data;
 }
 
-async function calculateProgressions(birthYear, birthMonth, birthDay) {
+async function calculateProgressions(birthYear, birthMonth, birthDay, birthHour, birthMinute) {
     console.log('📡 プログレス計算API呼び出し...');
     
     const currentDate = new Date().toISOString().split('T')[0];
@@ -227,6 +227,8 @@ async function calculateProgressions(birthYear, birthMonth, birthDay) {
             birth_year: birthYear,
             birth_month: birthMonth,
             birth_day: birthDay,
+            birth_hour: birthHour,
+            birth_minute: birthMinute,
             current_date: currentDate
         })
     });
@@ -318,8 +320,7 @@ function buildPromptText(name, year, month, day, hour, minute, prefecture, natal
         prompt += `\n## 📈 プログレス（セカンダリー進行図）\n`;
         prompt += `- 基準日: ${new Date().toISOString().split('T')[0]}\n`;
         prompt += `- **プログレス太陽**: ${progressions.p_sun.signJP} ${progressions.p_sun.degree.toFixed(2)}°\n`;
-        prompt += `- **プログレス月**: ${progressions.p_moon.signJP} ${progressions.p_moon.degree.toFixed(2)}°\n`;
-        prompt += `- **月相**: ${progressions.lunar_phase} (角度差: ${progressions.lunation_angle.toFixed(1)}°)\n\n`;
+        prompt += `- **プログレス月**: ${progressions.p_moon.signJP} ${progressions.p_moon.degree.toFixed(2)}°\n\n`;
     }
 
     // トランジット
