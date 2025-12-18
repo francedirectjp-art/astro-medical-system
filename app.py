@@ -378,9 +378,9 @@ def index():
 
 @app.route('/prompt-generator/')
 def prompt_generator():
-    """Anti-Gravity Prompt Builder (Swiss Ephemeris版)"""
+    """Anti-Gravity Prompt Builder (Swiss Ephemeris版 - 日本版)"""
     from flask import send_from_directory
-    return send_from_directory('prompt-generator', 'index-v3.html')
+    return send_from_directory('prompt-generator', 'index-v4.html')
 
 @app.route('/prompt-generator/<path:filename>')
 def prompt_generator_files(filename):
