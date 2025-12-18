@@ -376,6 +376,18 @@ def generate_comprehensive_health_data(astro_data, archetype):
 def index():
     return render_template('input.html')
 
+@app.route('/prompt-generator/')
+def prompt_generator():
+    """Anti-Gravity Prompt Builder (Swiss Ephemeris版)"""
+    from flask import send_from_directory
+    return send_from_directory('prompt-generator', 'index-v3.html')
+
+@app.route('/prompt-generator/<path:filename>')
+def prompt_generator_files(filename):
+    """プロンプトジェネレーターの静的ファイル配信"""
+    from flask import send_from_directory
+    return send_from_directory('prompt-generator', filename)
+
 @app.route('/basic', methods=['POST'])
 def basic_diagnosis():
     try:
