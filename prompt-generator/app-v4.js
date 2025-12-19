@@ -1,5 +1,4 @@
-// Anti-Gravity Prompt Builder v4.0 - 日本版（都道府県選択式）
-// Swiss Ephemeris Backend APIを使用
+// 占星術プロンプト・ジェネレーター（都道府県選択式）
 
 // === グローバル変数 ===
 let sabianSymbols = [];
@@ -72,7 +71,8 @@ const PLANETS_JP = {
     'Neptune': '海王星',
     'Pluto': '冥王星',
     'TrueNode': 'ドラゴンヘッド',
-    'Chiron': 'キローン'
+    'Chiron': 'キローン',
+    'Lilith': 'リリス'
 };
 
 // === 初期化 ===
@@ -277,12 +277,10 @@ async function calculateTransits() {
 
 // === プロンプトテキスト生成 ===
 function buildPromptText(name, year, month, day, hour, minute, prefecture, natalChart, progressions, transits) {
-    let prompt = `# 【完全版】${name}さんの占星術データ（Swiss Ephemeris超高精度版）\n\n`;
+    let prompt = `# 【完全版】${name}さんの占星術データ\n\n`;
     prompt += `## 基本情報\n`;
     prompt += `- 生年月日: ${year}年${month}月${day}日 ${hour}時${minute}分\n`;
-    prompt += `- 出生地: ${prefecture}\n`;
-    prompt += `- 計算エンジン: ${natalChart.calculation_engine}\n`;
-    prompt += `- 精度: ${natalChart.precision}\n\n`;
+    prompt += `- 出生地: ${prefecture}\n\n`;
 
     // ネイタルチャート
     prompt += `## 🌟 ネイタルチャート（出生図）\n\n`;
@@ -354,7 +352,6 @@ function buildPromptText(name, year, month, day, hour, minute, prefecture, natal
 
     prompt += `\n---\n`;
     prompt += `**生成日時**: ${new Date().toLocaleString('ja-JP')}\n`;
-    prompt += `**ツール**: Anti-Gravity Prompt Builder v4.0 (Swiss Ephemeris)\n`;
 
     return prompt;
 }

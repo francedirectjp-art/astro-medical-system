@@ -30,7 +30,8 @@ PLANETS = {
     'Neptune': swe.NEPTUNE,
     'Pluto': swe.PLUTO,
     'TrueNode': swe.TRUE_NODE,
-    'Chiron': swe.CHIRON
+    'Chiron': swe.CHIRON,
+    'Lilith': swe.MEAN_APOG  # 平均リリス（ブラックムーン・リリス）
 }
 
 # 星座名
