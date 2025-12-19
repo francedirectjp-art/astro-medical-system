@@ -71,8 +71,7 @@ const PLANETS_JP = {
     'Neptune': '海王星',
     'Pluto': '冥王星',
     'TrueNode': 'ドラゴンヘッド',
-    'Chiron': 'キローン',
-    'Lilith': 'リリス'
+    'Chiron': 'キローン'
 };
 
 // === 初期化 ===
