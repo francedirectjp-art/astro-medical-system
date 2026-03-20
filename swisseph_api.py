@@ -7,6 +7,7 @@ Swiss Ephemeris API for Anti-Gravity Prompt Builder
 from flask import Blueprint, request, jsonify
 import swisseph as swe
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 import os
 
 # Blueprintの作成
@@ -313,31 +314,40 @@ def calculate_transits():
                 PLANETS[planet_name]
             )
         
-        # 木星と土星のサイン移動を計算
+        # 木星と土星のサイン移動を計算（日単位で正確に）
         jupiter_transits = []
         saturn_transits = []
         
-        # 月単位でチェック
+        # 日単位でチェック（より正確）
         for planet_name, planet_id, transits_list in [
             ('Jupiter', PLANETS['Jupiter'], jupiter_transits),
             ('Saturn', PLANETS['Saturn'], saturn_transits)
         ]:
             current_sign = None
+            end_date = start_date + relativedelta(years=years)
             
-            for month in range(0, years * 12 + 1):
-                check_date = start_date + timedelta(days=month * 30)
+            # 日単位でチェック
+            check_date = start_date
+            while check_date <= end_date:
                 check_jd = swe.julday(check_date.year, check_date.month, check_date.day, 12.0)
                 
                 position = calculate_planet_position(check_jd, planet_id)
                 sign_index = int(position['longitude'] // 30)
                 
-                if current_sign != sign_index:
+                if current_sign is None:
+                    # 初回は現在のサインを記録
+                    current_sign = sign_index
+                elif current_sign != sign_index:
+                    # サインが変わった = イングレス発生
                     transits_list.append({
                         'date': check_date.isoformat().split('T')[0],
                         'sign': SIGNS[sign_index],
                         'signJP': SIGNS_JP[sign_index]
                     })
                     current_sign = sign_index
+                
+                # 次の日へ
+                check_date += timedelta(days=1)
         
         return jsonify({
             'success': True,
