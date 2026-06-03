@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>2026年 未来の航海図 ｜ 占星術AI GEM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="stars" aria-hidden="true"></div>
+    <main class="wrap">
+
+        <header class="hero">
+            <p class="kicker">Cosmic Intelligence × Bio-Strategy</p>
+            <h1>2026年<br><span class="accent">未来の航海図</span></h1>
+            <p class="lead">あなた専用の<strong>2万文字の鑑定書</strong>を、<br>星のデータから受け取ってください。</p>
+            <p class="sub">出生情報を入力すると、超高精度の天体計算（Swiss Ephemeris）であなたの星の地図を作成し、<br>そのまま AI鑑定（GEM）へお渡しします。</p>
+        </header>
+
+        <!-- 入力 -->
+        <section class="card" id="formCard">
+            <h2 class="card-title">✦ 出生情報を入力</h2>
+
+            <label class="field">
+                <span>お名前</span>
+                <input type="text" id="name" placeholder="例: 山田 花子" autocomplete="name">
+            </label>
+
+            <div class="field">
+                <span>生年月日</span>
+                <div class="row3">
+                    <input type="number" id="year" placeholder="年" min="1900" max="2100" inputmode="numeric">
+                    <input type="number" id="month" placeholder="月" min="1" max="12" inputmode="numeric">
+                    <input type="number" id="day" placeholder="日" min="1" max="31" inputmode="numeric">
+                </div>
+            </div>
+
+            <div class="field">
+                <span>出生時間</span>
+                <div class="row2">
+                    <input type="number" id="hour" placeholder="時" min="0" max="23" inputmode="numeric">
+                    <input type="number" id="minute" placeholder="分" min="0" max="59" inputmode="numeric">
+                </div>
+                <label class="check"><input type="checkbox" id="timeUnknown"> 出生時間がわからない（12:00で計算）</label>
+            </div>
+
+            <label class="field">
+                <span>出生地（都道府県）</span>
+                <select id="prefecture"><option value="">選択してください</option></select>
+            </label>
+
+            <button type="button" id="generateBtn" class="btn-primary">✦ 鑑定書を受け取る</button>
+            <div id="loading" class="loading" style="display:none;">
+                <div class="spinner"></div>
+                <p>星を計算しています… <small>±0.001度 / 12天体 / Placidus</small></p>
+            </div>
+        </section>
+
+        <!-- 受け取り -->
+        <section class="card receive" id="receiveCard" style="display:none;">
+            <p class="done-mark">✦</p>
+            <h2 class="card-title center"><span id="receiveName">あなた</span>の<br>航海図が完成しました</h2>
+            <p class="receive-lead">下のボタンを押すと、鑑定文が<strong>自動でコピー</strong>され、<br>AI鑑定（GEM）が新しいタブで開きます。</p>
+
+            <button type="button" id="openGemBtn" class="btn-primary big">🔮 GEMで鑑定を受け取る</button>
+            <p class="copy-status" id="copyStatus"></p>
+
+            <div class="gem-steps" id="gemSteps" style="display:none;">
+                <h3>受け取り方（かんたん2ステップ）</h3>
+                <ol>
+                    <li>開いた GEM のチャット欄に <strong>貼り付け（ペースト）</strong></li>
+                    <li><strong>送信</strong>すると鑑定が始まります。「<strong>続けて</strong>」と送ると次の章へ進みます</li>
+                </ol>
+            </div>
+
+            <details class="prompt-details">
+                <summary>うまくコピーできない場合はこちら</summary>
+                <button type="button" id="copyBtn" class="btn-secondary">📋 もう一度コピー</button>
+                <textarea id="promptPreview" readonly></textarea>
+            </details>
+
+            <button type="button" id="restartBtn" class="btn-text">← 別の人で作り直す</button>
+        </section>
+
+        <!-- 会員導線 -->
+        <section class="nexus">
+            <p class="nexus-kicker">── 設計図は、これで見えました。</p>
+            <h2>では、“動き続ける星の今”を、<br>毎朝・毎週、あなたへ。</h2>
+            <p class="nexus-body">ネイタルチャートは一生変わらない地図。けれど星は動き続け、あなたの“今いるべき場所”は日々変わります。<strong>NEXUS</strong> は、本日の星・週次フォーチュン・節目の通知で、あなたの航海に毎日寄り添うコミュニティです。</p>
+            <!-- TODO: 実際の会員登録URLに差し替え -->
+            <a class="btn-outline" href="https://france-direct.com/2026kaiun/" target="_blank" rel="noopener">NEXUSを見る →</a>
+        </section>
+
+        <footer class="foot">
+            <p>Metaphysica / NEXUS &copy; 2026 ｜ 織田 剛</p>
+            <p class="foot-note">本鑑定の生成は、あなたご自身の GEM（Gemini）が行います。</p>
+        </footer>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+:root {
+    --bg: #0b1026;
+    --bg2: #141a3a;
+    --card: #161d40;
+    --card-line: #2a3566;
+    --gold: #d8b46a;
+    --gold-soft: #e7cd92;
+    --ink: #f3f1ea;
+    --ink-soft: #b9c0dc;
+    --accent: #8aa0e8;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    color: var(--ink);
+    background: radial-gradient(1200px 700px at 50% -10%, rgba(60, 80, 170, 0.30) 0%, transparent 60%),
+                linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+    background-color: var(--bg);
+    min-height: 100vh;
+    line-height: 1.85;
+    -webkit-font-smoothing: antialiased;
+}
+
+.stars {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+        radial-gradient(1px 1px at 20% 30%, #fff 50%, transparent),
+        radial-gradient(1px 1px at 70% 20%, #fff 50%, transparent),
+        radial-gradient(1.5px 1.5px at 40% 70%, #fff 50%, transparent),
+        radial-gradient(1px 1px at 85% 60%, #fff 50%, transparent),
+        radial-gradient(1px 1px at 55% 45%, #fff 50%, transparent),
+        radial-gradient(1.5px 1.5px at 10% 80%, #fff 50%, transparent);
+    opacity: 0.35;
+}
+
+.wrap {
+    position: relative; z-index: 1;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px 20px 60px;
+}
+
+/* Hero */
+.hero { text-align: center; padding: 24px 0 32px; }
+.kicker {
+    font-size: 0.78rem; letter-spacing: 0.22em; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 18px;
+}
+.hero h1 {
+    font-family: 'Shippori Mincho', serif; font-weight: 700;
+    font-size: 2.6rem; line-height: 1.3; letter-spacing: 0.04em;
+}
+.hero h1 .accent {
+    color: var(--gold);
+    text-shadow: 0 0 24px rgba(216, 180, 106, 0.35);
+}
+.hero .lead { margin-top: 22px; font-size: 1.12rem; }
+.hero .lead strong { color: var(--gold-soft); }
+.hero .sub { margin-top: 14px; font-size: 0.9rem; color: var(--ink-soft); }
+
+/* Card */
+.card {
+    background: linear-gradient(180deg, var(--card) 0%, #131a3a 100%);
+    border: 1px solid var(--card-line);
+    border-radius: 18px;
+    padding: 28px 22px;
+    margin-top: 26px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
+}
+.card-title {
+    font-family: 'Shippori Mincho', serif; font-weight: 500;
+    font-size: 1.3rem; color: var(--gold-soft); margin-bottom: 20px;
+}
+.card-title.center { text-align: center; line-height: 1.5; }
+
+.field { display: block; margin-bottom: 20px; }
+.field > span { display: block; font-size: 0.9rem; color: var(--ink-soft); margin-bottom: 8px; }
+input[type="text"], input[type="number"], select {
+    width: 100%; padding: 14px 14px; font-size: 1.05rem;
+    color: var(--ink); background: #0e1430;
+    border: 1px solid var(--card-line); border-radius: 10px;
+    font-family: inherit;
+}
+input:focus, select:focus { outline: none; border-color: var(--gold); }
+.row3 { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 10px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.check { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 0.86rem; color: var(--ink-soft); }
+.check input { width: auto; }
+
+/* Buttons */
+.btn-primary {
+    display: block; width: 100%; padding: 16px;
+    font-family: 'Shippori Mincho', serif; font-size: 1.15rem; font-weight: 500;
+    color: #1a1405; cursor: pointer; border: none; border-radius: 12px;
+    background: linear-gradient(135deg, var(--gold-soft) 0%, var(--gold) 100%);
+    box-shadow: 0 10px 30px rgba(216, 180, 106, 0.3);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 14px 36px rgba(216, 180, 106, 0.42); }
+.btn-primary:disabled { opacity: 0.6; cursor: default; transform: none; }
+.btn-primary.big { font-size: 1.25rem; padding: 18px; }
+.btn-secondary {
+    display: inline-block; padding: 12px 18px; margin-top: 12px;
+    font-size: 0.98rem; color: var(--ink); cursor: pointer;
+    background: transparent; border: 1px solid var(--card-line); border-radius: 10px;
+}
+.btn-text {
+    display: block; margin: 22px auto 0; padding: 8px;
+    background: none; border: none; color: var(--ink-soft);
+    font-size: 0.9rem; cursor: pointer;
+}
+.btn-outline {
+    display: inline-block; margin-top: 22px; padding: 14px 28px;
+    font-family: 'Shippori Mincho', serif; font-size: 1.05rem;
+    color: var(--gold); text-decoration: none;
+    border: 1px solid var(--gold); border-radius: 999px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.btn-outline:hover { background: var(--gold); color: #1a1405; }
+
+/* Loading */
+.loading { text-align: center; margin-top: 22px; color: var(--ink-soft); }
+.loading small { color: var(--accent); }
+.spinner {
+    width: 34px; height: 34px; margin: 0 auto 12px;
+    border: 3px solid var(--card-line); border-top-color: var(--gold);
+    border-radius: 50%; animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Receive */
+.receive { text-align: center; }
+.done-mark { font-size: 2.4rem; color: var(--gold); text-shadow: 0 0 24px rgba(216,180,106,0.5); }
+.receive-lead { margin: 12px 0 24px; color: var(--ink-soft); }
+.copy-status { min-height: 1.4em; margin-top: 12px; color: var(--gold-soft); font-size: 0.95rem; }
+.gem-steps {
+    text-align: left; margin-top: 22px; padding: 18px;
+    background: #0e1430; border: 1px solid var(--card-line); border-radius: 12px;
+}
+.gem-steps h3 { font-size: 1rem; color: var(--gold-soft); margin-bottom: 10px; }
+.gem-steps ol { padding-left: 1.3em; }
+.gem-steps li { margin-bottom: 8px; }
+.prompt-details { text-align: left; margin-top: 18px; }
+.prompt-details summary { cursor: pointer; color: var(--ink-soft); font-size: 0.88rem; }
+#promptPreview {
+    width: 100%; height: 160px; margin-top: 10px; padding: 12px;
+    font-size: 0.8rem; color: var(--ink-soft); background: #0e1430;
+    border: 1px solid var(--card-line); border-radius: 10px; resize: vertical;
+    font-family: ui-monospace, monospace;
+}
+
+/* NEXUS */
+.nexus {
+    text-align: center; margin-top: 48px; padding: 36px 24px;
+    background: linear-gradient(180deg, rgba(216,180,106,0.06), transparent);
+    border-top: 1px solid var(--card-line); border-radius: 18px;
+}
+.nexus-kicker { color: var(--gold); font-size: 0.92rem; margin-bottom: 12px; }
+.nexus h2 { font-family: 'Shippori Mincho', serif; font-weight: 500; font-size: 1.5rem; line-height: 1.5; }
+.nexus-body { margin-top: 18px; color: var(--ink-soft); font-size: 0.98rem; text-align: left; }
+.nexus-body strong { color: var(--gold-soft); }
+
+/* Footer */
+.foot { text-align: center; margin-top: 44px; color: var(--ink-soft); font-size: 0.82rem; }
+.foot-note { margin-top: 6px; opacity: 0.7; }
+
+@media (max-width: 420px) {
+    .hero h1 { font-size: 2.1rem; }
+    .wrap { padding: 28px 16px 48px; }
+    .card { padding: 22px 16px; }
+}

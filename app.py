@@ -391,6 +391,20 @@ def prompt_generator_files(filename):
     from flask import send_from_directory
     return send_from_directory('prompt-generator', filename)
 
+@app.route('/experience')
+@app.route('/experience/')
+@app.route('/2026')
+def experience_page():
+    """2026 未来の航海図 — 体験ページ（出生データ→チャート→Gemで鑑定）"""
+    from flask import send_from_directory
+    return send_from_directory('experience', 'index.html')
+
+@app.route('/experience/<path:filename>')
+def experience_files(filename):
+    """体験ページの静的ファイル配信"""
+    from flask import send_from_directory
+    return send_from_directory('experience', filename)
+
 @app.route('/basic', methods=['POST'])
 def basic_diagnosis():
     try:
