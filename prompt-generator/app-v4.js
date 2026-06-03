@@ -169,6 +169,8 @@ async function generatePrompt() {
 
         // 結果表示
         document.getElementById('outputText').textContent = prompt;
+        window.__lastPrompt = prompt;
+        document.getElementById('readingSection').style.display = 'none';
         document.getElementById('outputSection').style.display = 'block';
         loading.style.display = 'none';
         document.getElementById('outputSection').scrollIntoView({ behavior: 'smooth' });
@@ -295,29 +297,29 @@ function buildPromptText(name, year, month, day, hour, minute, prefecture, natal
         const sabianDegree = Math.ceil(planetData.degree);
         const retrograde = planetData.retrograde ? ' ℞（逆行）' : '';
         
-        prompt += `- **${PLANETS_JP[planetKey]}**: ${planetData.signJP} ${planetData.degree.toFixed(2)}°${retrograde} [第${planetData.house}ハウス]\n`;
+        prompt += `- **${PLANETS_JP[planetKey]}**: ${planetData.signJP} ${formatDeg(planetData.degree)}${retrograde} [第${planetData.house}ハウス]\n`;
     }
 
     // アングル
     const houses = natalChart.houses;
     prompt += `\n### アングル（重要な感受点）\n`;
-    prompt += `- **ASC（アセンダント）**: ${houses.ascendant.signJP} ${houses.ascendant.degree.toFixed(2)}°\n`;
-    prompt += `- **MC（天頂）**: ${houses.midheaven.signJP} ${houses.midheaven.degree.toFixed(2)}°\n`;
+    prompt += `- **ASC（アセンダント）**: ${houses.ascendant.signJP} ${formatDeg(houses.ascendant.degree)}\n`;
+    prompt += `- **MC（天頂）**: ${houses.midheaven.signJP} ${formatDeg(houses.midheaven.degree)}\n`;
 
     // ハウスカスプ
     prompt += `\n### ハウスシステム（Placidus式）\n`;
     houses.cusps.forEach((cusp, index) => {
         const signIndex = Math.floor(cusp / 30);
         const degree = cusp % 30;
-        prompt += `- 第${index + 1}ハウス: ${SIGNS_JP[signIndex]} ${degree.toFixed(2)}°\n`;
+        prompt += `- 第${index + 1}ハウス: ${SIGNS_JP[signIndex]} ${formatDeg(degree)}\n`;
     });
 
     // プログレス
     if (progressions && progressions.p_sun) {
         prompt += `\n## 📈 プログレス（セカンダリー進行図）\n`;
         prompt += `- 基準日: ${new Date().toISOString().split('T')[0]}\n`;
-        prompt += `- **プログレス太陽**: ${progressions.p_sun.signJP} ${progressions.p_sun.degree.toFixed(2)}°\n`;
-        prompt += `- **プログレス月**: ${progressions.p_moon.signJP} ${progressions.p_moon.degree.toFixed(2)}°\n\n`;
+        prompt += `- **プログレス太陽**: ${progressions.p_sun.signJP} ${formatDeg(progressions.p_sun.degree)}\n`;
+        prompt += `- **プログレス月**: ${progressions.p_moon.signJP} ${formatDeg(progressions.p_moon.degree)}\n\n`;
     }
 
     // トランジット
@@ -338,13 +340,13 @@ function buildPromptText(name, year, month, day, hour, minute, prefecture, natal
             prompt += `\n### 外惑星の現在位置\n`;
             const outer = transits.outer_planets;
             if (outer.Uranus) {
-                prompt += `- **天王星**: ${outer.Uranus.signJP} ${outer.Uranus.degree.toFixed(2)}°${outer.Uranus.retrograde ? ' ℞' : ''}\n`;
+                prompt += `- **天王星**: ${outer.Uranus.signJP} ${formatDeg(outer.Uranus.degree)}${outer.Uranus.retrograde ? ' ℞' : ''}\n`;
             }
             if (outer.Neptune) {
-                prompt += `- **海王星**: ${outer.Neptune.signJP} ${outer.Neptune.degree.toFixed(2)}°${outer.Neptune.retrograde ? ' ℞' : ''}\n`;
+                prompt += `- **海王星**: ${outer.Neptune.signJP} ${formatDeg(outer.Neptune.degree)}${outer.Neptune.retrograde ? ' ℞' : ''}\n`;
             }
             if (outer.Pluto) {
-                prompt += `- **冥王星**: ${outer.Pluto.signJP} ${outer.Pluto.degree.toFixed(2)}°${outer.Pluto.retrograde ? ' ℞' : ''}\n`;
+                prompt += `- **冥王星**: ${outer.Pluto.signJP} ${formatDeg(outer.Pluto.degree)}${outer.Pluto.retrograde ? ' ℞' : ''}\n`;
             }
         }
     }
@@ -391,3 +393,122 @@ function downloadPrompt() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
+
+// === 度数を「度°分′」表記に整形（小数を分と誤読させない） ===
+function formatDeg(d) {
+    let deg = Math.floor(d);
+    let min = Math.round((d - deg) * 60);
+    if (min === 60) { deg += 1; min = 0; }
+    return `${deg}°${String(min).padStart(2, '0')}′`;
+}
+
+// ===== AI鑑定（一気通貫: Claude / Narrative Astrologer Gem） =====
+const READING_API = `${API_BASE_URL}/api/reading/stream`;
+let readingMessages = [];
+let readingBusy = false;
+
+function mdToHtml(md) {
+    const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return esc(md)
+        .replace(/^### (.*)$/gm, '<h4>$1</h4>')
+        .replace(/^## (.*)$/gm, '<h3>$1</h3>')
+        .replace(/^# (.*)$/gm, '<h2>$1</h2>')
+        .replace(/^---\s*$/gm, '<hr>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+}
+
+function setReadingStatus(t) {
+    document.getElementById('readingStatus').textContent = t || '';
+}
+
+async function streamReadingTurn() {
+    if (readingBusy) return;
+    readingBusy = true;
+    const out = document.getElementById('readingOutput');
+    const controls = document.getElementById('readingControls');
+    controls.style.display = 'none';
+    const block = document.createElement('div');
+    block.className = 'reading-block';
+    out.appendChild(block);
+    setReadingStatus('鑑定中…');
+    let acc = '';
+    try {
+        const res = await fetch(READING_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: readingMessages })
+        });
+        if (!res.ok) {
+            const e = await res.json().catch(() => ({ error: 'HTTP ' + res.status }));
+            throw new Error(e.error || ('HTTP ' + res.status));
+        }
+        const reader = res.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buf += dec.decode(value, { stream: true });
+            let idx;
+            while ((idx = buf.indexOf('\n\n')) >= 0) {
+                const frame = buf.slice(0, idx); buf = buf.slice(idx + 2);
+                const line = frame.replace(/^data: /, '').trim();
+                if (!line) continue;
+                let obj;
+                try { obj = JSON.parse(line); } catch (e) { continue; }
+                if (obj.t) {
+                    acc += obj.t;
+                    block.innerHTML = mdToHtml(acc);
+                    out.scrollTop = out.scrollHeight;
+                } else if (obj.error) {
+                    throw new Error(obj.error);
+                }
+            }
+        }
+        readingMessages.push({ role: 'assistant', content: acc });
+        setReadingStatus('');
+        controls.style.display = 'block';
+        document.getElementById('replyInput').focus();
+    } catch (err) {
+        setReadingStatus('エラー: ' + err.message);
+        block.innerHTML += `<div class="reading-error">エラー: ${err.message}</div>`;
+        controls.style.display = 'block';
+    } finally {
+        readingBusy = false;
+    }
+}
+
+function startReading() {
+    const prompt = window.__lastPrompt;
+    if (!prompt) { alert('先にプロンプトを生成してください'); return; }
+    readingMessages = [{ role: 'user', content: prompt }];
+    document.getElementById('readingOutput').innerHTML = '';
+    document.getElementById('readingSection').style.display = 'block';
+    document.getElementById('readingSection').scrollIntoView({ behavior: 'smooth' });
+    streamReadingTurn();
+}
+
+function sendReadingReply(text) {
+    if (readingBusy) return;
+    const t = (text || '').trim();
+    if (!t) return;
+    const out = document.getElementById('readingOutput');
+    const u = document.createElement('div');
+    u.className = 'reading-user';
+    u.textContent = '🙋 ' + t;
+    out.appendChild(u);
+    readingMessages.push({ role: 'user', content: t });
+    streamReadingTurn();
+}
+
+document.getElementById('readBtn').addEventListener('click', startReading);
+document.getElementById('continueBtn').addEventListener('click', () => sendReadingReply('続けて'));
+document.getElementById('replyBtn').addEventListener('click', () => {
+    const el = document.getElementById('replyInput');
+    sendReadingReply(el.value);
+    el.value = '';
+});
+document.getElementById('replyInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('replyBtn').click(); }
+});

@@ -9,6 +9,9 @@ import os
 # Swiss Ephemeris API Blueprint のインポート
 from swisseph_api import swisseph_api
 
+# Claude 一気通貫鑑定 Blueprint のインポート
+from claude_reading import claude_reading
+
 app = Flask(__name__)
 
 # CORSを有効化（プロンプトジェネレータからのAPI呼び出し用）
@@ -466,6 +469,9 @@ def detailed_diagnosis():
 
 # Swiss Ephemeris API Blueprint を登録
 app.register_blueprint(swisseph_api)
+
+# Claude 一気通貫鑑定 Blueprint を登録
+app.register_blueprint(claude_reading)
 
 if __name__ == '__main__':
     # Railway対応：PORT環境変数の動的取得

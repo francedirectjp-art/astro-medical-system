@@ -276,3 +276,78 @@ footer {
 .output-text::-webkit-scrollbar-thumb:hover {
     background: var(--primary-color);
 }
+
+/* ===== AI鑑定（一気通貫） ===== */
+.reading-cta {
+    margin-top: 16px;
+    text-align: center;
+}
+.btn-reading {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    font-size: 1.05rem;
+    padding: 14px 22px;
+}
+.reading-section {
+    margin-top: 28px;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 22px;
+}
+.reading-section h2 {
+    margin-bottom: 14px;
+    color: var(--text-primary);
+}
+.reading-output {
+    max-height: 60vh;
+    overflow-y: auto;
+    line-height: 1.85;
+    color: var(--text-primary);
+    font-size: 1.02rem;
+    padding-right: 6px;
+}
+.reading-block {
+    padding: 8px 0 18px;
+    border-bottom: 1px dashed var(--border-color);
+    margin-bottom: 12px;
+}
+.reading-block h2 { font-size: 1.4rem; margin: 14px 0 8px; color: var(--text-primary); }
+.reading-block h3 { font-size: 1.18rem; margin: 12px 0 6px; color: var(--secondary-color); }
+.reading-block h4 { font-size: 1.05rem; margin: 10px 0 6px; color: var(--text-secondary); }
+.reading-block hr { border: none; border-top: 1px solid var(--border-color); margin: 10px 0; }
+.reading-block strong { color: #fde68a; }
+.reading-user {
+    margin: 6px 0 10px;
+    padding: 8px 12px;
+    background: var(--surface-light);
+    border-radius: 8px;
+    color: var(--text-secondary);
+}
+.reading-controls {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.reading-reply {
+    display: flex;
+    gap: 8px;
+}
+.reading-reply input {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--background);
+    color: var(--text-primary);
+}
+.reading-status {
+    margin-top: 10px;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    min-height: 1.2em;
+}
+.reading-error {
+    margin-top: 8px;
+    color: #fca5a5;
+}
