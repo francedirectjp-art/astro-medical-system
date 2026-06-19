@@ -12,6 +12,9 @@ from swisseph_api import swisseph_api
 # Claude 一気通貫鑑定 Blueprint のインポート
 from claude_reading import claude_reading
 
+# Metaphysica Atlas (世界都市 + 歴史的タイムゾーン)
+import atlas_lib
+
 app = Flask(__name__)
 
 # CORSを有効化（プロンプトジェネレータからのAPI呼び出し用）
@@ -404,6 +407,55 @@ def experience_files(filename):
     """体験ページの静的ファイル配信"""
     from flask import send_from_directory
     return send_from_directory('experience', filename)
+
+# ── Metaphysica Atlas API ─────────────────────────────────────────────────
+
+@app.route('/api/cities/search')
+def api_cities_search():
+    """世界都市検索 (47都道府県を超える精度).
+
+    Query params:
+      q: 検索文字列 (例: "Tokyo", "東京", "Hakodate", "石垣")
+      limit: 上位 N 件 (default 10)
+      country: ISO 国コードで絞る (例: "JP")
+    """
+    q = request.args.get('q', '').strip()
+    limit = int(request.args.get('limit', 10))
+    country = request.args.get('country')
+    if not q:
+        return jsonify({'cities': []})
+    cities = atlas_lib.search_cities(q, limit=limit, country=country)
+    return jsonify({
+        'cities': [atlas_lib.city_to_dict(c) for c in cities],
+        'query': q,
+        'total': len(cities),
+    })
+
+
+@app.route('/api/cities/timezone')
+def api_cities_timezone():
+    """出生地 + 出生日時 → 正確な TZ オフセット (歴史的 DST 対応).
+
+    Query params:
+      tz: IANA timezone (例: "Asia/Tokyo")
+      date: ISO datetime (例: "1948-07-01T03:00:00Z")
+    """
+    tz_name = request.args.get('tz', '').strip()
+    date_str = request.args.get('date', '').strip()
+    if not tz_name or not date_str:
+        return jsonify({'error': 'tz and date are required'}), 400
+    try:
+        dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+    except ValueError as e:
+        return jsonify({'error': f'invalid date: {e}'}), 400
+    info = atlas_lib.get_timezone_at(tz_name, dt)
+    return jsonify({
+        'name': info.name,
+        'offset_minutes': info.offset_minutes,
+        'offset_label': info.offset_label,
+        'is_dst': info.is_dst,
+    })
+
 
 @app.route('/basic', methods=['POST'])
 def basic_diagnosis():

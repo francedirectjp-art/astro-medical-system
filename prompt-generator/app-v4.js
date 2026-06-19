@@ -102,6 +102,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('generateBtn').addEventListener('click', generatePrompt);
     document.getElementById('copyBtn').addEventListener('click', copyToClipboard);
     document.getElementById('downloadBtn').addEventListener('click', downloadPrompt);
+
+    // 位置タブ切替
+    document.getElementById('tab-pref').addEventListener('click', () => setLocationMode('pref'));
+    document.getElementById('tab-city').addEventListener('click', () => setLocationMode('city'));
+
+    // 都市検索 (debounced)
+    document.getElementById('cityInput').addEventListener('input', (e) => {
+        searchCitiesDebounced(e.target.value);
+    });
 });
 
 // === UI処理 ===
@@ -120,6 +129,82 @@ function handleTimeUnknown(e) {
     }
 }
 
+// === 位置選択モード (tab) ===
+let _locationMode = 'pref'; // 'pref' or 'city'
+let _selectedCity = null;   // City object when mode === 'city'
+
+function setLocationMode(mode) {
+    _locationMode = mode;
+    document.getElementById('tab-pref').classList.toggle('active', mode === 'pref');
+    document.getElementById('tab-pref').setAttribute('aria-selected', String(mode === 'pref'));
+    document.getElementById('tab-city').classList.toggle('active', mode === 'city');
+    document.getElementById('tab-city').setAttribute('aria-selected', String(mode === 'city'));
+    document.getElementById('location-pref').classList.toggle('active', mode === 'pref');
+    document.getElementById('location-city').classList.toggle('active', mode === 'city');
+}
+
+// === 都市検索 (debounced) ===
+let _searchTimer = null;
+async function searchCitiesDebounced(query) {
+    clearTimeout(_searchTimer);
+    if (!query || query.length < 1) {
+        document.getElementById('cityResults').innerHTML = '';
+        return;
+    }
+    _searchTimer = setTimeout(async () => {
+        try {
+            const resp = await fetch(`${API_BASE_URL}/api/cities/search?q=${encodeURIComponent(query)}&limit=8`);
+            const data = await resp.json();
+            renderCityResults(data.cities || []);
+        } catch (e) {
+            console.error('都市検索エラー:', e);
+        }
+    }, 200);
+}
+
+function renderCityResults(cities) {
+    const box = document.getElementById('cityResults');
+    if (cities.length === 0) {
+        box.innerHTML = '<div class="city-result-meta" style="padding:10px 14px;">該当なし</div>';
+        return;
+    }
+    box.innerHTML = cities.map((c, i) => {
+        const displayName = c.name_ja ? `${c.name_ja} (${c.name})` : c.name;
+        const meta = `${c.country} · ${c.tz} · ${c.lat.toFixed(3)}°N, ${c.lon.toFixed(3)}°E`;
+        return `<div class="city-result" data-index="${i}">
+            <div class="city-result-name">${displayName}</div>
+            <div class="city-result-meta">${meta}</div>
+        </div>`;
+    }).join('');
+    // Wire click handlers
+    box.querySelectorAll('.city-result').forEach((el, i) => {
+        el.addEventListener('click', () => selectCity(cities[i]));
+    });
+}
+
+function selectCity(city) {
+    _selectedCity = city;
+    document.getElementById('cityInput').value = '';
+    document.getElementById('cityResults').innerHTML = '';
+    const sel = document.getElementById('citySelected');
+    const displayName = city.name_ja ? `${city.name_ja} (${city.name})` : city.name;
+    sel.innerHTML = `
+        <button type="button" class="city-selected-clear" id="clearCity">×</button>
+        <strong>📍 ${displayName}</strong><br>
+        <span style="font-size:0.85rem;color:var(--text-secondary);">
+            ${city.country} · ${city.tz}<br>
+            ${city.lat.toFixed(4)}°N, ${city.lon.toFixed(4)}°E
+        </span>
+    `;
+    sel.style.display = 'block';
+    document.getElementById('clearCity').addEventListener('click', clearSelectedCity);
+}
+
+function clearSelectedCity() {
+    _selectedCity = null;
+    document.getElementById('citySelected').style.display = 'none';
+}
+
 async function generatePrompt() {
     // 入力値の検証
     const name = document.getElementById('name').value;
@@ -128,43 +213,66 @@ async function generatePrompt() {
     const day = parseInt(document.getElementById('day').value);
     const hour = parseInt(document.getElementById('hour').value);
     const minute = parseInt(document.getElementById('minute').value);
-    const prefecture = document.getElementById('prefecture').value;
 
-    if (!name || !year || !month || !day || isNaN(hour) || isNaN(minute) || !prefecture) {
-        alert('すべての項目を入力してください');
-        return;
+    // === 位置の取得 (mode に応じて) ===
+    let location;       // { lat, lon }
+    let placeLabel;     // プロンプト埋め込み用ラベル
+    let tzName;         // IANA TZ name (null = JST 既定)
+
+    if (_locationMode === 'pref') {
+        const prefecture = document.getElementById('prefecture').value;
+        if (!prefecture) {
+            alert('都道府県を選択してください');
+            return;
+        }
+        const loc = PREFECTURES[prefecture];
+        if (!loc) {
+            alert('都道府県の座標データが見つかりません');
+            return;
+        }
+        location = loc;
+        placeLabel = prefecture;
+        tzName = 'Asia/Tokyo';
+    } else {
+        if (!_selectedCity) {
+            alert('都市を検索して選択してください');
+            return;
+        }
+        location = { lat: _selectedCity.lat, lon: _selectedCity.lon };
+        placeLabel = _selectedCity.name_ja
+            ? `${_selectedCity.name_ja} (${_selectedCity.name}), ${_selectedCity.country}`
+            : `${_selectedCity.name}, ${_selectedCity.country}`;
+        tzName = _selectedCity.tz;
     }
 
-    // 都道府県から緯度経度を取得
-    const location = PREFECTURES[prefecture];
-    if (!location) {
-        alert('都道府県の座標データが見つかりません');
+    if (!name || !year || !month || !day || isNaN(hour) || isNaN(minute)) {
+        alert('すべての項目を入力してください');
         return;
     }
 
     const button = document.getElementById('generateBtn');
     const loading = document.getElementById('loading');
-    
+
     button.disabled = true;
     button.textContent = '⏳ 計算中...';
     loading.style.display = 'block';
 
     try {
-        console.log(`📍 計算開始: ${prefecture} (緯度: ${location.lat}, 経度: ${location.lon})`);
-        
+        console.log(`📍 計算開始: ${placeLabel} (lat=${location.lat}, lon=${location.lon}, tz=${tzName})`);
+
         // Backend APIを呼び出し
         const natalChart = await calculateNatalChart(
-            year, month, day, hour, minute, 
+            year, month, day, hour, minute,
             location.lat, location.lon
         );
-        
+
         const progressions = await calculateProgressions(year, month, day, hour, minute);
         const transits = await calculateTransits();
 
         // プロンプト生成
         const prompt = buildPromptText(
-            name, year, month, day, hour, minute, 
-            prefecture, natalChart, progressions, transits
+            name, year, month, day, hour, minute,
+            placeLabel, natalChart, progressions, transits
         );
 
         // 結果表示

@@ -53,10 +53,21 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="prefecture">出生地（都道府県）</label>
-                    <select id="prefecture" required>
-                        <option value="">選択してください</option>
-                        <option value="北海道">北海道</option>
+                    <label>出生地</label>
+                    <div class="location-tabs" role="tablist">
+                        <button type="button" id="tab-pref" class="location-tab active" role="tab" aria-selected="true">
+                            🇯🇵 都道府県
+                        </button>
+                        <button type="button" id="tab-city" class="location-tab" role="tab" aria-selected="false">
+                            🌍 都市検索
+                        </button>
+                    </div>
+
+                    <!-- Tab 1: 都道府県 -->
+                    <div id="location-pref" class="location-panel active">
+                        <select id="prefecture">
+                            <option value="">選択してください</option>
+                            <option value="北海道">北海道</option>
                         <option value="青森県">青森県</option>
                         <option value="岩手県">岩手県</option>
                         <option value="宮城県">宮城県</option>
@@ -101,9 +112,19 @@
                         <option value="熊本県">熊本県</option>
                         <option value="大分県">大分県</option>
                         <option value="宮崎県">宮崎県</option>
-                        <option value="鹿児島県">鹿児島県</option>
-                        <option value="沖縄県">沖縄県</option>
-                    </select>
+                            <option value="鹿児島県">鹿児島県</option>
+                            <option value="沖縄県">沖縄県</option>
+                        </select>
+                        <p class="location-hint">県庁所在地の座標を使います。離島・広域の県の場合は精度が落ちます (例: 函館は札幌から約140km)。</p>
+                    </div>
+
+                    <!-- Tab 2: 世界都市検索 -->
+                    <div id="location-city" class="location-panel">
+                        <input type="text" id="cityInput" placeholder="例: Tokyo / 東京 / Hakodate / 石垣 / New York" autocomplete="off">
+                        <div id="cityResults" class="city-results"></div>
+                        <div id="citySelected" class="city-selected" style="display: none;"></div>
+                        <p class="location-hint">日本 1,297 都市 + 世界 32,571 都市 / IANA タイムゾーン履歴対応 (戦時 DST 等)</p>
+                    </div>
                 </div>
 
                 <button type="button" id="generateBtn" class="btn-primary">🚀 プロンプト生成</button>
@@ -125,7 +146,6 @@
                 </div>
                 <div class="output-text" id="outputText"></div>
             </section>
-
         </main>
 
         <footer>
