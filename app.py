@@ -12,6 +12,9 @@ from swisseph_api import swisseph_api
 # Claude 一気通貫鑑定 Blueprint のインポート
 from claude_reading import claude_reading
 
+# Rectification API Blueprint (astro-rectify 用)
+from rectification_api import rectification_api
+
 # Metaphysica Atlas (世界都市 + 歴史的タイムゾーン)
 import atlas_lib
 
@@ -538,6 +541,9 @@ app.register_blueprint(swisseph_api)
 
 # Claude 一気通貫鑑定 Blueprint を登録
 app.register_blueprint(claude_reading)
+
+# Rectification API Blueprint を登録 (astro-rectify 用の 4 endpoint)
+app.register_blueprint(rectification_api)
 
 if __name__ == '__main__':
     # Railway対応：PORT環境変数の動的取得
