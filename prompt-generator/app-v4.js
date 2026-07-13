@@ -4,6 +4,9 @@
 let sabianSymbols = [];
 const API_BASE_URL = window.location.origin;
 
+// 占い用 Gemini Gem（Metaphysica 2028 占星術AI）
+const GEMINI_GEM_URL = 'https://gemini.google.com/gem/1NgB6OizsXJSo8kfeq4suOksYprUgN2io?usp=sharing';
+
 // === 都道府県座標データ ===
 const PREFECTURES = {
     '北海道': { lat: 43.0642, lon: 141.3469 },
@@ -102,6 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('generateBtn').addEventListener('click', generatePrompt);
     document.getElementById('copyBtn').addEventListener('click', copyToClipboard);
     document.getElementById('downloadBtn').addEventListener('click', downloadPrompt);
+    document.getElementById('geminiBtn').addEventListener('click', openGeminiWithPrompt);
 
     // 位置タブ切替
     document.getElementById('tab-pref').addEventListener('click', () => setLocationMode('pref'));
@@ -476,6 +480,53 @@ function getSabianSymbol(sign, degree) {
 }
 
 // === クリップボード・ダウンロード処理 ===
+
+// クリック直下で同期的にコピーする (ポップアップブロック回避のため await を挟まない)
+function copyTextSync(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    let ok = false;
+    try {
+        ok = document.execCommand('copy');
+    } catch (e) {
+        ok = false;
+    }
+    document.body.removeChild(ta);
+    return ok;
+}
+
+// プロンプトをコピーして Gemini (Gem) を新しいタブで開く
+function openGeminiWithPrompt() {
+    const text = document.getElementById('outputText').textContent;
+    if (!text) {
+        alert('先にプロンプトを生成してください');
+        return;
+    }
+
+    const copied = copyTextSync(text);
+    if (!copied) {
+        // フォールバック (非同期でも試みる。開くのは先に済ませる)
+        navigator.clipboard.writeText(text).catch(() => {});
+    }
+
+    window.open(GEMINI_GEM_URL, '_blank', 'noopener');
+
+    const btn = document.getElementById('geminiBtn');
+    const original = btn.textContent;
+    btn.textContent = '✅ コピーしました — Gemini に貼り付けて送信してください';
+    btn.disabled = true;
+    setTimeout(() => {
+        btn.textContent = original;
+        btn.disabled = false;
+    }, 5000);
+}
+
 async function copyToClipboard() {
     const text = document.getElementById('outputText').textContent;
     try {

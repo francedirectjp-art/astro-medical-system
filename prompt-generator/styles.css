@@ -177,6 +177,52 @@ input[type="number"]:focus {
     background: var(--border-color);
 }
 
+/* Gemini 直行 CTA */
+.gemini-cta {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: var(--surface-light);
+    border: 2px solid var(--primary-color);
+    border-radius: 12px;
+}
+
+.btn-gemini {
+    display: block;
+    width: 100%;
+    padding: 18px 28px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: white;
+    background: linear-gradient(135deg, #4285f4, #9b72cb, #d96570);
+    transition: all 0.3s;
+}
+
+.btn-gemini:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.5);
+}
+
+.btn-gemini:disabled {
+    opacity: 0.85;
+    cursor: default;
+    transform: none;
+}
+
+.gemini-hint {
+    margin-top: 12px;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+.gemini-hint strong {
+    color: var(--text-primary);
+}
+
 .loading {
     text-align: center;
     padding: 40px;

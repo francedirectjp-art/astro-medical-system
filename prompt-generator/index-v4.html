@@ -140,8 +140,12 @@
             <!-- 出力エリア -->
             <section class="output-section" id="outputSection" style="display: none;">
                 <h2>📋 生成されたプロンプト</h2>
+                <div class="gemini-cta">
+                    <button type="button" id="geminiBtn" class="btn-gemini">✨ コピーして Gemini で占う</button>
+                    <p class="gemini-hint">プロンプトを自動コピーして Gemini（専用AI）を開きます。<br>開いたら、チャット欄に<strong>貼り付け（⌘V / Ctrl+V / 長押し→ペースト）</strong>して送信してください。</p>
+                </div>
                 <div class="output-controls">
-                    <button type="button" id="copyBtn" class="btn-primary">📋 クリップボードにコピー</button>
+                    <button type="button" id="copyBtn" class="btn-secondary">📋 クリップボードにコピー</button>
                     <button type="button" id="downloadBtn" class="btn-secondary">💾 テキストファイルでダウンロード</button>
                 </div>
                 <div class="output-text" id="outputText"></div>
