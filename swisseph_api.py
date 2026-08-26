@@ -366,7 +366,9 @@ def calculate_transits():
 def calculate_solar_return():
     """
     ソーラーリターン（太陽回帰図）計算APIエンドポイント
-    今日以降で直近の回帰を、出生地で作図する。
+    「現在有効な回帰」＝基準日を含む回帰年（直近に成立済みのリターン）を、出生地で作図する。
+    ソーラーリターンの有効期間は「成立した瞬間 → 次の成立まで」なので、
+    年運として読むには基準日以降ではなく基準日直前に成立したものを返す。
 
     Request Body (JSON):
     {
@@ -378,7 +380,7 @@ def calculate_solar_return():
         "latitude": 35.6762,  # 出生地
         "longitude": 139.6503,
         "tz_name": "Asia/Tokyo",       # オプション、デフォルト Asia/Tokyo
-        "current_date": "2026-08-26",  # ISO format（この日以降で直近の回帰）
+        "current_date": "2026-08-26",  # ISO format（この日を含む回帰年）
         "house_system": "P"
     }
     """
@@ -433,22 +435,34 @@ def calculate_solar_return():
                 jd -= diff / speed
             return jd
 
-        # 経過年数から初期値を作り、基準日以降になるまで1年ずつ進める
-        years_elapsed = int((now_jd - natal_jd) / TROPICAL_YEAR)
+        def jd_to_datetimes(jd):
+            """JD → (UTC datetime, ローカル datetime, UTCオフセット表記)"""
+            y, m, d, ut = swe.revjul(jd)
+            utc_dt = datetime(y, m, d, tzinfo=timezone.utc) + timedelta(seconds=round(ut * 3600))
+            local_dt = utc_dt.astimezone(tzinfo)
+            total_min = int(local_dt.utcoffset().total_seconds() // 60)
+            sign = '+' if total_min >= 0 else '-'
+            hh, mm = divmod(abs(total_min), 60)
+            return utc_dt, local_dt, f"UTC{sign}{hh}" + (f":{mm:02d}" if mm else '')
+
+        # 経過年数から初期値を作り、基準日を含む回帰年（直近に成立済み）を特定する
+        years_elapsed = max(0, int((now_jd - natal_jd) / TROPICAL_YEAR))
         return_jd = solve_return(natal_jd + years_elapsed * TROPICAL_YEAR)
-        while return_jd < now_jd:
-            years_elapsed += 1
+
+        # 行き過ぎていれば1年ずつ戻す
+        while years_elapsed > 0 and return_jd > now_jd:
+            years_elapsed -= 1
             return_jd = solve_return(natal_jd + years_elapsed * TROPICAL_YEAR)
 
-        # JD → UTC → ローカル時刻
-        y, m, d, ut = swe.revjul(return_jd)
-        total_seconds = round(ut * 3600)
-        return_utc = datetime(y, m, d, tzinfo=timezone.utc) + timedelta(seconds=total_seconds)
-        return_local = return_utc.astimezone(tzinfo)
-        utc_offset = return_local.utcoffset()
-        offset_hours = utc_offset.total_seconds() / 3600
-        offset_str = f"UTC{'+' if offset_hours >= 0 else '-'}{abs(int(offset_hours)):d}" \
-            + (f":{abs(int(utc_offset.total_seconds() % 3600 // 60)):02d}" if utc_offset.total_seconds() % 3600 else '')
+        # 次の回帰がまだ基準日以前なら進める（有効期間の終端も同時に得る）
+        next_return_jd = solve_return(natal_jd + (years_elapsed + 1) * TROPICAL_YEAR)
+        while next_return_jd <= now_jd:
+            years_elapsed += 1
+            return_jd = next_return_jd
+            next_return_jd = solve_return(natal_jd + (years_elapsed + 1) * TROPICAL_YEAR)
+
+        return_utc, return_local, offset_str = jd_to_datetimes(return_jd)
+        _, next_return_local, _ = jd_to_datetimes(next_return_jd)
 
         # リターン瞬間・出生地でチャート作成
         planets = {}
@@ -469,6 +483,9 @@ def calculate_solar_return():
             'return_jd': round(return_jd, 6),
             'return_datetime_utc': return_utc.strftime('%Y-%m-%d %H:%M'),
             'return_datetime_local': return_local.strftime('%Y-%m-%d %H:%M'),
+            'valid_from': return_local.strftime('%Y-%m-%d'),
+            'valid_until': next_return_local.strftime('%Y-%m-%d'),
+            'next_return_datetime_local': next_return_local.strftime('%Y-%m-%d %H:%M'),
             'tz_name': tz_name,
             'utc_offset': offset_str,
             'natal_sun_longitude': round(natal_sun_lon, 6),

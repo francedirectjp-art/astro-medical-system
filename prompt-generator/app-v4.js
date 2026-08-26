@@ -504,7 +504,9 @@ function buildPromptText(name, year, month, day, hour, minute, prefecture, natal
         prompt += `\n## 🌞 ソーラーリターン図（太陽回帰図）\n`;
         prompt += `- 対象年齢: ${sr.age}歳\n`;
         prompt += `- リターン成立日時: ${sr.return_datetime_local}（${sr.tz_name}, ${sr.utc_offset}）\n`;
+        prompt += `- **有効期間: ${sr.valid_from} 〜 ${sr.valid_until}（次の回帰まで）＝ 現在進行中の一年**\n`;
         prompt += `- 作成場所: 出生地（${prefecture}）\n`;
+        prompt += `- ※この図は「今まさに渦中にある一年」を示します。未来の一年ではありません。プロフェクションを併用する場合も ${sr.age}歳（第${sr.age % 12 + 1}ハウス）を基準にしてください。\n`;
         prompt += `- **SR-ASC**: ${sr.houses.ascendant.signJP} ${formatDeg(sr.houses.ascendant.degree)}\n`;
         prompt += `- **SR-MC**: ${sr.houses.midheaven.signJP} ${formatDeg(sr.houses.midheaven.degree)}\n`;
 
