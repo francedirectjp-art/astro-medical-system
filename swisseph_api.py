@@ -362,6 +362,126 @@ def calculate_transits():
             'error': str(e)
         }), 500
 
+@swisseph_api.route('/api/calculate-solar-return', methods=['POST'])
+def calculate_solar_return():
+    """
+    ソーラーリターン（太陽回帰図）計算APIエンドポイント
+    今日以降で直近の回帰を、出生地で作図する。
+
+    Request Body (JSON):
+    {
+        "birth_year": 1990,
+        "birth_month": 3,
+        "birth_day": 21,
+        "birth_hour": 15,     # 出生地ローカル時刻
+        "birth_minute": 30,
+        "latitude": 35.6762,  # 出生地
+        "longitude": 139.6503,
+        "tz_name": "Asia/Tokyo",       # オプション、デフォルト Asia/Tokyo
+        "current_date": "2026-08-26",  # ISO format（この日以降で直近の回帰）
+        "house_system": "P"
+    }
+    """
+    try:
+        data = request.get_json()
+
+        required_fields = ['birth_year', 'birth_month', 'birth_day',
+                           'birth_hour', 'birth_minute', 'latitude', 'longitude']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+
+        tz_name = data.get('tz_name') or 'Asia/Tokyo'
+        try:
+            from zoneinfo import ZoneInfo
+            tzinfo = ZoneInfo(tz_name)
+        except Exception:
+            from zoneinfo import ZoneInfo
+            tz_name = 'Asia/Tokyo'
+            tzinfo = ZoneInfo(tz_name)
+
+        # 出生ローカル時刻 → UTC（タイムゾーンの歴史的変更も zoneinfo が吸収）
+        from datetime import timezone
+        birth_local = datetime(data['birth_year'], data['birth_month'], data['birth_day'],
+                               data['birth_hour'], data['birth_minute'], tzinfo=tzinfo)
+        birth_utc = birth_local.astimezone(timezone.utc)
+        natal_jd = swe.julday(birth_utc.year, birth_utc.month, birth_utc.day,
+                              birth_utc.hour + birth_utc.minute / 60.0 + birth_utc.second / 3600.0)
+
+        # ネイタル太陽黄経
+        natal_sun = calculate_planet_position(natal_jd, swe.SUN)
+        if 'error' in natal_sun:
+            return jsonify({'success': False, 'error': natal_sun['error']}), 500
+        natal_sun_lon = natal_sun['longitude']
+
+        # 基準日（この日時以降で直近の回帰を探す）
+        current_date = datetime.fromisoformat(data.get('current_date', datetime.utcnow().date().isoformat()))
+        now_jd = swe.julday(current_date.year, current_date.month, current_date.day, 0.0)
+
+        TROPICAL_YEAR = 365.2421897
+
+        def solve_return(jd_guess):
+            """ニュートン法で太陽黄経がネイタルに一致する瞬間のJDを求める"""
+            jd = jd_guess
+            for _ in range(30):
+                swe.set_ephe_path(EPHE_PATH)
+                pos = swe.calc_ut(jd, swe.SUN)[0]
+                diff = ((pos[0] - natal_sun_lon) + 180.0) % 360.0 - 180.0
+                if abs(diff) < 1e-8:
+                    break
+                speed = pos[3] if pos[3] > 0.5 else 0.9856  # deg/day
+                jd -= diff / speed
+            return jd
+
+        # 経過年数から初期値を作り、基準日以降になるまで1年ずつ進める
+        years_elapsed = int((now_jd - natal_jd) / TROPICAL_YEAR)
+        return_jd = solve_return(natal_jd + years_elapsed * TROPICAL_YEAR)
+        while return_jd < now_jd:
+            years_elapsed += 1
+            return_jd = solve_return(natal_jd + years_elapsed * TROPICAL_YEAR)
+
+        # JD → UTC → ローカル時刻
+        y, m, d, ut = swe.revjul(return_jd)
+        total_seconds = round(ut * 3600)
+        return_utc = datetime(y, m, d, tzinfo=timezone.utc) + timedelta(seconds=total_seconds)
+        return_local = return_utc.astimezone(tzinfo)
+        utc_offset = return_local.utcoffset()
+        offset_hours = utc_offset.total_seconds() / 3600
+        offset_str = f"UTC{'+' if offset_hours >= 0 else '-'}{abs(int(offset_hours)):d}" \
+            + (f":{abs(int(utc_offset.total_seconds() % 3600 // 60)):02d}" if utc_offset.total_seconds() % 3600 else '')
+
+        # リターン瞬間・出生地でチャート作成
+        planets = {}
+        for planet_name, planet_id in PLANETS.items():
+            planets[planet_name] = calculate_planet_position(return_jd, planet_id)
+
+        house_system = data.get('house_system', 'P')
+        houses = calculate_houses(return_jd, data['latitude'], data['longitude'], house_system)
+
+        if 'cusps' in houses:
+            for planet_name, planet_data in planets.items():
+                if 'longitude' in planet_data:
+                    planet_data['house'] = get_planet_house(planet_data['longitude'], houses['cusps'])
+
+        return jsonify({
+            'success': True,
+            'age': years_elapsed,
+            'return_jd': round(return_jd, 6),
+            'return_datetime_utc': return_utc.strftime('%Y-%m-%d %H:%M'),
+            'return_datetime_local': return_local.strftime('%Y-%m-%d %H:%M'),
+            'tz_name': tz_name,
+            'utc_offset': offset_str,
+            'natal_sun_longitude': round(natal_sun_lon, 6),
+            'planets': planets,
+            'houses': houses
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @swisseph_api.route('/api/health', methods=['GET'])
 def health_check():
     """ヘルスチェックエンドポイント"""

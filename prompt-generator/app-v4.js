@@ -268,11 +268,15 @@ async function generatePrompt() {
 
         const progressions = await calculateProgressions(year, month, day, hour, minute);
         const transits = await calculateTransits();
+        const solarReturn = await calculateSolarReturn(
+            year, month, day, hour, minute,
+            location.lat, location.lon, tzName
+        );
 
         // プロンプト生成
         const prompt = buildPromptText(
             name, year, month, day, hour, minute,
-            placeLabel, natalChart, progressions, transits
+            placeLabel, natalChart, progressions, transits, solarReturn
         );
 
         // 結果表示
@@ -383,8 +387,44 @@ async function calculateTransits() {
     return data;
 }
 
+async function calculateSolarReturn(birthYear, birthMonth, birthDay, birthHour, birthMinute, latitude, longitude, tzName) {
+    console.log('📡 ソーラーリターン計算API呼び出し...');
+
+    const currentDate = new Date().toISOString().split('T')[0];
+
+    const response = await fetch(`${API_BASE_URL}/api/calculate-solar-return`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            birth_year: birthYear,
+            birth_month: birthMonth,
+            birth_day: birthDay,
+            birth_hour: birthHour,
+            birth_minute: birthMinute,
+            latitude,
+            longitude,
+            tz_name: tzName || 'Asia/Tokyo',
+            current_date: currentDate
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(`Solar Return API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (!data.success) {
+        throw new Error(data.error || 'Solar Return calculation failed');
+    }
+
+    console.log('✅ ソーラーリターン計算成功');
+    return data;
+}
+
 // === プロンプトテキスト生成 ===
-function buildPromptText(name, year, month, day, hour, minute, prefecture, natalChart, progressions, transits) {
+function buildPromptText(name, year, month, day, hour, minute, prefecture, natalChart, progressions, transits, solarReturn) {
     let prompt = `# 【完全版】${name}さんの占星術データ\n\n`;
     prompt += `## 基本情報\n`;
     prompt += `- 生年月日: ${year}年${month}月${day}日 ${hour}時${minute}分\n`;
@@ -456,6 +496,27 @@ function buildPromptText(name, year, month, day, hour, minute, prefecture, natal
                 prompt += `- **冥王星**: ${outer.Pluto.signJP} ${formatDeg(outer.Pluto.degree)}${outer.Pluto.retrograde ? ' ℞' : ''}\n`;
             }
         }
+    }
+
+    // ソーラーリターン図
+    if (solarReturn && solarReturn.planets) {
+        const sr = solarReturn;
+        prompt += `\n## 🌞 ソーラーリターン図（太陽回帰図）\n`;
+        prompt += `- 対象年齢: ${sr.age}歳\n`;
+        prompt += `- リターン成立日時: ${sr.return_datetime_local}（${sr.tz_name}, ${sr.utc_offset}）\n`;
+        prompt += `- 作成場所: 出生地（${prefecture}）\n`;
+        prompt += `- **SR-ASC**: ${sr.houses.ascendant.signJP} ${formatDeg(sr.houses.ascendant.degree)}\n`;
+        prompt += `- **SR-MC**: ${sr.houses.midheaven.signJP} ${formatDeg(sr.houses.midheaven.degree)}\n`;
+
+        const SR_PLANETS = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars',
+                            'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'];
+        SR_PLANETS.forEach(planetKey => {
+            const p = sr.planets[planetKey];
+            if (!p || p.error) return;
+            const retrograde = p.retrograde ? ' ℞（逆行）' : '';
+            const house = p.house ? ` [第${p.house}ハウス]` : '';
+            prompt += `- **${PLANETS_JP[planetKey]}**: ${p.signJP} ${formatDeg(p.degree)}${retrograde}${house}\n`;
+        });
     }
 
     prompt += `\n---\n`;
