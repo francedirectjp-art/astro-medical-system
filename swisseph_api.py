@@ -381,7 +381,11 @@ def calculate_solar_return():
         "longitude": 139.6503,
         "tz_name": "Asia/Tokyo",       # オプション、デフォルト Asia/Tokyo
         "current_date": "2026-08-26",  # ISO format（この日を含む回帰年）
-        "house_system": "P"
+        "house_system": "P",
+        # 以下オプション。作成地を出生地以外にする場合（リロケーション）
+        "sr_latitude": 35.6895,
+        "sr_longitude": 139.6917,
+        "sr_tz_name": "Asia/Tokyo"
     }
     """
     try:
@@ -393,14 +397,21 @@ def calculate_solar_return():
             if field not in data:
                 return jsonify({'error': f'Missing required field: {field}'}), 400
 
-        tz_name = data.get('tz_name') or 'Asia/Tokyo'
-        try:
-            from zoneinfo import ZoneInfo
-            tzinfo = ZoneInfo(tz_name)
-        except Exception:
-            from zoneinfo import ZoneInfo
-            tz_name = 'Asia/Tokyo'
-            tzinfo = ZoneInfo(tz_name)
+        from zoneinfo import ZoneInfo
+
+        def safe_zone(name):
+            try:
+                return ZoneInfo(name), name
+            except Exception:
+                return ZoneInfo('Asia/Tokyo'), 'Asia/Tokyo'
+
+        # 出生地のタイムゾーン（出生時刻の解釈に使う）
+        tzinfo, tz_name = safe_zone(data.get('tz_name') or 'Asia/Tokyo')
+
+        # 作成地（ハウス計算と成立日時の表示に使う。省略時は出生地）
+        chart_lat = data.get('sr_latitude', data['latitude'])
+        chart_lon = data.get('sr_longitude', data['longitude'])
+        chart_tz, chart_tz_name = safe_zone(data.get('sr_tz_name') or tz_name)
 
         # 出生ローカル時刻 → UTC（タイムゾーンの歴史的変更も zoneinfo が吸収）
         from datetime import timezone
@@ -439,7 +450,7 @@ def calculate_solar_return():
             """JD → (UTC datetime, ローカル datetime, UTCオフセット表記)"""
             y, m, d, ut = swe.revjul(jd)
             utc_dt = datetime(y, m, d, tzinfo=timezone.utc) + timedelta(seconds=round(ut * 3600))
-            local_dt = utc_dt.astimezone(tzinfo)
+            local_dt = utc_dt.astimezone(chart_tz)
             total_min = int(local_dt.utcoffset().total_seconds() // 60)
             sign = '+' if total_min >= 0 else '-'
             hh, mm = divmod(abs(total_min), 60)
@@ -464,13 +475,13 @@ def calculate_solar_return():
         return_utc, return_local, offset_str = jd_to_datetimes(return_jd)
         _, next_return_local, _ = jd_to_datetimes(next_return_jd)
 
-        # リターン瞬間・出生地でチャート作成
+        # リターン瞬間・作成地でチャート作成
         planets = {}
         for planet_name, planet_id in PLANETS.items():
             planets[planet_name] = calculate_planet_position(return_jd, planet_id)
 
         house_system = data.get('house_system', 'P')
-        houses = calculate_houses(return_jd, data['latitude'], data['longitude'], house_system)
+        houses = calculate_houses(return_jd, chart_lat, chart_lon, house_system)
 
         if 'cusps' in houses:
             for planet_name, planet_data in planets.items():
@@ -486,8 +497,11 @@ def calculate_solar_return():
             'valid_from': return_local.strftime('%Y-%m-%d'),
             'valid_until': next_return_local.strftime('%Y-%m-%d'),
             'next_return_datetime_local': next_return_local.strftime('%Y-%m-%d %H:%M'),
-            'tz_name': tz_name,
+            'tz_name': chart_tz_name,
             'utc_offset': offset_str,
+            'chart_latitude': chart_lat,
+            'chart_longitude': chart_lon,
+            'relocated': (chart_lat != data['latitude'] or chart_lon != data['longitude']),
             'natal_sun_longitude': round(natal_sun_lon, 6),
             'planets': planets,
             'houses': houses

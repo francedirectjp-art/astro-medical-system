@@ -111,7 +111,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('cityInput').addEventListener('input', (e) => {
         searchCitiesDebounced(e.target.value);
     });
+
+    // ソーラーリターン作成地
+    document.querySelectorAll('input[name="srLocation"]').forEach(radio => {
+        radio.addEventListener('change', handleSrLocationChange);
+    });
+    document.getElementById('srCityInput').addEventListener('input', (e) => {
+        searchSrCitiesDebounced(e.target.value);
+    });
 });
+
+// === 都市の表示名ヘルパー ===
+function cityName(city) {
+    return city.name_ja ? `${city.name_ja} (${city.name})` : city.name;
+}
+
+function cityFullLabel(city) {
+    return `${cityName(city)}, ${city.country}`;
+}
 
 // === UI処理 ===
 function handleTimeUnknown(e) {
@@ -205,6 +222,74 @@ function clearSelectedCity() {
     document.getElementById('citySelected').style.display = 'none';
 }
 
+// === ソーラーリターン作成地の選択 ===
+let _srCity = null;        // 現在地モードで選択された都市
+let _srSearchTimer = null;
+
+function srLocationMode() {
+    const checked = document.querySelector('input[name="srLocation"]:checked');
+    return checked ? checked.value : 'birth';
+}
+
+function handleSrLocationChange() {
+    const isCurrent = srLocationMode() === 'current';
+    document.getElementById('srCityPanel').style.display = isCurrent ? 'block' : 'none';
+}
+
+async function searchSrCitiesDebounced(query) {
+    clearTimeout(_srSearchTimer);
+    const box = document.getElementById('srCityResults');
+    if (!query) {
+        box.innerHTML = '';
+        return;
+    }
+    _srSearchTimer = setTimeout(async () => {
+        try {
+            const resp = await fetch(`${API_BASE_URL}/api/cities/search?q=${encodeURIComponent(query)}&limit=8`);
+            const data = await resp.json();
+            renderSrCityResults(data.cities || []);
+        } catch (e) {
+            console.error('都市検索エラー:', e);
+        }
+    }, 200);
+}
+
+function renderSrCityResults(cities) {
+    const box = document.getElementById('srCityResults');
+    if (cities.length === 0) {
+        box.innerHTML = '<div class="city-result-meta" style="padding:10px 14px;">該当なし</div>';
+        return;
+    }
+    box.innerHTML = cities.map((c, i) => `
+        <div class="city-result" data-index="${i}">
+            <div class="city-result-name">${cityName(c)}</div>
+            <div class="city-result-meta">${c.country} · ${c.tz} · ${c.lat.toFixed(3)}°N, ${c.lon.toFixed(3)}°E</div>
+        </div>`).join('');
+    box.querySelectorAll('.city-result').forEach((el, i) => {
+        el.addEventListener('click', () => selectSrCity(cities[i]));
+    });
+}
+
+function selectSrCity(city) {
+    _srCity = city;
+    document.getElementById('srCityInput').value = '';
+    document.getElementById('srCityResults').innerHTML = '';
+    const sel = document.getElementById('srCitySelected');
+    sel.innerHTML = `
+        <button type="button" class="city-selected-clear" id="clearSrCity">×</button>
+        <strong>📍 ${cityName(city)}</strong><br>
+        <span style="font-size:0.85rem;color:var(--text-secondary);">
+            ${city.country} · ${city.tz}<br>
+            ${city.lat.toFixed(4)}°N, ${city.lon.toFixed(4)}°E
+        </span>
+    `;
+    sel.style.display = 'block';
+    document.getElementById('clearSrCity').addEventListener('click', () => {
+        _srCity = null;
+        sel.style.display = 'none';
+    });
+}
+
 async function generatePrompt() {
     // 入力値の検証
     const name = document.getElementById('name').value;
@@ -250,6 +335,11 @@ async function generatePrompt() {
         return;
     }
 
+    if (srLocationMode() === 'current' && !_srCity) {
+        alert('ソーラーリターンの作成地となる都市を検索して選択してください');
+        return;
+    }
+
     const button = document.getElementById('generateBtn');
     const loading = document.getElementById('loading');
 
@@ -268,15 +358,24 @@ async function generatePrompt() {
 
         const progressions = await calculateProgressions(year, month, day, hour, minute);
         const transits = await calculateTransits();
+        // ソーラーリターンの作成地（既定は出生地）
+        let srPlace = { lat: location.lat, lon: location.lon, tz: tzName, label: placeLabel };
+        if (srLocationMode() === 'current' && _srCity) {
+            srPlace = {
+                lat: _srCity.lat, lon: _srCity.lon, tz: _srCity.tz,
+                label: cityFullLabel(_srCity)
+            };
+        }
+
         const solarReturn = await calculateSolarReturn(
             year, month, day, hour, minute,
-            location.lat, location.lon, tzName
+            location.lat, location.lon, tzName, srPlace
         );
 
         // プロンプト生成
         const prompt = buildPromptText(
             name, year, month, day, hour, minute,
-            placeLabel, natalChart, progressions, transits, solarReturn
+            placeLabel, natalChart, progressions, transits, solarReturn, srPlace
         );
 
         // 結果表示
@@ -387,7 +486,7 @@ async function calculateTransits() {
     return data;
 }
 
-async function calculateSolarReturn(birthYear, birthMonth, birthDay, birthHour, birthMinute, latitude, longitude, tzName) {
+async function calculateSolarReturn(birthYear, birthMonth, birthDay, birthHour, birthMinute, latitude, longitude, tzName, srPlace) {
     console.log('📡 ソーラーリターン計算API呼び出し...');
 
     const currentDate = new Date().toISOString().split('T')[0];
@@ -406,7 +505,10 @@ async function calculateSolarReturn(birthYear, birthMonth, birthDay, birthHour, 
             latitude,
             longitude,
             tz_name: tzName || 'Asia/Tokyo',
-            current_date: currentDate
+            current_date: currentDate,
+            sr_latitude: srPlace.lat,
+            sr_longitude: srPlace.lon,
+            sr_tz_name: srPlace.tz || tzName || 'Asia/Tokyo'
         })
     });
 
@@ -424,7 +526,7 @@ async function calculateSolarReturn(birthYear, birthMonth, birthDay, birthHour, 
 }
 
 // === プロンプトテキスト生成 ===
-function buildPromptText(name, year, month, day, hour, minute, prefecture, natalChart, progressions, transits, solarReturn) {
+function buildPromptText(name, year, month, day, hour, minute, prefecture, natalChart, progressions, transits, solarReturn, srPlace) {
     let prompt = `# 【完全版】${name}さんの占星術データ\n\n`;
     prompt += `## 基本情報\n`;
     prompt += `- 生年月日: ${year}年${month}月${day}日 ${hour}時${minute}分\n`;
@@ -505,7 +607,10 @@ function buildPromptText(name, year, month, day, hour, minute, prefecture, natal
         prompt += `- 対象年齢: ${sr.age}歳\n`;
         prompt += `- リターン成立日時: ${sr.return_datetime_local}（${sr.tz_name}, ${sr.utc_offset}）\n`;
         prompt += `- **有効期間: ${sr.valid_from} 〜 ${sr.valid_until}（次の回帰まで）＝ 現在進行中の一年**\n`;
-        prompt += `- 作成場所: 出生地（${prefecture}）\n`;
+        const srLabel = (srPlace && srPlace.label) ? srPlace.label : prefecture;
+        prompt += sr.relocated
+            ? `- 作成場所: ${srLabel}（リロケーション／出生地は ${prefecture}）\n`
+            : `- 作成場所: 出生地（${srLabel}）\n`;
         prompt += `- ※この図は「今まさに渦中にある一年」を示します。未来の一年ではありません。プロフェクションを併用する場合も ${sr.age}歳（第${sr.age % 12 + 1}ハウス）を基準にしてください。\n`;
         prompt += `- **SR-ASC**: ${sr.houses.ascendant.signJP} ${formatDeg(sr.houses.ascendant.degree)}\n`;
         prompt += `- **SR-MC**: ${sr.houses.midheaven.signJP} ${formatDeg(sr.houses.midheaven.degree)}\n`;

@@ -127,6 +127,27 @@
                     </div>
                 </div>
 
+                <!-- ソーラーリターンの作成地 -->
+                <div class="form-group">
+                    <label>🌞 ソーラーリターン図の作成地</label>
+                    <div class="sr-location-choice">
+                        <label class="sr-radio">
+                            <input type="radio" name="srLocation" value="birth" checked>
+                            <span>出生地で作図</span>
+                        </label>
+                        <label class="sr-radio">
+                            <input type="radio" name="srLocation" value="current">
+                            <span>現在地で作図（リロケーション）</span>
+                        </label>
+                    </div>
+                    <div id="srCityPanel" style="display: none;">
+                        <input type="text" id="srCityInput" placeholder="例: 東京 / Tokyo / 宮古島 / New York" autocomplete="off">
+                        <div id="srCityResults" class="city-results"></div>
+                        <div id="srCitySelected" class="city-selected" style="display: none;"></div>
+                    </div>
+                    <p class="location-hint">「その一年を過ごす土地で作図する」流派の場合は現在地を選びます。天体の度数は同じで、ASC・MC・ハウスだけが変わります。</p>
+                </div>
+
                 <button type="button" id="generateBtn" class="btn-primary">🚀 プロンプト生成</button>
             </section>
 

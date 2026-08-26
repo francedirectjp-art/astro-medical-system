@@ -389,7 +389,38 @@ footer {
     color: var(--text-secondary);
     line-height: 1.5;
 }
-#cityInput {
+.sr-location-choice {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.sr-radio {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: border-color 0.2s, background 0.2s;
+}
+.sr-radio:hover {
+    background: rgba(255, 255, 255, 0.09);
+}
+.sr-radio:has(input:checked) {
+    border-color: var(--accent, #a78bfa);
+    background: rgba(167, 139, 250, 0.14);
+}
+.sr-radio input {
+    accent-color: var(--accent, #a78bfa);
+    cursor: pointer;
+}
+
+#cityInput,
+#srCityInput {
     width: 100%;
     padding: 12px 14px;
     background: rgba(255, 255, 255, 0.05);
