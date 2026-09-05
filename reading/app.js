@@ -3,7 +3,10 @@
 // → 6ブロックを自動進行で受信 → 鑑定書として表示 → 印刷/PDF
 
 const API_BASE_URL = window.location.origin;
-const TOTAL_BLOCKS = 6;
+// 想定は6ブロックだが、章がずれた場合に終章まで書き切るため上限10回まで続行する
+const EXPECTED_BLOCKS = 6;
+const MAX_BLOCKS = 10;
+const FINAL_CHAPTER = /終章[｜|]/;
 const CONTINUE_MARKER = /（[『「]はい[』」]または[『「]続けて[』」]と入力すると、次へ進みます。?）/g;
 const CONTINUE_PROMPT = '続けて。第5節の各章の文字数目安を必ず守り、圧縮せずたっぷり書いてください。';
 
@@ -147,15 +150,16 @@ async function runAllBlocks() {
     state.running = true;
     hideError();
     try {
-        while (state.blockIndex < TOTAL_BLOCKS) {
+        while (state.blockIndex < MAX_BLOCKS) {
             setStatus(
-                `鑑定書を執筆しています… （${state.blockIndex + 1} / ${TOTAL_BLOCKS} ブロック）`,
-                5 + Math.round(90 * state.blockIndex / TOTAL_BLOCKS)
+                `鑑定書を執筆しています… （${state.blockIndex + 1} / ${EXPECTED_BLOCKS} ブロック目安）`,
+                5 + Math.round(90 * Math.min(state.blockIndex, EXPECTED_BLOCKS - 1) / EXPECTED_BLOCKS)
             );
             const blockText = await streamOneBlock();
             state.messages.push({ role: 'assistant', content: blockText });
             state.messages.push({ role: 'user', content: CONTINUE_PROMPT });
             state.blockIndex += 1;
+            if (FINAL_CHAPTER.test(blockText)) break;
         }
         // 最後に積んだ「続けて」は不要
         state.messages.pop();
