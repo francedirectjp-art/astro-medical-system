@@ -397,6 +397,18 @@ def prompt_generator_files(filename):
     from flask import send_from_directory
     return send_from_directory('prompt-generator', filename)
 
+@app.route('/reading/')
+def reading_page():
+    """一気通貫鑑定（第2版）— 入力→自動6ブロック生成→鑑定書表示→印刷/PDF"""
+    from flask import send_from_directory
+    return send_from_directory('reading', 'index.html')
+
+@app.route('/reading/<path:filename>')
+def reading_files(filename):
+    """一気通貫鑑定ページの静的ファイル配信"""
+    from flask import send_from_directory
+    return send_from_directory('reading', filename)
+
 @app.route('/experience')
 @app.route('/experience/')
 @app.route('/2026')

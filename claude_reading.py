@@ -13,10 +13,17 @@ from anthropic import Anthropic
 
 claude_reading = Blueprint('claude_reading', __name__)
 
-_GEM_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                         'gem_narrative_astrologer.md')
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Gem バージョン → (指示文ファイル, max_tokens)
+# v1: Evolution Ver.（約12,000字・二部構成） / v2: 第2版（約20,000字・6ブロック自動進行）
+_GEMS = {
+    'v1': (os.path.join(_BASE_DIR, 'gem_narrative_astrologer.md'),
+           int(os.environ.get('READING_MAX_TOKENS', '4000'))),
+    'v2': (os.path.join(_BASE_DIR, 'gem_narrative_astrologer_v2.md'),
+           int(os.environ.get('READING_MAX_TOKENS_V2', '12000'))),
+}
 DEFAULT_MODEL = os.environ.get('READING_MODEL', 'claude-sonnet-4-6')
-MAX_TOKENS = int(os.environ.get('READING_MAX_TOKENS', '4000'))
+MAX_TOKENS = _GEMS['v1'][1]
 
 # 許可モデル（任意モデル注入を防ぐ）。既定は検証済みの Sonnet 4.6。
 ALLOWED_MODELS = {
@@ -26,8 +33,9 @@ ALLOWED_MODELS = {
 }
 
 
-def _load_gem():
-    with open(_GEM_PATH, encoding='utf-8') as f:
+def _load_gem(version='v1'):
+    path, _ = _GEMS.get(version, _GEMS['v1'])
+    with open(path, encoding='utf-8') as f:
         return f.read()
 
 
@@ -38,7 +46,8 @@ def reading_health():
         'success': True,
         'configured': bool(os.environ.get('ANTHROPIC_API_KEY')),
         'default_model': DEFAULT_MODEL,
-        'gem_loaded': os.path.exists(_GEM_PATH),
+        'gems': {v: os.path.exists(p) for v, (p, _) in _GEMS.items()},
+        'gem_loaded': os.path.exists(_GEMS['v1'][0]),
     })
 
 
@@ -60,6 +69,8 @@ def reading_stream():
     model = data.get('model') or DEFAULT_MODEL
     if model not in ALLOWED_MODELS:
         model = DEFAULT_MODEL
+    gem_version = data.get('gem') if data.get('gem') in _GEMS else 'v1'
+    max_tokens = _GEMS[gem_version][1]
 
     api_key = os.environ.get('ANTHROPIC_API_KEY')
     if not api_key:
@@ -77,7 +88,7 @@ def reading_stream():
                         'error': '最初のメッセージは user である必要があります'}), 400
 
     try:
-        gem = _load_gem()
+        gem = _load_gem(gem_version)
     except OSError as e:
         return jsonify({'success': False, 'error': f'gem 読込失敗: {e}'}), 500
 
@@ -88,7 +99,7 @@ def reading_stream():
 
     def generate():
         try:
-            with client.messages.stream(model=model, max_tokens=MAX_TOKENS,
+            with client.messages.stream(model=model, max_tokens=max_tokens,
                                         system=gem, messages=messages) as stream:
                 for text in stream.text_stream:
                     yield sse({'t': text})

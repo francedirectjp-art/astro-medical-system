@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ナラティブ・アストロロジー鑑定書</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="no-print">
+            <h1>ナラティブ・アストロロジー<br>鑑定書の作成</h1>
+            <p class="subtitle">出生情報を入力すると、約2万字の鑑定書が自動で執筆されます</p>
+        </header>
+
+        <main>
+            <!-- 入力フォーム -->
+            <section class="input-section no-print" id="inputSection">
+                <h2>出生情報の入力</h2>
+
+                <div class="form-group">
+                    <label for="name">お名前</label>
+                    <input type="text" id="name" placeholder="例: 山田太郎" required>
+                </div>
+
+                <div class="form-group">
+                    <label>生年月日</label>
+                    <div class="date-inputs">
+                        <input type="number" id="year" placeholder="年" min="1900" max="2100" required>
+                        <span>年</span>
+                        <input type="number" id="month" placeholder="月" min="1" max="12" required>
+                        <span>月</span>
+                        <input type="number" id="day" placeholder="日" min="1" max="31" required>
+                        <span>日</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>出生時間</label>
+                    <div class="time-inputs">
+                        <input type="number" id="hour" placeholder="時" min="0" max="23" required>
+                        <span>時</span>
+                        <input type="number" id="minute" placeholder="分" min="0" max="59" required>
+                        <span>分</span>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="timeUnknown">
+                        <label for="timeUnknown">出生時間不明（12:00に設定）</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="prefecture">出生地（都道府県）</label>
+                    <select id="prefecture">
+                        <option value="">選択してください</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="consultation">ご相談・近況（任意）</label>
+                    <textarea id="consultation" rows="5"
+                        placeholder="今のお仕事や暮らし、これからの願いなどを自由にお書きください。鑑定書に織り込まれます。"></textarea>
+                </div>
+
+                <button id="generateBtn" class="generate-btn">鑑定書を作成する</button>
+
+                <div id="statusBox" class="status-box" style="display:none;">
+                    <div class="status-text" id="statusText">準備中…</div>
+                    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                </div>
+
+                <div id="errorBox" class="error-box" style="display:none;">
+                    <div id="errorText"></div>
+                    <button id="retryBtn" class="retry-btn">続きから再開する</button>
+                </div>
+            </section>
+
+            <!-- 鑑定書 -->
+            <section class="report-section" id="reportSection" style="display:none;">
+                <div class="report-actions no-print">
+                    <button id="printBtn" class="print-btn">PDFとして保存（印刷）</button>
+                </div>
+                <article class="report" id="report">
+                    <div class="report-cover">
+                        <div class="report-cover-label">Narrative Astrology Reading</div>
+                        <h1 class="report-title" id="reportTitle"></h1>
+                        <div class="report-meta" id="reportMeta"></div>
+                        <div class="report-author">星とハーブの研究家　織田 剛</div>
+                    </div>
+                    <div class="report-body" id="reportBody"></div>
+                </article>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

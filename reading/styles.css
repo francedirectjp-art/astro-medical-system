@@ -1,0 +1,188 @@
+/* ナラティブ・アストロロジー鑑定書 */
+
+:root {
+    --bg: #f7f4ee;
+    --card: #ffffff;
+    --ink: #2b2a26;
+    --ink-soft: #6b675e;
+    --accent: #7a5c2e;
+    --accent-soft: #b49a6c;
+    --line: #e4ddd0;
+    --error: #b3452e;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif;
+    line-height: 1.8;
+}
+
+.container { max-width: 860px; margin: 0 auto; padding: 32px 20px 80px; }
+
+header { text-align: center; margin-bottom: 36px; }
+header h1 { font-size: 1.7rem; letter-spacing: 0.08em; color: var(--accent); }
+.subtitle { margin-top: 10px; color: var(--ink-soft); font-size: 0.95rem; }
+
+/* ── 入力フォーム ── */
+.input-section {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 28px 26px;
+    margin-bottom: 40px;
+}
+.input-section h2 { font-size: 1.1rem; margin-bottom: 22px; color: var(--accent); }
+
+.form-group { margin-bottom: 20px; }
+.form-group > label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.95rem; }
+
+input[type="text"], input[type="number"], select, textarea {
+    font: inherit;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fdfcf9;
+    color: var(--ink);
+}
+input[type="text"], select, textarea { width: 100%; }
+textarea { resize: vertical; }
+
+.date-inputs, .time-inputs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.date-inputs input, .time-inputs input { width: 90px; }
+
+.checkbox-group { margin-top: 10px; display: flex; align-items: center; gap: 8px; }
+.checkbox-group label { font-weight: normal; font-size: 0.9rem; color: var(--ink-soft); }
+
+.generate-btn {
+    width: 100%;
+    padding: 15px;
+    font: inherit;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-soft));
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+.generate-btn:disabled { opacity: 0.55; cursor: default; }
+
+/* ── ステータス表示 ── */
+.status-box { margin-top: 20px; }
+.status-text { font-size: 0.92rem; color: var(--ink-soft); margin-bottom: 8px; }
+.progress-bar {
+    height: 8px;
+    background: var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, var(--accent), var(--accent-soft));
+    transition: width 0.6s ease;
+}
+
+.error-box {
+    margin-top: 18px;
+    padding: 14px 16px;
+    border: 1px solid var(--error);
+    border-radius: 8px;
+    color: var(--error);
+    font-size: 0.92rem;
+    background: #fdf3f0;
+}
+.retry-btn {
+    margin-top: 10px;
+    padding: 8px 18px;
+    font: inherit;
+    font-size: 0.9rem;
+    color: #fff;
+    background: var(--error);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* ── 鑑定書 ── */
+.report-actions { text-align: right; margin-bottom: 14px; }
+.print-btn {
+    padding: 10px 22px;
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--card);
+    border: 1px solid var(--accent-soft);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.report {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 60px 56px;
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+    font-size: 1.02rem;
+    line-height: 2.05;
+}
+
+.report-cover { text-align: center; margin-bottom: 64px; }
+.report-cover-label {
+    font-size: 0.78rem;
+    letter-spacing: 0.35em;
+    color: var(--accent-soft);
+    text-transform: uppercase;
+    margin-bottom: 22px;
+}
+.report-title { font-size: 1.8rem; font-weight: 600; letter-spacing: 0.12em; margin-bottom: 14px; }
+.report-meta { font-size: 0.88rem; color: var(--ink-soft); margin-bottom: 30px; }
+.report-author { font-size: 0.95rem; letter-spacing: 0.15em; color: var(--accent); }
+
+.report-body p { margin-bottom: 1.5em; text-align: justify; }
+.report-body .chapter-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    margin: 3em 0 1.4em;
+    padding-bottom: 0.5em;
+    border-bottom: 1px solid var(--line);
+}
+.report-body .minor-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 2em 0 1em;
+    color: var(--ink);
+}
+.report-body .recipe-line { margin-bottom: 0.4em; padding-left: 1em; }
+.block-partial { opacity: 0.92; }
+
+/* ── モバイル ── */
+@media (max-width: 640px) {
+    .report { padding: 36px 22px; font-size: 0.98rem; }
+    .report-title { font-size: 1.4rem; }
+}
+
+/* ── 印刷（PDF保存） ── */
+@media print {
+    .no-print { display: none !important; }
+    body { background: #fff; }
+    .container { max-width: none; padding: 0; }
+    .report {
+        border: none;
+        border-radius: 0;
+        padding: 0;
+        font-size: 10.5pt;
+        line-height: 2.0;
+    }
+    .report-cover { margin-top: 30mm; margin-bottom: 40mm; page-break-after: always; }
+    .report-body .chapter-title { page-break-after: avoid; }
+    .report-body p { orphans: 3; widows: 3; }
+    @page { margin: 22mm 18mm; }
+}
