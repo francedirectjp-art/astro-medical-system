@@ -4,7 +4,8 @@
 
 const API_BASE_URL = window.location.origin;
 const TOTAL_BLOCKS = 6;
-const CONTINUE_MARKER = /（『はい』または『続けて』と入力すると、次へ進みます）/g;
+const CONTINUE_MARKER = /（[『「]はい[』」]または[『「]続けて[』」]と入力すると、次へ進みます。?）/g;
+const CONTINUE_PROMPT = '続けて。第5節の各章の文字数目安を必ず守り、圧縮せずたっぷり書いてください。';
 
 const PREFECTURES = {
     '北海道': { lat: 43.0642, lon: 141.3469 }, '青森県': { lat: 40.8244, lon: 140.7400 },
@@ -153,7 +154,7 @@ async function runAllBlocks() {
             );
             const blockText = await streamOneBlock();
             state.messages.push({ role: 'assistant', content: blockText });
-            state.messages.push({ role: 'user', content: '続けて' });
+            state.messages.push({ role: 'user', content: CONTINUE_PROMPT });
             state.blockIndex += 1;
         }
         // 最後に積んだ「続けて」は不要
@@ -323,7 +324,7 @@ function buildChartText(name, year, month, day, hour, minute, prefecture,
         t += `\n## ご本人からの近況とご相談（参考）\n${consultation}\n`;
     }
 
-    t += `\n---\n以上のデータで鑑定書の執筆を開始してください。\n`;
+    t += `\n---\n以上のデータで鑑定書の執筆を開始してください。第5節の各章の文字数目安（全体約20,000字）を厳守し、圧縮せずたっぷり書いてください。\n`;
     return t;
 }
 
