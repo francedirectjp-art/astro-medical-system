@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anti-Gravity Prompt Builder v3.0 - Backend API Edition</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✨ Anti-Gravity Prompt Builder</h1>
+            <p class="subtitle">占星術プロンプト・ジェネレーター v3.0 (Swiss Ephemeris完全版)</p>
+            <p class="description">Swiss Ephemeris WebAssemblyによる最高精度天体計算（±0.001度）</p>
+        </header>
+
+        <main>
+            <!-- 入力フォーム -->
+            <section class="input-section">
+                <h2>📝 出生情報の入力</h2>
+                
+                <div class="form-group">
+                    <label for="name">お名前</label>
+                    <input type="text" id="name" placeholder="例: 山田太郎" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="year">生年月日</label>
+                        <div class="date-inputs">
+                            <input type="number" id="year" placeholder="年" min="1900" max="2100" required>
+                            <span>年</span>
+                            <input type="number" id="month" placeholder="月" min="1" max="12" required>
+                            <span>月</span>
+                            <input type="number" id="day" placeholder="日" min="1" max="31" required>
+                            <span>日</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="hour">出生時間</label>
+                        <div class="time-inputs">
+                            <input type="number" id="hour" placeholder="時" min="0" max="23" required>
+                            <span>時</span>
+                            <input type="number" id="minute" placeholder="分" min="0" max="59" required>
+                            <span>分</span>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="timeUnknown">
+                            <label for="timeUnknown">出生時間不明（12:00に設定）</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="location">出生地</label>
+                    <input type="text" id="location" placeholder="例: 東京都渋谷区" required>
+                    <button type="button" id="searchLocation" class="btn-secondary">📍 位置検索</button>
+                </div>
+
+                <div class="form-row coordinates-row" id="coordinatesRow" style="display: none;">
+                    <div class="form-group">
+                        <label for="latitude">緯度</label>
+                        <input type="number" id="latitude" step="0.0001" placeholder="35.6762" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="longitude">経度</label>
+                        <input type="number" id="longitude" step="0.0001" placeholder="139.6503" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="timezone">タイムゾーン</label>
+                        <input type="text" id="timezone" placeholder="Asia/Tokyo" required>
+                    </div>
+                </div>
+
+                <button type="button" id="generateBtn" class="btn-primary">🌟 プロンプト生成（Swiss Ephemeris）</button>
+            </section>
+
+            <!-- ローディング表示 -->
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Swiss Ephemeris による高精度天体計算中...</p>
+                <p style="font-size: 0.9rem; color: #cbd5e1;">精度: ±0.001度 | 10天体 + カイロン + ドラゴンヘッド</p>
+            </div>
+
+            <!-- 出力エリア -->
+            <section class="output-section" id="outputSection" style="display: none;">
+                <h2>📋 生成されたプロンプト</h2>
+                <div class="output-controls">
+                    <button type="button" id="copyBtn" class="btn-primary">📋 クリップボードにコピー</button>
+                    <button type="button" id="downloadBtn" class="btn-secondary">💾 テキストファイルでダウンロード</button>
+                </div>
+                <div class="output-text" id="outputText"></div>
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2024 Anti-Gravity Prompt Builder v3.0 | Powered by Swiss Ephemeris WebAssembly (±0.001度精度)</p>
+        </footer>
+    </div>
+
+    <script type="module" src="app-v3.js"></script>
+</body>
+</html>

@@ -1,11 +1,27 @@
 from flask import Flask, request, render_template, jsonify, redirect, url_for
+from flask_cors import CORS
 import math
 import ephem
 from datetime import datetime
 import json
 import os
 
+# Swiss Ephemeris API Blueprint のインポート
+from swisseph_api import swisseph_api
+
+# Claude 一気通貫鑑定 Blueprint のインポート
+from claude_reading import claude_reading
+
+# Rectification API Blueprint (astro-rectify 用)
+from rectification_api import rectification_api
+
+# Metaphysica Atlas (世界都市 + 歴史的タイムゾーン)
+import atlas_lib
+
 app = Flask(__name__)
+
+# CORSを有効化（プロンプトジェネレータからのAPI呼び出し用）
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # 現在のスクリプトのディレクトリを取得
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -369,6 +385,93 @@ def generate_comprehensive_health_data(astro_data, archetype):
 def index():
     return render_template('input.html')
 
+@app.route('/prompt-generator/')
+def prompt_generator():
+    """Anti-Gravity Prompt Builder (Swiss Ephemeris版 - 日本版)"""
+    from flask import send_from_directory
+    return send_from_directory('prompt-generator', 'index-v4.html')
+
+@app.route('/prompt-generator/<path:filename>')
+def prompt_generator_files(filename):
+    """プロンプトジェネレーターの静的ファイル配信"""
+    from flask import send_from_directory
+    return send_from_directory('prompt-generator', filename)
+
+@app.route('/reading/')
+def reading_page():
+    """一気通貫鑑定（第2版）— 入力→自動6ブロック生成→鑑定書表示→印刷/PDF"""
+    from flask import send_from_directory
+    return send_from_directory('reading', 'index.html')
+
+@app.route('/reading/<path:filename>')
+def reading_files(filename):
+    """一気通貫鑑定ページの静的ファイル配信"""
+    from flask import send_from_directory
+    return send_from_directory('reading', filename)
+
+@app.route('/experience')
+@app.route('/experience/')
+@app.route('/2026')
+def experience_page():
+    """2026 未来の航海図 — 体験ページ（出生データ→チャート→Gemで鑑定）"""
+    from flask import send_from_directory
+    return send_from_directory('experience', 'index.html')
+
+@app.route('/experience/<path:filename>')
+def experience_files(filename):
+    """体験ページの静的ファイル配信"""
+    from flask import send_from_directory
+    return send_from_directory('experience', filename)
+
+# ── Metaphysica Atlas API ─────────────────────────────────────────────────
+
+@app.route('/api/cities/search')
+def api_cities_search():
+    """世界都市検索 (47都道府県を超える精度).
+
+    Query params:
+      q: 検索文字列 (例: "Tokyo", "東京", "Hakodate", "石垣")
+      limit: 上位 N 件 (default 10)
+      country: ISO 国コードで絞る (例: "JP")
+    """
+    q = request.args.get('q', '').strip()
+    limit = int(request.args.get('limit', 10))
+    country = request.args.get('country')
+    if not q:
+        return jsonify({'cities': []})
+    cities = atlas_lib.search_cities(q, limit=limit, country=country)
+    return jsonify({
+        'cities': [atlas_lib.city_to_dict(c) for c in cities],
+        'query': q,
+        'total': len(cities),
+    })
+
+
+@app.route('/api/cities/timezone')
+def api_cities_timezone():
+    """出生地 + 出生日時 → 正確な TZ オフセット (歴史的 DST 対応).
+
+    Query params:
+      tz: IANA timezone (例: "Asia/Tokyo")
+      date: ISO datetime (例: "1948-07-01T03:00:00Z")
+    """
+    tz_name = request.args.get('tz', '').strip()
+    date_str = request.args.get('date', '').strip()
+    if not tz_name or not date_str:
+        return jsonify({'error': 'tz and date are required'}), 400
+    try:
+        dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+    except ValueError as e:
+        return jsonify({'error': f'invalid date: {e}'}), 400
+    info = atlas_lib.get_timezone_at(tz_name, dt)
+    return jsonify({
+        'name': info.name,
+        'offset_minutes': info.offset_minutes,
+        'offset_label': info.offset_label,
+        'is_dst': info.is_dst,
+    })
+
+
 @app.route('/basic', methods=['POST'])
 def basic_diagnosis():
     try:
@@ -444,6 +547,15 @@ def detailed_diagnosis():
 
     except Exception as e:
         return f"エラーが発生しました: {str(e)}", 400
+
+# Swiss Ephemeris API Blueprint を登録
+app.register_blueprint(swisseph_api)
+
+# Claude 一気通貫鑑定 Blueprint を登録
+app.register_blueprint(claude_reading)
+
+# Rectification API Blueprint を登録 (astro-rectify 用の 4 endpoint)
+app.register_blueprint(rectification_api)
 
 if __name__ == '__main__':
     # Railway対応：PORT環境変数の動的取得

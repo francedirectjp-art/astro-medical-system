@@ -1,4 +1,8 @@
 Flask==2.3.3
-pyephem==4.1.5
+ephem==4.1.5
 Werkzeug==2.3.7
 gunicorn==21.2.0
+pyswisseph==2.10.3.2
+flask-cors==4.0.0
+python-dateutil==2.8.2
+anthropic==0.105.2
