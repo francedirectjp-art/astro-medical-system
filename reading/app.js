@@ -5,7 +5,7 @@
 const API_BASE_URL = window.location.origin;
 // 想定は6ブロックだが、章がずれた場合に終章まで書き切るため上限10回まで続行する
 const EXPECTED_BLOCKS = 6;
-const MAX_BLOCKS = 10;
+const MAX_BLOCKS = 14;
 const FINAL_CHAPTER = /終章[｜|]/;
 const CONTINUE_MARKER = /（[『「]はい[』」]または[『「]続けて[』」]と入力すると、次へ進みます。?）/g;
 const CONTINUE_PROMPT = '続けて。第5節の各章の文字数目安を必ず守り、圧縮せずたっぷり書いてください。';
