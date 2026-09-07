@@ -3,12 +3,17 @@
 // → 6ブロックを自動進行で受信 → 鑑定書として表示 → 印刷/PDF
 
 const API_BASE_URL = window.location.origin;
-// 想定は6ブロックだが、章がずれた場合に終章まで書き切るため上限10回まで続行する
-const EXPECTED_BLOCKS = 6;
-const MAX_BLOCKS = 14;
+// 2分割生成方式: 前半(序章〜第5章 約9,500字)+後半(第6章〜終章 約8,500字)で
+// 計約18,000字。実測コストは1件約$0.20(Sonnet 5 + thinking無効 + キャッシュ)。
+// 万一後半が終章まで届かなかった場合のみ3回目で追記する。
+const MAX_CALLS = 3;
+const TARGET_CHARS = 18000;
 const FINAL_CHAPTER = /終章[｜|]/;
+const READING_MODEL = 'claude-sonnet-5';
+const PART2_PROMPT = '続けて後半です。第6章・第7章・第8章・第9章・第10章・終章を途中で止まらずに書き切ってください。'
+    + '後半の合計は8,500字前後。第5節の各章の文字数目安を一章ずつ守ってください。';
 const CONTINUE_MARKER = /（[『「]はい[』」]または[『「]続けて[』」]と入力すると、次へ進みます。?）/g;
-const CONTINUE_PROMPT = '続けて。第5節の各章の文字数目安を必ず守り、圧縮せずたっぷり書いてください。';
+const CONTINUE_PROMPT = '続けて。残りの章を終章まで書き切ってください。';
 
 const PREFECTURES = {
     '北海道': { lat: 43.0642, lon: 141.3469 }, '青森県': { lat: 40.8244, lon: 140.7400 },
@@ -150,14 +155,14 @@ async function runAllBlocks() {
     state.running = true;
     hideError();
     try {
-        while (state.blockIndex < MAX_BLOCKS) {
-            setStatus(
-                `鑑定書を執筆しています… （${state.blockIndex + 1} / ${EXPECTED_BLOCKS} ブロック目安）`,
-                5 + Math.round(90 * Math.min(state.blockIndex, EXPECTED_BLOCKS - 1) / EXPECTED_BLOCKS)
-            );
+        while (state.blockIndex < MAX_CALLS) {
+            setStatus('鑑定書を執筆しています…', 5);
             const blockText = await streamOneBlock();
             state.messages.push({ role: 'assistant', content: blockText });
-            state.messages.push({ role: 'user', content: CONTINUE_PROMPT });
+            state.messages.push({
+                role: 'user',
+                content: state.blockIndex === 0 ? PART2_PROMPT : CONTINUE_PROMPT
+            });
             state.blockIndex += 1;
             if (FINAL_CHAPTER.test(blockText)) break;
         }
@@ -194,7 +199,7 @@ async function streamOneBlock() {
     const resp = await fetch(`${API_BASE_URL}/api/reading/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: state.messages, gem: 'v2' })
+        body: JSON.stringify({ messages: state.messages, gem: 'v2', model: READING_MODEL })
     });
     if (!resp.ok) {
         blockDiv.remove();
@@ -211,6 +216,11 @@ async function streamOneBlock() {
 
     const render = () => {
         blockDiv.innerHTML = formatBlock(blockText);
+        const done = state.reportChunks.reduce((n, c) => n + c.length, 0) + blockText.length;
+        setStatus(
+            `鑑定書を執筆しています… （約${Math.round(done / 100) * 100}字 / 目安${TARGET_CHARS}字）`,
+            Math.min(95, 5 + Math.round(90 * done / TARGET_CHARS))
+        );
     };
 
     try {
@@ -328,7 +338,11 @@ function buildChartText(name, year, month, day, hour, minute, prefecture,
         t += `\n## ご本人からの近況とご相談（参考）\n${consultation}\n`;
     }
 
-    t += `\n---\n以上のデータで鑑定書の執筆を開始してください。第5節の各章の文字数目安（全体約20,000字）を厳守し、圧縮せずたっぷり書いてください。\n`;
+    t += `\n---\n以上のデータで鑑定書を執筆してください。`;
+    t += `今回は対話ではなく2回に分けた一括生成です。第2節のブロック停止ルールは適用しません。`;
+    t += `まず前半として、序章・第1章・第2章・第3章・第4章・第5章を途中で止まらずに書いてください。`;
+    t += `前半の合計は9,500字前後。第5節の各章の文字数目安を一章ずつ守り、`;
+    t += `実感の場面描写と代償の記述を省略しないでください。第5章まで書いたら止まってください。\n`;
     return t;
 }
 

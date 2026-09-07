@@ -20,7 +20,7 @@ _GEMS = {
     'v1': (os.path.join(_BASE_DIR, 'gem_narrative_astrologer.md'),
            int(os.environ.get('READING_MAX_TOKENS', '4000'))),
     'v2': (os.path.join(_BASE_DIR, 'gem_narrative_astrologer_v2.md'),
-           int(os.environ.get('READING_MAX_TOKENS_V2', '12000'))),
+           int(os.environ.get('READING_MAX_TOKENS_V2', '28000'))),
 }
 DEFAULT_MODEL = os.environ.get('READING_MODEL', 'claude-sonnet-4-6')
 MAX_TOKENS = _GEMS['v1'][1]
@@ -28,6 +28,7 @@ MAX_TOKENS = _GEMS['v1'][1]
 # 許可モデル（任意モデル注入を防ぐ）。既定は検証済みの Sonnet 4.6。
 ALLOWED_MODELS = {
     'claude-sonnet-4-6',
+    'claude-sonnet-5',
     'claude-opus-4-8',
     'claude-haiku-4-5-20251001',
 }
@@ -97,10 +98,17 @@ def reading_stream():
     def sse(obj):
         return 'data: ' + json.dumps(obj, ensure_ascii=False) + '\n\n'
 
+    # systemプロンプトはキャッシュ(連続鑑定時に入力単価が1/10になる)
+    system_blocks = [{'type': 'text', 'text': gem,
+                      'cache_control': {'type': 'ephemeral'}}]
+
     def generate():
         try:
+            # thinking無効: Sonnet 5はデフォルトで内部思考に出力トークンを大量消費するため、
+            # 純テキスト生成のこの用途では明示的に切る(思考も出力単価で課金される)
             with client.messages.stream(model=model, max_tokens=max_tokens,
-                                        system=gem, messages=messages) as stream:
+                                        thinking={'type': 'disabled'},
+                                        system=system_blocks, messages=messages) as stream:
                 for text in stream.text_stream:
                     yield sse({'t': text})
             yield sse({'done': True})
