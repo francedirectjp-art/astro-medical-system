@@ -337,6 +337,19 @@ function buildChartText(name, year, month, day, hour, minute, prefecture,
         t += `\n### 日食・月食\n- データ提供なし（日食・月食には言及しないでください）\n`;
     }
 
+    // プロフェクションは計算済みで渡す(モデルの割り算ミス防止)
+    if (window.HoroscopeChart && solarReturn && typeof solarReturn.age === 'number') {
+        const prof = HoroscopeChart.profection(solarReturn.age, natalChart.houses.cusps);
+        t += `\n## プロフェクション（計算済み・この値をそのまま使うこと）\n`;
+        t += `- 現在の年齢: ${prof.age}歳（${prof.age} ÷ 12 の余り = ${prof.age % 12}）\n`;
+        t += `- 起動ハウス: 第${prof.house}ハウス\n`;
+        t += `- 起動サイン: ${prof.signJP}\n`;
+        t += `- 年主星（今年、鍵を預かる星）: ${prof.lordJP}\n`;
+        if (prof.prevAge >= 0) {
+            t += `- 同じ部屋が前回起動した年齢: ${prof.prevAge}歳\n`;
+        }
+    }
+
     if (solarReturn && solarReturn.planets) {
         const sr = solarReturn;
         t += `\n## ソーラーリターン図（太陽回帰図）\n`;
