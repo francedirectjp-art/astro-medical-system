@@ -51,6 +51,21 @@ const PLANETS_JP = {
     'Pluto': '冥王星', 'TrueNode': 'ドラゴンヘッド', 'Chiron': 'キローン'
 };
 
+// === サビアンシンボル(検証済み360度表) ===
+let SABIAN360 = null;
+const SIGN_EN = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+                 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+
+function sabianOf(signJP, degree) {
+    // サイン内度数→サビアン度数(0°00-0°59=1度)→原文
+    if (!SABIAN360) return null;
+    const si = SIGNS_JP.indexOf(signJP);
+    let d = Math.floor(degree) + 1;
+    if (d > 30) d = 30;
+    const sym = SABIAN360[`${SIGN_EN[si]}_${d}`];
+    return sym ? { d, sym } : null;
+}
+
 // === 実行状態（エラー時の再開用） ===
 const state = {
     messages: [],       // 会話履歴（user/assistant交互）
@@ -78,6 +93,9 @@ document.addEventListener('DOMContentLoaded', () => {
             h.disabled = false; m.disabled = false;
         }
     });
+
+    fetch('sabian360.json').then(r => r.json()).then(d => { SABIAN360 = d; })
+        .catch(() => { SABIAN360 = null; });
 
     document.getElementById('generateBtn').addEventListener('click', startReading);
     document.getElementById('retryBtn').addEventListener('click', resumeReading);
@@ -342,6 +360,26 @@ function buildChartText(name, year, month, day, hour, minute, prefecture,
             transits.saturn_transits.forEach(tr => { t += `- ${tr.date}: ${tr.signJP}入り\n`; });
         }
         t += `\n### 日食・月食\n- データ提供なし（日食・月食には言及しないでください）\n`;
+    }
+
+    // サビアンシンボルは検証済み360度表から計算して渡す(モデルの暗記誤り防止)
+    if (SABIAN360) {
+        t += `\n## サビアンシンボル（計算済み・検証済み原文。度数は換算済みなので変更せず、情景は原文に忠実な日本語で描写すること）\n`;
+        for (const [key, p] of Object.entries(natalChart.planets)) {
+            if (p.error || p.degree === undefined) continue;
+            const s = sabianOf(p.signJP, p.degree);
+            if (s) t += `- ${PLANETS_JP[key] || key}: ${p.signJP}${s.d}度 "${s.sym}"\n`;
+        }
+        for (const [label, obj] of [['ASC', houses.ascendant], ['MC', houses.midheaven]]) {
+            const s = sabianOf(obj.signJP, obj.degree);
+            if (s) t += `- ${label}: ${obj.signJP}${s.d}度 "${s.sym}"\n`;
+        }
+        if (progressions && progressions.p_sun) {
+            for (const [label, obj] of [['進行の太陽', progressions.p_sun], ['進行の月', progressions.p_moon]]) {
+                const s = sabianOf(obj.signJP, obj.degree);
+                if (s) t += `- ${label}: ${obj.signJP}${s.d}度 "${s.sym}"\n`;
+            }
+        }
     }
 
     // セクトとプロフェクションは計算済みで渡す(モデルの判定ミス防止)
