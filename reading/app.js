@@ -111,7 +111,8 @@ async function startReading() {
             { year, month, day, hour, minute, latitude: loc.lat, longitude: loc.lon });
 
         const currentDate = new Date().toISOString().split('T')[0];
-        const [progressions, transits, solarReturn] = await Promise.all([
+        const [ty, tm, td] = currentDate.split('-').map(Number);
+        const [progressions, transits, solarReturn, transitChart] = await Promise.all([
             postJson('/api/calculate-progressions', {
                 birth_year: year, birth_month: month, birth_day: day,
                 birth_hour: hour, birth_minute: minute, current_date: currentDate
@@ -123,6 +124,11 @@ async function startReading() {
                 latitude: loc.lat, longitude: loc.lon, tz_name: 'Asia/Tokyo',
                 current_date: currentDate,
                 sr_latitude: loc.lat, sr_longitude: loc.lon, sr_tz_name: 'Asia/Tokyo'
+            }),
+            // 鑑定日正午の全天体(チャート外周のトランジット表示用)
+            postJson('/api/calculate-chart', {
+                year: ty, month: tm, day: td, hour: 12, minute: 0,
+                latitude: loc.lat, longitude: loc.lon
             })
         ]);
 
@@ -141,7 +147,14 @@ async function startReading() {
         // 鑑定データ(円形チャート+プログレス/トランジット/プロフェクション/SR表)
         if (window.HoroscopeChart) {
             const prof = HoroscopeChart.profection(solarReturn.age, natal.houses.cusps);
-            document.getElementById('wheelWrap').innerHTML = HoroscopeChart.wheelSVG(natal);
+            const extras = {
+                transit: transitChart && transitChart.planets,
+                progressed: [
+                    { label: 'P☉︎', pd: progressions && progressions.p_sun },
+                    { label: 'P☽︎', pd: progressions && progressions.p_moon },
+                ].filter(e => e.pd),
+            };
+            document.getElementById('wheelWrap').innerHTML = HoroscopeChart.wheelSVG(natal, extras);
             document.getElementById('dataTables').innerHTML =
                 HoroscopeChart.tablesHTML(natal, progressions, transits, solarReturn, prof, currentDate);
             document.getElementById('reportData').style.display = 'block';

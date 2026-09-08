@@ -26,9 +26,13 @@
     const RULERS_JP = ['火星', '金星', '水星', '月', '太陽', '水星',
                       '金星', '火星', '木星', '土星', '土星', '木星'];
 
-    const CX = 460, CY = 460;
+    const CX = 540, CY = 540;
     const R_OUT = 400, R_IN = 340, R_PLANET = 265, R_HOUSE = 165, R_ASPECT = 195;
+    const R_TRANS = 428;          // 外周リング(トランジット/プログレス)の基準半径
+    const R_TRANS_OUT = 466;      // 外周リングの外側境界
     const INK = '#2b2a26', ACCENT = '#7a5c2e', LINE = '#cbc2ae';
+    const C_TRANS = '#2471a3';    // トランジット=青
+    const C_PROG = '#1e8449';     // プログレス=緑
 
     function fmtDeg(d) {
         let deg = Math.floor(d);
@@ -37,21 +41,27 @@
         return `${deg}°${String(min).padStart(2, '0')}′`;
     }
 
-    function wheelSVG(natal) {
+    // extras: {transit: {Sun:{longitude,...},...}, progressed: [{label:'P☉', pd:{longitude,...}}, ...]}
+    function wheelSVG(natal, extras) {
         const asc = natal.houses.ascendant.longitude;
         const mc = natal.houses.midheaven.longitude;
         const cusps = natal.houses.cusps;
+        const hasOuter = !!(extras && (extras.transit || extras.progressed));
+        const viewH = hasOuter ? 1148 : 1080;
         const pt = (deg, r) => {
             const th = (180 + (deg - asc)) * Math.PI / 180;
             return [CX + r * Math.cos(th), CY - r * Math.sin(th)];
         };
         const s = [];
-        s.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 920" ` +
+        s.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 ${viewH}" ` +
                `font-family="Hiragino Mincho ProN, Yu Mincho, serif">`);
         for (const r of [R_OUT, R_IN, R_ASPECT]) {
             s.push(`<circle cx="${CX}" cy="${CY}" r="${r}" fill="none" stroke="${LINE}" stroke-width="1.5"/>`);
         }
         s.push(`<circle cx="${CX}" cy="${CY}" r="${R_OUT}" fill="none" stroke="${ACCENT}" stroke-width="2.5"/>`);
+        if (hasOuter) {
+            s.push(`<circle cx="${CX}" cy="${CY}" r="${R_TRANS_OUT}" fill="none" stroke="${LINE}" stroke-width="1.2"/>`);
+        }
 
         for (let i = 0; i < 12; i++) {
             const [x1, y1] = pt(i * 30, R_IN);
@@ -79,7 +89,7 @@
         });
 
         for (const [ang, name] of [[asc, 'ASC'], [mc, 'MC']]) {
-            const [lx, ly] = pt(ang, R_OUT + 24);
+            const [lx, ly] = pt(ang, (hasOuter ? R_TRANS_OUT : R_OUT) + 24);
             s.push(`<text x="${lx}" y="${ly + 6}" text-anchor="middle" font-size="19" ` +
                    `font-weight="bold" fill="${ACCENT}">${name}</text>`);
         }
@@ -129,6 +139,53 @@
                     }
                 }
             }
+        }
+        // 外周リング: トランジット(青)とプログレス(緑)
+        if (hasOuter) {
+            const outer = [];
+            if (extras.transit) {
+                for (const k of ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars',
+                                 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']) {
+                    const p = extras.transit[k];
+                    if (p && p.longitude !== undefined) {
+                        outer.push({ deg: p.longitude, glyph: GLYPHS[k], pd: p, color: C_TRANS });
+                    }
+                }
+            }
+            (extras.progressed || []).forEach(e => {
+                if (e.pd && e.pd.longitude !== undefined) {
+                    outer.push({ deg: e.pd.longitude, glyph: e.label, pd: e.pd, color: C_PROG, small: true });
+                }
+            });
+            outer.sort((a, b) => a.deg - b.deg);
+            const placedOuter = [];
+            for (const o of outer) {
+                let r = R_TRANS;
+                let moved = true;
+                while (moved) {
+                    moved = false;
+                    for (const [pdeg, pr] of placedOuter) {
+                        const gap = Math.abs(((o.deg - pdeg + 180) % 360 + 360) % 360 - 180);
+                        if (gap < 6 && Math.abs(r - pr) < 30) { r += 32; moved = true; }
+                    }
+                }
+                placedOuter.push([o.deg, r]);
+                const [tx, ty] = pt(o.deg, R_OUT);
+                const [ix, iy] = pt(o.deg, R_OUT + 9);
+                s.push(`<line x1="${tx}" y1="${ty}" x2="${ix}" y2="${iy}" stroke="${o.color}" stroke-width="2"/>`);
+                const [gx, gy] = pt(o.deg, r);
+                s.push(`<text x="${gx}" y="${gy + 8}" text-anchor="middle" ` +
+                       `font-size="${o.small ? 17 : 22}" fill="${o.color}">${o.glyph}</text>`);
+                const [rx, ry] = pt(o.deg, r + 22);
+                const retro = o.pd.retrograde ? 'R' : '';
+                s.push(`<text x="${rx}" y="${ry + 4}" text-anchor="middle" font-size="11" ` +
+                       `fill="${o.color}" opacity="0.8">${Math.floor(o.pd.degree)}°${retro}</text>`);
+            }
+            // 凡例
+            s.push(`<text x="${CX}" y="1112" text-anchor="middle" font-size="19" fill="#6b675e">` +
+                   `<tspan fill="${INK}">● 内円=ネイタル</tspan>` +
+                   `<tspan dx="26" fill="${C_TRANS}">● 外周=トランジット(現在)</tspan>` +
+                   `<tspan dx="26" fill="${C_PROG}">● P=プログレス</tspan></text>`);
         }
         s.push('</svg>');
         return s.join('');
