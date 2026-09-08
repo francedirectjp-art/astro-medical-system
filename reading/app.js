@@ -138,6 +138,15 @@ async function startReading() {
         document.getElementById('reportBody').innerHTML = '';
         document.getElementById('reportSection').style.display = 'block';
 
+        // 鑑定データ(円形チャート+プログレス/トランジット/プロフェクション/SR表)
+        if (window.HoroscopeChart) {
+            const prof = HoroscopeChart.profection(solarReturn.age, natal.houses.cusps);
+            document.getElementById('wheelWrap').innerHTML = HoroscopeChart.wheelSVG(natal);
+            document.getElementById('dataTables').innerHTML =
+                HoroscopeChart.tablesHTML(natal, progressions, transits, solarReturn, prof, currentDate);
+            document.getElementById('reportData').style.display = 'block';
+        }
+
         // 会話を初期化して6ブロック自動進行
         state.messages = [{ role: 'user', content: chartText }];
         state.blockIndex = 0;

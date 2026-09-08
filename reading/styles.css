@@ -144,6 +144,39 @@ textarea { resize: vertical; }
 .report-meta { font-size: 0.88rem; color: var(--ink-soft); margin-bottom: 30px; }
 .report-author { font-size: 0.95rem; letter-spacing: 0.15em; color: var(--accent); }
 
+/* ── 鑑定データ(チャート+表) ── */
+.report-data { margin-bottom: 64px; }
+.data-title {
+    text-align: center;
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    margin-bottom: 24px;
+}
+.wheel-wrap { max-width: 540px; margin: 0 auto 36px; }
+.wheel-wrap svg { width: 100%; height: auto; display: block; }
+.data-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+}
+.data-card {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px 16px;
+    background: #fdfcf9;
+}
+.data-card h4 {
+    font-size: 0.92rem;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 10px;
+}
+.data-card table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+.data-card td { padding: 4px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.data-card tr:last-child td { border-bottom: none; }
+
 .report-body p { margin-bottom: 1.5em; text-align: justify; }
 .report-body .chapter-title {
     font-size: 1.25rem;
@@ -182,6 +215,9 @@ textarea { resize: vertical; }
         line-height: 2.0;
     }
     .report-cover { margin-top: 30mm; margin-bottom: 40mm; page-break-after: always; }
+    .report-data { page-break-after: always; }
+    .data-card { break-inside: avoid; background: #fff; }
+    .wheel-wrap { max-width: 130mm; }
     .report-body .chapter-title { page-break-after: avoid; }
     .report-body p { orphans: 3; widows: 3; }
     @page { margin: 22mm 18mm; }
