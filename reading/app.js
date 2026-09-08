@@ -337,7 +337,12 @@ function buildChartText(name, year, month, day, hour, minute, prefecture,
         t += `\n### 日食・月食\n- データ提供なし（日食・月食には言及しないでください）\n`;
     }
 
-    // プロフェクションは計算済みで渡す(モデルの割り算ミス防止)
+    // セクトとプロフェクションは計算済みで渡す(モデルの判定ミス防止)
+    const sunHouse = natalChart.planets.Sun && natalChart.planets.Sun.house;
+    if (sunHouse) {
+        const sect = (sunHouse >= 7 && sunHouse <= 12) ? '昼生まれ' : '夜生まれ';
+        t += `\n## セクト（計算済み・この値をそのまま使うこと）\n- 太陽が第${sunHouse}ハウス → ${sect}\n`;
+    }
     if (window.HoroscopeChart && solarReturn && typeof solarReturn.age === 'number') {
         const prof = HoroscopeChart.profection(solarReturn.age, natalChart.houses.cusps);
         t += `\n## プロフェクション（計算済み・この値をそのまま使うこと）\n`;
