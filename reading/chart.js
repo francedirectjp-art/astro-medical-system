@@ -191,6 +191,15 @@
         return s.join('');
     }
 
+    // 黄経→在室ハウス(ネイタルカスプ基準)
+    function houseOf(lon, cusps) {
+        for (let i = 0; i < 12; i++) {
+            const a = cusps[i], b = cusps[(i + 1) % 12];
+            if (((lon - a) % 360 + 360) % 360 < ((b - a) % 360 + 360) % 360) return i + 1;
+        }
+        return 12;
+    }
+
     // プロフェクション: 年齢→起動ハウス(余り0=1ハウス)→起動サイン→年主星
     function profection(age, cusps) {
         const houseNum = (age % 12) + 1;
@@ -233,11 +242,14 @@
         }
         h.push('</table></div>');
 
-        // プログレス
+        // プログレス(ハウスは出生図に重ねた在室)
         if (prog && prog.p_sun) {
+            const cusps = natal.houses.cusps;
+            const psH = houseOf(prog.p_sun.longitude, cusps);
+            const pmH = houseOf(prog.p_moon.longitude, cusps);
             h.push('<div class="data-card"><h4>プログレス（進行図）</h4><table>');
-            h.push(`<tr><td>進行の太陽</td><td>${prog.p_sun.signJP} ${fmtDeg(prog.p_sun.degree)}</td></tr>`);
-            h.push(`<tr><td>進行の月</td><td>${prog.p_moon.signJP} ${fmtDeg(prog.p_moon.degree)}</td></tr>`);
+            h.push(`<tr><td>進行の太陽</td><td>${prog.p_sun.signJP} ${fmtDeg(prog.p_sun.degree)}（ネイタル第${psH}ハウス）</td></tr>`);
+            h.push(`<tr><td>進行の月</td><td>${prog.p_moon.signJP} ${fmtDeg(prog.p_moon.degree)}（ネイタル第${pmH}ハウス）</td></tr>`);
             h.push(`<tr><td>基準日</td><td>${esc(currentDate)}</td></tr>`);
             h.push('</table></div>');
         }
@@ -279,5 +291,5 @@
         return h.join('');
     }
 
-    window.HoroscopeChart = { wheelSVG, profection, tablesHTML };
+    window.HoroscopeChart = { wheelSVG, profection, tablesHTML, houseOf };
 })();

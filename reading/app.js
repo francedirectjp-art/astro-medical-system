@@ -310,10 +310,17 @@ function buildChartText(name, year, month, day, hour, minute, prefecture,
     });
 
     if (progressions && progressions.p_sun) {
-        t += `\n## プログレス（セカンダリー進行図）\n`;
+        t += `\n## プログレス（セカンダリー進行図・ハウスは出生図に重ねた在室）\n`;
         t += `- 基準日: ${currentDate}\n`;
-        t += `- プログレス太陽: ${progressions.p_sun.signJP} ${formatDeg(progressions.p_sun.degree)}\n`;
-        t += `- プログレス月: ${progressions.p_moon.signJP} ${formatDeg(progressions.p_moon.degree)}\n`;
+        if (window.HoroscopeChart && HoroscopeChart.houseOf) {
+            const psH = HoroscopeChart.houseOf(progressions.p_sun.longitude, natalChart.houses.cusps);
+            const pmH = HoroscopeChart.houseOf(progressions.p_moon.longitude, natalChart.houses.cusps);
+            t += `- プログレス太陽: ${progressions.p_sun.signJP} ${formatDeg(progressions.p_sun.degree)} [ネイタル第${psH}ハウス]\n`;
+            t += `- プログレス月: ${progressions.p_moon.signJP} ${formatDeg(progressions.p_moon.degree)} [ネイタル第${pmH}ハウス]\n`;
+        } else {
+            t += `- プログレス太陽: ${progressions.p_sun.signJP} ${formatDeg(progressions.p_sun.degree)}\n`;
+            t += `- プログレス月: ${progressions.p_moon.signJP} ${formatDeg(progressions.p_moon.degree)}\n`;
+        }
     }
 
     if (transits) {
