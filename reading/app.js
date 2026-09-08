@@ -364,7 +364,9 @@ function buildChartText(name, year, month, day, hour, minute, prefecture,
 
     // サビアンシンボルは検証済み360度表から計算して渡す(モデルの暗記誤り防止)
     if (SABIAN360) {
-        t += `\n## サビアンシンボル（計算済み・検証済み原文。度数は換算済みなので変更せず、情景は原文に忠実な日本語で描写すること）\n`;
+        t += `\n## サビアンシンボル（計算済み・検証済み原文）\n`;
+        t += `※占星術の慣例により、度数表記◯°◯′は「切り上げた度数」のシンボルに正式に対応する（例: 獅子座8°32′→獅子座9度）。\n`;
+        t += `※以下が各天体の正式なサビアン度数である。本文では「近い度数」「およそ」等と言わず、その天体のサビアンシンボルそのものとして断言し、情景は原文に忠実な日本語で描写すること。\n`;
         for (const [key, p] of Object.entries(natalChart.planets)) {
             if (p.error || p.degree === undefined) continue;
             const s = sabianOf(p.signJP, p.degree);
