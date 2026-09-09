@@ -113,11 +113,12 @@ class Worker:
         name = f"{sub.get('name1') or ''}{sub.get('name2') or ''}".strip() or 'お客'
         y, mo, d = parse_birth(fv('free1'))
         h, mi, approx = parse_time(fv('free2'))
-        pref = (sub.get('pref') or '').lstrip('*') or '東京都'
-        if pref not in PREFECTURES:
-            pref = '東京都'
-        lat, lon = PREFECTURES[pref]
+        pref = (sub.get('pref') or '').lstrip('*')
         city = fv('free3')
+        if pref not in PREFECTURES:
+            # 市区町村欄に都道府県名が含まれていれば拾う
+            pref = next((p for p in PREFECTURES if p in city), '東京都')
+        lat, lon = PREFECTURES[pref]
         place = f"{pref}{city}" if city and not city.startswith(pref) else (city or pref)
         return {
             'name': name, 'y': y, 'mo': mo, 'd': d, 'h': h, 'mi': mi,
