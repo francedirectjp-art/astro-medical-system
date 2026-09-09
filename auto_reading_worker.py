@@ -101,7 +101,7 @@ class Worker:
         # 再デプロイ時は失敗マークを掃除して再挑戦させる
         for k in list(self.state):
             v = self.state[k]
-            if k.startswith('fail_') or (isinstance(v, dict) and v.get('token') == 'failed'):
+            if k.startswith('fail_') or (isinstance(v, dict) and v.get('token') in ('failed', 'external')):
                 del self.state[k]
 
     def _save_state(self):
