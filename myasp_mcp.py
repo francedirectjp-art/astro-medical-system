@@ -44,9 +44,9 @@ class MyASP:
     def call(self, name, args):
         _, raw = self._post({"jsonrpc": "2.0", "id": 2, "method": "tools/call",
                              "params": {"name": name, "arguments": args}})
-        for line in raw.splitlines():  # SSE で返ることがある
-            if line.startswith("data: "):
-                raw = line[6:]
+        datas = [l[6:] for l in raw.splitlines() if l.startswith("data: ")]
+        if datas:  # SSE(複数dataラインは結合)
+            raw = "".join(datas)
         d = json.loads(raw)
         if "error" in d:
             raise RuntimeError(str(d["error"])[:300])

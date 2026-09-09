@@ -98,18 +98,25 @@ class Worker:
                 self.state = json.load(open(self.state_path, encoding='utf-8'))
             except Exception:  # noqa: BLE001
                 self.state = {}
+        # 再デプロイ時は失敗マークを掃除して再挑戦させる
+        for k in list(self.state):
+            v = self.state[k]
+            if k.startswith('fail_') or (isinstance(v, dict) and v.get('token') == 'failed'):
+                del self.state[k]
 
     def _save_state(self):
         json.dump(self.state, open(self.state_path, 'w', encoding='utf-8'),
                   ensure_ascii=False, indent=0)
 
     def _person_from_subscriber(self, sub):
-        free = sub.get('free_fields') or {}
+        free = sub.get('free_fields') or []
+        if isinstance(free, dict):
+            fmap = {k: (v.get('value') if isinstance(v, dict) else v) for k, v in free.items()}
+        else:
+            fmap = {it.get('field_key'): it.get('value') for it in free if isinstance(it, dict)}
         def fv(k):
-            v = free.get(k)
-            if isinstance(v, dict):
-                v = v.get('value')
-            return (v or '').strip() if isinstance(v, str) else (v or '')
+            v = fmap.get(k)
+            return v.strip() if isinstance(v, str) else (v or '')
         name = f"{sub.get('name1') or ''}{sub.get('name2') or ''}".strip() or 'お客'
         y, mo, d = parse_birth(fv('free1'))
         h, mi, approx = parse_time(fv('free2'))
@@ -158,15 +165,15 @@ class Worker:
             sid = str(sub.get('subscriber_id') or sub.get('id'))
             if sid in self.state:
                 continue
-            free = sub.get('free_fields') or {}
-            f10 = free.get('free10')
-            if isinstance(f10, dict):
-                f10 = f10.get('value')
-            if f10:
+            detail = my.call('get_subscriber_details', {'subscriber_id': sid})
+            free = detail.get('free_fields') or []
+            fmap = {it.get('field_key'): it.get('value') for it in free if isinstance(it, dict)}
+            if fmap.get('free10'):
                 self.state[sid] = {'token': 'external', 'done': time.time()}
+                self._save_state()
                 continue
             try:
-                self.process_one(sub)
+                self.process_one(detail)
             except Exception as e:  # noqa: BLE001
                 log(f"ERROR {sid}: {e}\n{traceback.format_exc()[:500]}")
                 fails = self.state.get(f'fail_{sid}', 0)
