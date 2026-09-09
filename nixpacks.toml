@@ -1,3 +1,3 @@
-# WeasyPrint(自動鑑定書PDF)に必要なネイティブライブラリ
+# WeasyPrint(自動鑑定書PDF)に必要なネイティブライブラリ(apt方式)
 [phases.setup]
-nixPkgs = ["python311", "gcc", "pango", "harfbuzz", "fontconfig", "freetype", "glib", "gdk-pixbuf", "cairo", "libffi"]
+aptPkgs = ["libpango-1.0-0", "libpangocairo-1.0-0", "libharfbuzz0b", "libcairo2", "libglib2.0-0", "libgdk-pixbuf-2.0-0", "shared-mime-info"]
