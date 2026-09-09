@@ -44,6 +44,54 @@ PREFECTURES = {
 }
 
 
+# 主要市区町村→都道府県(フォームに県名が無い場合の解決用)
+CITY2PREF = {
+    '札幌': '北海道', '旭川': '北海道', '函館': '北海道',
+    '仙台': '宮城県', '青森': '青森県', '盛岡': '岩手県', '秋田': '秋田県',
+    '山形': '山形県', '福島': '福島県', '郡山': '福島県',
+    'さいたま': '埼玉県', '川口': '埼玉県', '八潮': '埼玉県', '川越': '埼玉県', '所沢': '埼玉県',
+    '千葉': '千葉県', '船橋': '千葉県', '柏': '千葉県', '松戸': '千葉県',
+    '横浜': '神奈川県', '川崎': '神奈川県', '相模原': '神奈川県', '藤沢': '神奈川県',
+    '新潟': '新潟県', '富山': '富山県', '金沢': '石川県', '穴水': '石川県', '鳳珠': '石川県',
+    '輪島': '石川県', '七尾': '石川県', '福井': '福井県', '甲府': '山梨県', '長野': '長野県',
+    '松本': '長野県', '岐阜': '岐阜県', '静岡': '静岡県', '浜松': '静岡県',
+    '名古屋': '愛知県', '豊田': '愛知県', '岡崎': '愛知県', '津': '三重県', '四日市': '三重県',
+    '大津': '滋賀県', '京都': '京都府', '大阪': '大阪府', '堺': '大阪府', '大東': '大阪府',
+    '東大阪': '大阪府', '豊中': '大阪府', '吹田': '大阪府', '枚方': '大阪府',
+    '神戸': '兵庫県', '姫路': '兵庫県', '西宮': '兵庫県', '尼崎': '兵庫県',
+    '奈良': '奈良県', '和歌山': '和歌山県', '鳥取': '鳥取県', '松江': '島根県', '出雲': '島根県',
+    '岡山': '岡山県', '倉敷': '岡山県', '広島': '広島県', '福山': '広島県',
+    '下関': '山口県', '徳島': '徳島県', '高松': '香川県', '土庄': '香川県', '小豆': '香川県',
+    '松山': '愛媛県', '高知': '高知県',
+    '福岡': '福岡県', '北九州': '福岡県', '久留米': '福岡県',
+    '佐賀': '佐賀県', '長崎': '長崎県', '佐世保': '長崎県', '熊本': '熊本県',
+    '大分': '大分県', '宮崎': '宮崎県', '鹿児島': '鹿児島県', '鹿屋': '鹿児島県',
+    '那覇': '沖縄県', '宮古島': '沖縄県', '石垣': '沖縄県',
+    '世田谷': '東京都', '杉並': '東京都', '中野': '東京都', '江戸川': '東京都', '八王子': '東京都',
+}
+
+
+def resolve_pref(city_text):
+    """自由記述の出生地から都道府県を推定"""
+    t = (city_text or '').strip()
+    for p in PREFECTURES:
+        if p in t or p.rstrip('都道府県') in t[:4]:
+            if p in t:
+                return p
+    for p in PREFECTURES:
+        if p in t:
+            return p
+    # 「大阪」「兵庫」のような県名の省略形
+    for p in PREFECTURES:
+        short = p.rstrip('都道府県')
+        if t.startswith(short):
+            return p
+    for city, p in CITY2PREF.items():
+        if city in t:
+            return p
+    return None
+
+
 def log(msg):
     print(f"[auto-reading {datetime.now():%H:%M:%S}] {msg}", flush=True)
 
@@ -123,8 +171,7 @@ class Worker:
         pref = (sub.get('pref') or '').lstrip('*')
         city = fv('free3')
         if pref not in PREFECTURES:
-            # 市区町村欄に都道府県名が含まれていれば拾う
-            pref = next((p for p in PREFECTURES if p in city), '東京都')
+            pref = resolve_pref(city) or '東京都'
         lat, lon = PREFECTURES[pref]
         place = f"{pref}{city}" if city and not city.startswith(pref) else (city or pref)
         return {
@@ -135,12 +182,12 @@ class Worker:
                           'today': fv('free6')},
         }
 
-    def process_one(self, sub):
+    def process_one(self, sub, token=None):
         sid = str(sub.get('subscriber_id') or sub.get('id'))
         person = self._person_from_subscriber(sub)
-        log(f"生成開始: {sid} {person['name']} ({person['y']}-{person['mo']}-{person['d']})")
+        log(f"生成開始: {sid} {person['name']} ({person['y']}-{person['mo']}-{person['d']}) pref={person['pref']}")
         reading_md, data = self.engine.generate(person)
-        token = secrets.token_urlsafe(16)
+        token = token or secrets.token_urlsafe(16)
         pdf_path = os.path.join(STORE, f'{token}.pdf')
         from reading_pdf import build_pdf
         build_pdf(person, reading_md, data, pdf_path)
@@ -166,17 +213,21 @@ class Worker:
         log(f'cycle: {len(subs)}件 / state={list(self.state)[:5]}')
         for sub in subs:
             sid = str(sub.get('subscriber_id') or sub.get('id'))
-            if sid in self.state:
-                continue
-            detail = my.call('get_subscriber_details', {'subscriber_id': sid})
-            free = detail.get('free_fields') or []
+            ent = self.state.get(sid)
+            prev_token = ent.get('token') if isinstance(ent, dict) else None
+            if prev_token in ('external', 'failed'):
+                prev_token = None
+            # 一覧のfree_fieldsで判定(空なら再処理=同トークン上書き)
+            free = sub.get('free_fields') or []
             fmap = {it.get('field_key'): it.get('value') for it in free if isinstance(it, dict)}
             if fmap.get('free10'):
-                self.state[sid] = {'token': 'external', 'done': time.time()}
-                self._save_state()
+                if not isinstance(ent, dict):
+                    self.state[sid] = {'token': 'external', 'done': time.time()}
+                    self._save_state()
                 continue
+            detail = my.call('get_subscriber_details', {'subscriber_id': sid})
             try:
-                self.process_one(detail)
+                self.process_one(detail, token=prev_token)
             except Exception as e:  # noqa: BLE001
                 log(f"ERROR {sid}: {e}\n{traceback.format_exc()[:500]}")
                 fails = self.state.get(f'fail_{sid}', 0)
