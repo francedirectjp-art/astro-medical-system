@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>西洋占星術プロンプトジェネレーター</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>西洋占星術<br>プロンプトジェネレーター</h1>
+        </header>
+
+        <main>
+            <!-- 入力フォーム -->
+            <section class="input-section">
+                <h2>📝 出生情報の入力</h2>
+                
+                <div class="form-group">
+                    <label for="name">お名前</label>
+                    <input type="text" id="name" placeholder="例: 山田太郎" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="year">生年月日</label>
+                        <div class="date-inputs">
+                            <input type="number" id="year" placeholder="年" min="1900" max="2100" required>
+                            <span>年</span>
+                            <input type="number" id="month" placeholder="月" min="1" max="12" required>
+                            <span>月</span>
+                            <input type="number" id="day" placeholder="日" min="1" max="31" required>
+                            <span>日</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="hour">出生時間</label>
+                        <div class="time-inputs">
+                            <input type="number" id="hour" placeholder="時" min="0" max="23" required>
+                            <span>時</span>
+                            <input type="number" id="minute" placeholder="分" min="0" max="59" required>
+                            <span>分</span>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="timeUnknown">
+                            <label for="timeUnknown">出生時間不明（12:00に設定）</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>出生地</label>
+                    <div class="location-tabs" role="tablist">
+                        <button type="button" id="tab-pref" class="location-tab active" role="tab" aria-selected="true">
+                            🇯🇵 都道府県
+                        </button>
+                        <button type="button" id="tab-city" class="location-tab" role="tab" aria-selected="false">
+                            🌍 都市検索
+                        </button>
+                    </div>
+
+                    <!-- Tab 1: 都道府県 -->
+                    <div id="location-pref" class="location-panel active">
+                        <select id="prefecture">
+                            <option value="">選択してください</option>
+                            <option value="北海道">北海道</option>
+                        <option value="青森県">青森県</option>
+                        <option value="岩手県">岩手県</option>
+                        <option value="宮城県">宮城県</option>
+                        <option value="秋田県">秋田県</option>
+                        <option value="山形県">山形県</option>
+                        <option value="福島県">福島県</option>
+                        <option value="茨城県">茨城県</option>
+                        <option value="栃木県">栃木県</option>
+                        <option value="群馬県">群馬県</option>
+                        <option value="埼玉県">埼玉県</option>
+                        <option value="千葉県">千葉県</option>
+                        <option value="東京都">東京都</option>
+                        <option value="神奈川県">神奈川県</option>
+                        <option value="新潟県">新潟県</option>
+                        <option value="富山県">富山県</option>
+                        <option value="石川県">石川県</option>
+                        <option value="福井県">福井県</option>
+                        <option value="山梨県">山梨県</option>
+                        <option value="長野県">長野県</option>
+                        <option value="岐阜県">岐阜県</option>
+                        <option value="静岡県">静岡県</option>
+                        <option value="愛知県">愛知県</option>
+                        <option value="三重県">三重県</option>
+                        <option value="滋賀県">滋賀県</option>
+                        <option value="京都府">京都府</option>
+                        <option value="大阪府">大阪府</option>
+                        <option value="兵庫県">兵庫県</option>
+                        <option value="奈良県">奈良県</option>
+                        <option value="和歌山県">和歌山県</option>
+                        <option value="鳥取県">鳥取県</option>
+                        <option value="島根県">島根県</option>
+                        <option value="岡山県">岡山県</option>
+                        <option value="広島県">広島県</option>
+                        <option value="山口県">山口県</option>
+                        <option value="徳島県">徳島県</option>
+                        <option value="香川県">香川県</option>
+                        <option value="愛媛県">愛媛県</option>
+                        <option value="高知県">高知県</option>
+                        <option value="福岡県">福岡県</option>
+                        <option value="佐賀県">佐賀県</option>
+                        <option value="長崎県">長崎県</option>
+                        <option value="熊本県">熊本県</option>
+                        <option value="大分県">大分県</option>
+                        <option value="宮崎県">宮崎県</option>
+                            <option value="鹿児島県">鹿児島県</option>
+                            <option value="沖縄県">沖縄県</option>
+                        </select>
+                        <p class="location-hint">県庁所在地の座標を使います。離島・広域の県の場合は精度が落ちます (例: 函館は札幌から約140km)。</p>
+                    </div>
+
+                    <!-- Tab 2: 世界都市検索 -->
+                    <div id="location-city" class="location-panel">
+                        <input type="text" id="cityInput" placeholder="例: Tokyo / 東京 / Hakodate / 石垣 / New York" autocomplete="off">
+                        <div id="cityResults" class="city-results"></div>
+                        <div id="citySelected" class="city-selected" style="display: none;"></div>
+                        <p class="location-hint">日本 1,297 都市 + 世界 32,571 都市 / IANA タイムゾーン履歴対応 (戦時 DST 等)</p>
+                    </div>
+                </div>
+
+                <!-- ソーラーリターンの作成地 -->
+                <div class="form-group">
+                    <label>🌞 ソーラーリターン図の作成地</label>
+                    <div class="sr-location-choice">
+                        <label class="sr-radio">
+                            <input type="radio" name="srLocation" value="birth" checked>
+                            <span>出生地で作図</span>
+                        </label>
+                        <label class="sr-radio">
+                            <input type="radio" name="srLocation" value="current">
+                            <span>現在地で作図（リロケーション）</span>
+                        </label>
+                    </div>
+                    <div id="srCityPanel" style="display: none;">
+                        <input type="text" id="srCityInput" placeholder="例: 東京 / Tokyo / 宮古島 / New York" autocomplete="off">
+                        <div id="srCityResults" class="city-results"></div>
+                        <div id="srCitySelected" class="city-selected" style="display: none;"></div>
+                    </div>
+                    <p class="location-hint">「その一年を過ごす土地で作図する」流派の場合は現在地を選びます。天体の度数は同じで、ASC・MC・ハウスだけが変わります。</p>
+                </div>
+
+                <button type="button" id="generateBtn" class="btn-primary">🚀 プロンプト生成</button>
+            </section>
+
+            <!-- ローディング表示 -->
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Swiss Ephemeris による超高精度天体計算中...</p>
+                <p style="font-size: 0.9rem; color: #cbd5e1;">精度: ±0.001度 | 12天体 | Placidusハウス</p>
+            </div>
+
+            <!-- 出力エリア -->
+            <section class="output-section" id="outputSection" style="display: none;">
+                <h2>📋 生成されたプロンプト</h2>
+                <div class="output-controls">
+                    <button type="button" id="copyBtn" class="btn-primary">📋 クリップボードにコピー</button>
+                    <button type="button" id="downloadBtn" class="btn-secondary">💾 テキストファイルでダウンロード</button>
+                </div>
+                <div class="output-text" id="outputText"></div>
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2024 Anti-Gravity Prompt Builder v4.0 | Swiss Ephemeris (±0.001度精度)</p>
+        </footer>
+    </div>
+
+    <script type="module" src="app-v4.js"></script>
+</body>
+</html>

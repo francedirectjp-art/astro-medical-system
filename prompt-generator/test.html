@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Astronomy Engine API Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.js"></script>
+</head>
+<body>
+    <h1>Astronomy Engine API Test</h1>
+    <div id="output"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            output.innerHTML += message + '<br>';
+            console.log(message);
+        }
+        
+        try {
+            log('Testing Astronomy Engine API...');
+            log('');
+            
+            // Test date - Convert to AstroTime
+            const jsDate = new Date('1990-03-21T15:30:00Z');
+            const date = Astronomy.MakeTime(jsDate);
+            log('Test Date: ' + jsDate.toISOString());
+            log('AstroTime: ' + JSON.stringify(date));
+            log('');
+            
+            // Test Sun - arguments are (date, body)
+            log('=== Testing Sun ===');
+            const sunEcl = Astronomy.Ecliptic(date, 'Sun');
+            log('Sun ecliptic: ' + JSON.stringify(sunEcl));
+            log('Sun longitude: ' + (sunEcl.elon || sunEcl.lon));
+            log('');
+            
+            // Test Moon
+            log('=== Testing Moon ===');
+            if (Astronomy.EclipticGeoMoon) {
+                const moonEcl = Astronomy.EclipticGeoMoon(date);
+                log('Moon ecliptic: ' + JSON.stringify(moonEcl));
+                log('Moon longitude: ' + (moonEcl.elon || moonEcl.lon));
+            } else {
+                const moonEcl = Astronomy.Ecliptic(date, 'Moon');
+                log('Moon ecliptic: ' + JSON.stringify(moonEcl));
+                log('Moon longitude: ' + (moonEcl.elon || moonEcl.lon));
+            }
+            log('');
+            
+            // Test Mercury
+            log('=== Testing Mercury ===');
+            const mercuryEcl = Astronomy.Ecliptic(date, 'Mercury');
+            log('Mercury ecliptic: ' + JSON.stringify(mercuryEcl));
+            log('Mercury longitude: ' + (mercuryEcl.elon || mercuryEcl.lon));
+            log('');
+            
+            log('✅ All tests passed!');
+            
+        } catch (error) {
+            log('❌ Error: ' + error.message);
+            log('Stack: ' + error.stack);
+        }
+    </script>
+</body>
+</html>

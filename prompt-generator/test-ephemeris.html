@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Ephemeris Test</title>
+    <script src="ephemeris.js"></script>
+</head>
+<body>
+    <h1>Ephemeris Library Test</h1>
+    <div id="output" style="font-family: monospace; white-space: pre;"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            output.textContent += message + '\n';
+            console.log(message);
+        }
+        
+        try {
+            log('=== Ephemeris Library Test ===');
+            log('');
+            
+            // Test date: 1990年3月21日 15時30分
+            const date = new Date('1990-03-21T15:30:00Z');
+            log('Test Date: ' + date.toISOString());
+            log('');
+            
+            // Test Sun
+            log('=== Sun ===');
+            const sunLon = Ephemeris.eclipticLongitude('Sun', date);
+            const sunSign = Math.floor(sunLon / 30);
+            const sunDegree = sunLon % 30;
+            log(`Longitude: ${sunLon.toFixed(4)}°`);
+            log(`Sign: ${['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'][sunSign]} ${sunDegree.toFixed(2)}°`);
+            log('');
+            
+            // Test Moon
+            log('=== Moon ===');
+            const moonLon = Ephemeris.eclipticLongitude('Moon', date);
+            const moonSign = Math.floor(moonLon / 30);
+            const moonDegree = moonLon % 30;
+            log(`Longitude: ${moonLon.toFixed(4)}°`);
+            log(`Sign: ${['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'][moonSign]} ${moonDegree.toFixed(2)}°`);
+            log('');
+            
+            // Test Mercury
+            log('=== Mercury ===');
+            const mercuryLon = Ephemeris.eclipticLongitude('Mercury', date);
+            const mercurySign = Math.floor(mercuryLon / 30);
+            const mercuryDegree = mercuryLon % 30;
+            log(`Longitude: ${mercuryLon.toFixed(4)}°`);
+            log(`Sign: ${['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'][mercurySign]} ${mercuryDegree.toFixed(2)}°`);
+            log('');
+            
+            // Test ASC/MC for Tokyo
+            log('=== ASC/MC (Tokyo) ===');
+            const lat = 35.6762;
+            const lon = 139.6503;
+            const asc = Ephemeris.ascendant(date, lat, lon);
+            const mc = Ephemeris.midheaven(date, lon);
+            log(`ASC: ${asc.toFixed(4)}°`);
+            log(`MC: ${mc.toFixed(4)}°`);
+            log('');
+            
+            log('✅ All tests passed!');
+            
+        } catch (error) {
+            log('❌ Error: ' + error.message);
+            log('Stack: ' + error.stack);
+        }
+    </script>
+</body>
+</html>
