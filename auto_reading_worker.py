@@ -142,7 +142,8 @@ class Worker:
         url = f'{PUBLIC_BASE}/r/{token}.pdf'
         my = self.MyASP().connect()
         my.call('update_subscriber',
-                {'subscriber_id': sid, 'free_fields': {'free10': url}})
+                {'subscriber_id': sid,
+                 'free_fields': [{'field_key': 'free10', 'value': url}]})
         self.state[sid] = {'token': token, 'done': time.time(), 'name': person['name']}
         self._save_state()
         log(f"完了: {sid} → {url} ({len(reading_md)}字)")
