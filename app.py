@@ -397,6 +397,19 @@ def prompt_generator_files(filename):
     from flask import send_from_directory
     return send_from_directory('prompt-generator', filename)
 
+@app.route('/r/<token>.pdf')
+def auto_reading_pdf(token):
+    """自動発行された鑑定書PDFの配信（推測不可能なトークンURL）"""
+    import re as _re
+    from flask import send_from_directory, abort
+    if not _re.fullmatch(r'[A-Za-z0-9_\-]{10,64}', token):
+        abort(404)
+    store = os.environ.get('READING_STORE',
+                           os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                        'generated_readings'))
+    return send_from_directory(store, f'{token}.pdf', mimetype='application/pdf')
+
+
 @app.route('/reading/')
 def reading_page():
     """一気通貫鑑定（第2版）— 入力→自動6ブロック生成→鑑定書表示→印刷/PDF"""
@@ -556,6 +569,13 @@ app.register_blueprint(claude_reading)
 
 # Rectification API Blueprint を登録 (astro-rectify 用の 4 endpoint)
 app.register_blueprint(rectification_api)
+
+# 自動鑑定書ワーカー (AUTO_READING=1 のとき起動)
+try:
+    from auto_reading_worker import start_worker as _start_auto_reading
+    _start_auto_reading(app)
+except Exception as _e:  # noqa: BLE001
+    print(f'[auto-reading] worker起動スキップ: {_e}', flush=True)
 
 if __name__ == '__main__':
     # Railway対応：PORT環境変数の動的取得
