@@ -156,11 +156,14 @@ class Worker:
         log(f"完了: {sid} → {url} ({len(reading_md)}字)")
 
     def cycle(self):
+        log('cycle: connect')
         my = self.MyASP().connect()
+        log('cycle: search')
         res = my.call('search_subscribers',
                       {'scenario_id': SCENARIO_ID, 'limit': 50})
         subs = res.get('subscribers') if isinstance(res, dict) else res
         subs = subs or []
+        log(f'cycle: {len(subs)}件 / state={list(self.state)[:5]}')
         for sub in subs:
             sid = str(sub.get('subscriber_id') or sub.get('id'))
             if sid in self.state:
