@@ -68,6 +68,27 @@ CITY2PREF = {
     '大分': '大分県', '宮崎': '宮崎県', '鹿児島': '鹿児島県', '鹿屋': '鹿児島県',
     '那覇': '沖縄県', '宮古島': '沖縄県', '石垣': '沖縄県',
     '世田谷': '東京都', '杉並': '東京都', '中野': '東京都', '江戸川': '東京都', '八王子': '東京都',
+    '水戸': '茨城県', '土浦': '茨城県', 'つくば': '茨城県', '日立': '茨城県', '取手': '茨城県',
+    '古河': '茨城県', '牛久': '茨城県', 'ひたちなか': '茨城県', '龍ケ崎': '茨城県',
+    '宇都宮': '栃木県', '小山': '栃木県', '足利': '栃木県', '栃木': '栃木県', '日光': '栃木県',
+    '前橋': '群馬県', '高崎': '群馬県', '太田': '群馬県', '伊勢崎': '群馬県', '桐生': '群馬県',
+    '越谷': '埼玉県', '草加': '埼玉県', '春日部': '埼玉県', '熊谷': '埼玉県', '上尾': '埼玉県',
+    '浦和': '埼玉県', '大宮': '埼玉県', '市川': '千葉県', '市原': '千葉県', '習志野': '千葉県',
+    '浦安': '千葉県', '木更津': '千葉県', '横須賀': '神奈川県', '鎌倉': '神奈川県',
+    '小田原': '神奈川県', '平塚': '神奈川県', '厚木': '神奈川県', '茅ヶ崎': '神奈川県',
+    '長岡': '新潟県', '上越': '新潟県', '柏崎': '新潟県', '高岡': '富山県', '沼津': '静岡県',
+    '一宮': '愛知県', '豊橋': '愛知県', '春日井': '愛知県', '鈴鹿': '三重県', '伊勢': '三重県',
+    '宇治': '京都府', '舞鶴': '京都府', '高槻': '大阪府', '茨木': '大阪府', '八尾': '大阪府',
+    '明石': '兵庫県', '加古川': '兵庫県', '宝塚': '兵庫県', '芦屋': '兵庫県',
+    '呉': '広島県', '尾道': '広島県', '宇部': '山口県', '今治': '愛媛県',
+    '飯塚': '福岡県', '大牟田': '福岡県', '別府': '大分県', '都城': '宮崎県', '沖縄市': '沖縄県',
+    '苫小牧': '北海道', '釧路': '北海道', '帯広': '北海道', '小樽': '北海道', '八戸': '青森県',
+    '弘前': '青森県', '石巻': '宮城県', 'いわき': '福島県', '会津': '福島県',
+    '練馬': '東京都', '大田区': '東京都', '足立': '東京都', '板橋': '東京都', '町田': '東京都',
+    '府中': '東京都', '調布': '東京都', '三鷹': '東京都', '武蔵野': '東京都', '立川': '東京都',
+    '品川': '東京都', '目黒': '東京都', '渋谷': '東京都', '新宿': '東京都', '文京': '東京都',
+    '豊島': '東京都', '北区': '東京都', '荒川': '東京都', '台東': '東京都', '墨田': '東京都',
+    '江東': '東京都', '葛飾': '東京都', '港区': '東京都', '千代田': '東京都', '中央区': '東京都',
 }
 
 
@@ -86,9 +107,10 @@ def resolve_pref(city_text):
         short = p.rstrip('都道府県')
         if t.startswith(short):
             return p
-    for city, p in CITY2PREF.items():
+    # 長い地名から照合する(「津」が「大津」「沼津」に、「伊勢」が「伊勢崎」に先に当たるのを防ぐ)
+    for city in sorted(CITY2PREF, key=len, reverse=True):
         if city in t:
-            return p
+            return CITY2PREF[city]
     return None
 
 
@@ -156,6 +178,26 @@ class Worker:
         json.dump(self.state, open(self.state_path, 'w', encoding='utf-8'),
                   ensure_ascii=False, indent=0)
 
+    def _ai_pref(self, city):
+        """対応表に無い地名の都道府県をHaikuに判定させる。47都道府県名以外の答えは捨てる"""
+        if not city:
+            return None
+        try:
+            res = self.engine.client.messages.create(
+                model='claude-haiku-4-5-20251001', max_tokens=20,
+                messages=[{'role': 'user', 'content':
+                           f'日本の地名「{city}」はどの都道府県にありますか。'
+                           '都道府県名だけを1語で答えてください（例: 茨城県）。'}])
+            ans = ''.join(b.text for b in res.content if getattr(b, 'type', '') == 'text')
+        except Exception as e:
+            log(f"都道府県のAI判定に失敗: {city!r} {e}")
+            return None
+        for p in PREFECTURES:
+            if p in ans:
+                log(f"都道府県をAI判定: {city!r} → {p}")
+                return p
+        return None
+
     def _person_from_subscriber(self, sub):
         free = sub.get('free_fields') or []
         if isinstance(free, dict):
@@ -171,7 +213,10 @@ class Worker:
         pref = (sub.get('pref') or '').lstrip('*')
         city = fv('free3')
         if pref not in PREFECTURES:
-            pref = resolve_pref(city) or '東京都'
+            pref = resolve_pref(city) or self._ai_pref(city)
+            if not pref:
+                log(f"出生地から都道府県を特定できず東京都で計算: {city!r}")
+                pref = '東京都'
         lat, lon = PREFECTURES[pref]
         place = f"{pref}{city}" if city and not city.startswith(pref) else (city or pref)
         return {
