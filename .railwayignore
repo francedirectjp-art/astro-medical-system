@@ -1,0 +1,12 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.git/
+.DS_Store
+node_modules/
+*.log
+.env
+.env.local
+.env.*.local
+/tmp/

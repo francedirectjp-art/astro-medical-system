@@ -1,9 +1,8 @@
-// 2026 未来の航海図 — 体験ページ
-// 出生データ → (同アプリの)Swiss Ephemeris APIでチャート計算 → 鑑定プロンプト生成 → Gemで鑑定
-// ※AI処理はユーザー自身のGem(Gemini)が行う＝運営のAPIコストは発生しない無料体験。
+// 2026 未来の航海図 — 体験ページ（プロンプトジェネレーター準拠）
+// 出生データ → 同アプリのSwiss Ephemeris API → 鑑定データ(天体配置)を表示 → GEMで受け取り
+// ※AI処理はユーザー自身のGem(Gemini)＝運営のAPIコストは発生しない無料体験。
 
 const API_BASE_URL = window.location.origin;
-// Narrative Astrologer GEM (Gemini)
 const GEM_URL = 'https://gemini.google.com/gem/1NgB6OizsXJSo8kfeq4suOksYprUgN2io?usp=sharing';
 
 const PREFECTURES = {
@@ -63,11 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('generateBtn').addEventListener('click', onGenerate);
     document.getElementById('openGemBtn').addEventListener('click', openGem);
     document.getElementById('copyBtn').addEventListener('click', copyPrompt);
-    document.getElementById('restartBtn').addEventListener('click', () => {
-        document.getElementById('receiveCard').style.display = 'none';
-        document.getElementById('formCard').style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
+    document.getElementById('downloadBtn').addEventListener('click', downloadPrompt);
 });
 
 async function onGenerate() {
@@ -87,17 +82,18 @@ async function onGenerate() {
     const btn = document.getElementById('generateBtn');
     btn.disabled = true; btn.textContent = '⏳ 星を計算しています…';
     document.getElementById('loading').style.display = 'block';
+    document.getElementById('outputSection').style.display = 'none';
+    document.getElementById('gemSteps').style.display = 'none';
+    document.getElementById('copyStatus').textContent = '';
     try {
         const natalChart = await calcChart(year, month, day, hour, minute, loc.lat, loc.lon);
         let progressions = null, transits = null;
         try { progressions = await calcProgressions(year, month, day, hour, minute); } catch (e) {}
         try { transits = await calcTransits(); } catch (e) {}
         lastPrompt = buildPromptText(name, year, month, day, hour, minute, prefecture, natalChart, progressions, transits);
-        document.getElementById('formCard').style.display = 'none';
-        document.getElementById('receiveCard').style.display = 'block';
-        document.getElementById('promptPreview').value = lastPrompt;
-        document.getElementById('receiveName').textContent = name + ' さん';
-        document.getElementById('receiveCard').scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('outputText').textContent = lastPrompt;
+        document.getElementById('outputSection').style.display = 'block';
+        document.getElementById('outputSection').scrollIntoView({ behavior: 'smooth' });
     } catch (err) {
         alert('計算でエラーが発生しました: ' + err.message);
     } finally {
@@ -181,9 +177,10 @@ async function copyPrompt() {
         await navigator.clipboard.writeText(lastPrompt);
         flashCopied();
     } catch (e) {
-        const ta = document.getElementById('promptPreview');
-        ta.style.display = 'block'; ta.select();
-        document.execCommand('copy');
+        const tmp = document.createElement('textarea');
+        tmp.value = lastPrompt; document.body.appendChild(tmp); tmp.select();
+        try { document.execCommand('copy'); } catch (e2) {}
+        document.body.removeChild(tmp);
         flashCopied();
     }
 }
@@ -196,4 +193,13 @@ async function openGem() {
     await copyPrompt();
     document.getElementById('gemSteps').style.display = 'block';
     window.open(GEM_URL, '_blank', 'noopener');
+}
+function downloadPrompt() {
+    const blob = new Blob([lastPrompt], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `航海図_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
