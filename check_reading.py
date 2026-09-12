@@ -88,6 +88,10 @@ def main(path):
     seam = re.findall(r'[（(]『?(?:はい|続けて)[^）)]{0,40}[）)]|\*\*【', flat)
     (fail if seam else ok).append('停止案内/書式の漏れ: ' + (f'{len(seam)}箇所 {seam[:2]}' if seam else 'なし'))
 
+    # 9c 本文の太字
+    bold = re.findall(r'\*\*[^*\n]{1,40}\*\*', raw)
+    (fail if bold else ok).append('本文の太字: ' + (f'{len(bold)}箇所 {bold[:2]}' if bold else 'なし'))
+
     # 10 次の扉に売り込みが混入していないか
     m = re.search(r'次の扉(.{0,1200})', flat, re.S)
     if m:

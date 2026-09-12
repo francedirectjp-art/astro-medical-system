@@ -21,10 +21,10 @@ FIG_BEFORE = {
 # 章末に置く指の回収図(その章まででいくつ灯ったか)
 HANDS_AFTER = {'第1章': 2, '第3章': 5, '第4章': 8, '第5章': 10}
 
-CHAPTER = re.compile(r'^(序章|第[0-9１-９十]+章|終章|第[一二]葉|一葉|次の扉|王国の宮廷)[｜|]?')
+CHAPTER = re.compile(r'^(序章|第[0-9１-９十]+章|終章|第[一二]葉|一葉|次の扉|王国の宮廷)([｜|]|$)')
 METHOD = re.compile(r'^[【\[]\s*読みの手順\s*[】\]]')
 HOLD = re.compile(r'^[【\[]\s*(ここで私が決めなかったこと|判断を止めた場所)\s*[】\]]')
-FINGERS = re.compile(r'(本の指|本、すべて揃|指はもう揃|あなたの手に戻りました|あなたの手に入りました)')
+FINGERS = re.compile(r'^.{0,60}(戻りました|揃いました|入りました|弾き方です)。$')
 BLANK = re.compile(r'[（(][\s　]{4,}[）)]')
 
 CSS = """
@@ -113,7 +113,8 @@ def md_to_html(md_path, title, meta, out_html, cover=True):
         line = raw.strip()
         # モデルが太字で包む / 欄外ラベルを本文化する揺れを吸収する
         line = re.sub(r'^\*\*\s*([【\[][^】\]]*[】\]])\s*\*\*', r'\1', line)
-        line = re.sub(r'^\*\*(第[0-9１-９]+章末|序章末|終章末)\*\*[\s　]*', '', line)
+        line = re.sub(r'^\*\*[^*]{0,24}(章末|葉末)\*\*[\s　]*', '', line)
+        line = line.replace('**', '')   # 本文に太字は置かない
         if re.match(r'^[（(]『?(はい|続けて)', line):
             continue
         if not line or line == '---':
@@ -124,7 +125,7 @@ def md_to_html(md_path, title, meta, out_html, cover=True):
             continue
         heading = re.sub(r'^#+\s*', '', line)
         # 完全版の章題(序章/第N章/終章)と、簡易版の「本質｜」「あなたの問いへ」等の#見出し
-        if CHAPTER.match(heading) or (re.match(r'^#+\s', line) and len(heading) <= 24):
+        if re.match(r'^#+\s', line) and (CHAPTER.match(heading) or len(heading) <= 24):
             flush()
             close_chapter()
             if D is not None and heading.startswith('第一葉'):
@@ -173,7 +174,7 @@ def md_to_html(md_path, title, meta, out_html, cover=True):
             if re.match(r'^[一二三1-3][\s、.]|^・', line) or len(line) < 120:
                 body.append(f'<p>{fmt(line)}</p>')
                 continue
-        if FINGERS.search(line) and len(line) < 90:
+        if FINGERS.match(line):
             flush()
             body.append(f'<p class="fingers">{fmt(line)}</p>')
             continue
