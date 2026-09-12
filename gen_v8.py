@@ -469,6 +469,9 @@ for i in range(PARTS):
             time.sleep(20)
     if not text or len(text) < 2500:
         raise RuntimeError(f'part {i+1} failed')
+    text = re.sub(r'\n*[（(]『?(?:はい|続けて)[^）)]{0,40}[）)]\s*$', '', text.rstrip())
+    text = re.sub(r'^\*\*\s*([【\[][^】\]]*[】\]])\s*\*\*', r'\1', text, flags=re.M)
+    text = re.sub(r'^\*\*(第[0-9１-９]+章末|序章末|終章末)\*\*[\s　]*', '', text, flags=re.M)
     print(f'part {i+1}: {len(text)} chars', flush=True)
     blocks.append(text)
     messages.append({'role': 'assistant', 'content': text})

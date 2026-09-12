@@ -62,6 +62,11 @@ def md_to_html(md_path, title, meta, out_html, cover=True):
 
     for raw in open(md_path, encoding='utf-8'):
         line = raw.strip()
+        # モデルが太字で包む / 欄外ラベルを本文化する揺れを吸収する
+        line = re.sub(r'^\*\*\s*([【\[][^】\]]*[】\]])\s*\*\*', r'\1', line)
+        line = re.sub(r'^\*\*(第[0-9１-９]+章末|序章末|終章末)\*\*[\s　]*', '', line)
+        if re.match(r'^[（(]『?(はい|続けて)', line):
+            continue
         if not line or line == '---':
             flush()
             if tech_open[0]:

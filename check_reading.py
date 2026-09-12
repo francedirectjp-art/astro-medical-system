@@ -59,10 +59,12 @@ def main(path):
     total = sum(flat.count(h) for h in ['ではないでしょうか','かもしれません','だと思います'])
     (fail if over else ok).append(f'弱い推量 合計{total}箇所 / 上限超過の章: ' + (', '.join(f'{k}={v}' for k,v in over.items()) if over else 'なし'))
 
-    # 6 三点セット
+    # 6 三点セット (存在する章数に連動させる)
+    nch = len(set(re.findall(r'第(\d+)章[｜|]', raw)))
+    need = min(nch, 10)
     for label, pat in [('読みの手順','読みの手順'),('判断の保留','決めなかったこと')]:
-        c = flat.count(pat)
-        (ok if c >= 10 else fail).append(f'{label}: {c}箇所 (第1〜10章で10必要)')
+        cc = flat.count(pat)
+        (ok if cc >= need else fail).append(f'{label}: {cc}箇所 / 本文の章数{nch}に対し{need}必要')
 
     # 7 香り三処方の重複(中心植物の重複を主判定にする)
     centers = re.findall(r'([ァ-ヶー・]+)\s*3滴', flat)
@@ -78,6 +80,10 @@ def main(path):
     # 9 メタ発言・偽見出しの断片
     meta = re.findall(r'[（(]※[^）)]{0,40}[）)]|申し訳|先ほどの章|書き直し|訂正します', flat)
     (fail if meta else ok).append('メタ発言: ' + ('; '.join(meta[:3]) if meta else 'なし'))
+
+    # 9b 停止案内・便の継ぎ目の漏れ
+    seam = re.findall(r'[（(]『?(?:はい|続けて)[^）)]{0,40}[）)]|\*\*【', flat)
+    (fail if seam else ok).append('停止案内/書式の漏れ: ' + (f'{len(seam)}箇所 {seam[:2]}' if seam else 'なし'))
 
     # 10 次の扉に売り込みが混入していないか
     m = re.search(r'次の扉(.{0,1200})', flat, re.S)
