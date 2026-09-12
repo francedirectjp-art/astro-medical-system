@@ -6,6 +6,21 @@ import re
 import subprocess
 import sys
 
+try:
+    import figures as FIG
+except ImportError:
+    FIG = None
+
+# 章扉に差し込む図(コード側で確定配置する。モデルにマーカーを書かせない)
+FIG_BEFORE = {
+    '第2章': ('elements', 'あなたの炉の火加減。器の満ち方が、生まれつきの体質です。'),
+    '一葉':  ('sunmoon',  '王と王妃。育てていきたい方向と、心が安心する条件。'),
+    '第3章': ('castle',   'あなたの王国の間取り。どの官が、どの部屋に住んでいるか。'),
+    '第8章': ('timeline', '心の季節と、現実の季節。そして今年の部屋と、時代の波。'),
+}
+# 章末に置く指の回収図(その章まででいくつ灯ったか)
+HANDS_AFTER = {'第1章': 2, '第3章': 5, '第4章': 8, '第5章': 10}
+
 CHAPTER = re.compile(r'^(序章|第[0-9１-９十]+章|終章|第[一二]葉|一葉|次の扉|王国の宮廷)[｜|]?')
 METHOD = re.compile(r'^[【\[]\s*読みの手順\s*[】\]]')
 HOLD = re.compile(r'^[【\[]\s*(ここで私が決めなかったこと|判断を止めた場所)\s*[】\]]')
@@ -36,12 +51,26 @@ p.recipe { margin-bottom: 0.4em; padding-left: 1em; }
 .fingers { margin: 1.2em 0 2.4em; padding-top: 0.7em; border-top: 1px solid #e4ddd0;
            font-size: 9.5pt; letter-spacing: 0.05em; color: #7a5c2e; text-align: right; }
 /* 記入欄: 読者が実際に書き込む罫線 */
-.blank { border-bottom: 1px solid #b9b2a4; height: 9mm; margin: 0.6em 0 1.8em; }
+.blank { border-bottom: 1px solid #b9b2a4; height: 9mm; margin: 0.6em 0 1.8em 6mm;
+          width: calc(100% - 12mm); }
 .blank + .blank { margin-top: -1.2em; }
 .dateline { font-size: 9pt; color: #6b675e; margin: 2em 0 1em; }
 .gate { margin: 2.5em 0; padding: 6mm 7mm; border: 1px solid #ded5c4;
         page-break-inside: avoid; }
 .gate p { margin: 0 0 0.9em; }
+.gatefold { page-break-before: always; page-break-after: always; text-align: center;
+            padding-top: 26mm; }
+.gatefold .no { font-size: 30pt; color: #d8cdb6; letter-spacing: 0.1em; line-height: 1; }
+.gatefold .ti { font-size: 15pt; color: #7a5c2e; letter-spacing: 0.14em;
+                margin: 5mm 0 2mm; font-weight: 600; }
+.gatefold .sub { font-size: 9.5pt; color: #8a8478; letter-spacing: 0.1em; }
+.gatefold .fig { max-width: 150mm; margin: 12mm auto 6mm; }
+.gatefold.tall { padding-top: 12mm; }
+.gatefold.tall .fig { max-width: 132mm; margin: 8mm auto 5mm; }
+.gatefold.leaf .no { font-size: 13pt; letter-spacing: 0.3em; color: #b49a6c; }
+.gatefold .cap { font-size: 9pt; color: #8a8478; }
+.handfig { margin: 0.8em auto 2.6em; max-width: 96mm; }
+.handfig.big { max-width: 150mm; margin: 6mm auto; }
 @page { margin: 22mm 18mm; }
 """
 
@@ -50,6 +79,26 @@ def md_to_html(md_path, title, meta, out_html, cover=True):
     body = []
     para = []
     tech_open = [False]
+    chart = os.environ.get('CHART_TXT')
+    D = FIG.parse_chart(chart) if (FIG and chart and os.path.exists(chart)) else None
+    prev_ch = [None]
+
+    def svg(kind):
+        if kind == 'elements':
+            return FIG.fig_elements(D['elem'], D['modes'])
+        if kind == 'castle':
+            return FIG.fig_castle(D['houses'], D.get('asc', ''), D.get('mc', ''))
+        if kind == 'sunmoon':
+            return FIG.fig_sun_moon(D)
+        if kind == 'timeline':
+            return FIG.fig_timeline(D)
+        return ''
+
+    def close_chapter():
+        n = HANDS_AFTER.get(prev_ch[0])
+        if n and D is not None:
+            body.append('<div class="handfig">' + FIG.fig_hands(n) + '</div>')
+        prev_ch[0] = None
 
     def fmt(s):
         s = html.escape(s)
@@ -77,7 +126,34 @@ def md_to_html(md_path, title, meta, out_html, cover=True):
         # 完全版の章題(序章/第N章/終章)と、簡易版の「本質｜」「あなたの問いへ」等の#見出し
         if CHAPTER.match(heading) or (re.match(r'^#+\s', line) and len(heading) <= 24):
             flush()
+            close_chapter()
+            if D is not None and heading.startswith('第一葉'):
+                body.append(f'<h2>{fmt(heading)}</h2>')
+                body.append('<div class="handfig big">' + FIG.fig_hands(2) + '</div>')
+                prev_ch[0] = None
+                continue
+            if D is not None and heading.startswith('王国の宮廷'):
+                body.append(f'<h2>{fmt(heading)}</h2>')
+                body.append('<div class="handfig big">' + FIG.fig_hands(10, labels=True) + '</div>')
+                prev_ch[0] = None
+                continue
+            key = next((k for k in FIG_BEFORE if heading.startswith(k)), None) if D is not None else None
+            if key:
+                kind, cap = FIG_BEFORE[key]
+                parts = heading.split('｜')
+                no = parts[0]
+                ti = parts[1] if len(parts) > 1 else ''
+                sub = ''
+                if '――' in ti:
+                    ti, sub = ti.split('――', 1)
+                cls = 'gatefold tall' if kind == 'castle' else (
+                    'gatefold leaf' if not no.startswith('第') or '葉' in no else 'gatefold')
+                body.append('<div class="' + cls + '"><div class="no">' + fmt(no) + '</div>'
+                            '<div class="ti">' + fmt(ti) + '</div><div class="sub">' + fmt(sub) + '</div>'
+                            '<div class="fig">' + svg(kind) + '</div>'
+                            '<div class="cap">' + fmt(cap) + '</div></div>')
             body.append(f'<h2>{fmt(heading)}</h2>')
+            prev_ch[0] = heading.split('｜')[0]
             continue
         if re.match(r'^#+\s', line):
             flush()
@@ -117,6 +193,7 @@ def md_to_html(md_path, title, meta, out_html, cover=True):
     flush()
     if tech_open[0]:
         body.append('</div>')
+    close_chapter()
 
     wheel_html = ''
     wheel_path = os.environ.get('WHEEL_SVG')

@@ -68,9 +68,12 @@ def main(path):
 
     # 7 香り三処方の重複(中心植物の重複を主判定にする)
     centers = re.findall(r'([ァ-ヶー・]+)\s*3滴', flat)
-    dupc = [c for c,k in collections.Counter(centers).items() if k > 1]
-    (fail if dupc else ok).append('香りの中心植物: ' + str(centers) +
-        (f' ← {dupc} が重複。三処方は必ず区別する' if dupc else ' (重複なし)'))
+    # 城主と年主星が同一天体なら中心は同じになりうる。全4種が完全一致した場合だけ誤りとする
+    recipes = re.findall(r'精油[：:]\s*((?:[ァ-ヶー・]+\d滴[、,]?\s*)+)', flat)
+    norm = [tuple(sorted(re.findall(r'([ァ-ヶー・]+)(\d)滴', r))) for r in recipes]
+    dupc = [r for r,k in collections.Counter(norm).items() if k > 1 and r]
+    (fail if dupc else ok).append(f'香り: 中心={centers} / 処方{len(recipes)}件 ' +
+        (f'← 完全同一の配合が{len(dupc)}組' if dupc else '(完全同一なし)'))
 
     # 8 禁止術語 (巻末資料は技術資料なので対象外)
     body = flat.split('巻末資料')[0]
