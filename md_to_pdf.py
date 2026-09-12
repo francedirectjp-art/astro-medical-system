@@ -6,7 +6,11 @@ import re
 import subprocess
 import sys
 
-CHAPTER = re.compile(r'^(序章|第[0-9１-９十]+章|終章)[｜|]')
+CHAPTER = re.compile(r'^(序章|第[0-9１-９十]+章|終章|第[一二]葉|一葉|次の扉|王国の宮廷)[｜|]?')
+METHOD = re.compile(r'^[【\[]\s*読みの手順\s*[】\]]')
+HOLD = re.compile(r'^[【\[]\s*(ここで私が決めなかったこと|判断を止めた場所)\s*[】\]]')
+FINGERS = re.compile(r'(本の指|本、すべて揃|指はもう揃|あなたの手に戻りました|あなたの手に入りました)')
+BLANK = re.compile(r'[（(][\s　]{4,}[）)]')
 
 CSS = """
 body { font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
@@ -22,6 +26,22 @@ h2 { font-size: 13.5pt; font-weight: 600; letter-spacing: 0.08em; color: #7a5c2e
 h3 { font-size: 11.5pt; margin: 2em 0 1em; }
 p { margin: 0 0 1.5em; text-align: justify; orphans: 3; widows: 3; }
 p.recipe { margin-bottom: 0.4em; padding-left: 1em; }
+p.recipe { margin-bottom: 0.4em; padding-left: 1em; }
+/* 技術層: 本文の詩情と切り離して罫線囲みで隔離する */
+.tech { margin: 1.8em 0 1.2em; padding: 3.5mm 5mm; background: #faf8f4;
+        border-left: 2px solid #c9bb9a; page-break-inside: avoid; }
+.tech .cap { font-size: 8.5pt; letter-spacing: 0.12em; color: #9a7b42;
+             margin: 0 0 0.5em; font-weight: 600; }
+.tech p { font-size: 9pt; line-height: 1.75; margin: 0 0 0.35em; color: #4a463e; }
+.fingers { margin: 1.2em 0 2.4em; padding-top: 0.7em; border-top: 1px solid #e4ddd0;
+           font-size: 9.5pt; letter-spacing: 0.05em; color: #7a5c2e; text-align: right; }
+/* 記入欄: 読者が実際に書き込む罫線 */
+.blank { border-bottom: 1px solid #b9b2a4; height: 9mm; margin: 0.6em 0 1.8em; }
+.blank + .blank { margin-top: -1.2em; }
+.dateline { font-size: 9pt; color: #6b675e; margin: 2em 0 1em; }
+.gate { margin: 2.5em 0; padding: 6mm 7mm; border: 1px solid #ded5c4;
+        page-break-inside: avoid; }
+.gate p { margin: 0 0 0.9em; }
 @page { margin: 22mm 18mm; }
 """
 
@@ -29,6 +49,7 @@ p.recipe { margin-bottom: 0.4em; padding-left: 1em; }
 def md_to_html(md_path, title, meta, out_html, cover=True):
     body = []
     para = []
+    tech_open = [False]
 
     def fmt(s):
         s = html.escape(s)
@@ -43,6 +64,9 @@ def md_to_html(md_path, title, meta, out_html, cover=True):
         line = raw.strip()
         if not line or line == '---':
             flush()
+            if tech_open[0]:
+                body.append('</div>')
+                tech_open[0] = False
             continue
         heading = re.sub(r'^#+\s*', '', line)
         # 完全版の章題(序章/第N章/終章)と、簡易版の「本質｜」「あなたの問いへ」等の#見出し
@@ -54,12 +78,40 @@ def md_to_html(md_path, title, meta, out_html, cover=True):
             flush()
             body.append(f'<h3>{fmt(heading)}</h3>')
             continue
+        if METHOD.match(line) or HOLD.match(line):
+            flush()
+            cap = '読みの手順' if METHOD.match(line) else 'ここで私が決めなかったこと'
+            rest = re.sub(r'^[【\[][^】\]]*[】\]]\s*', '', line)
+            body.append(f'<div class="tech"><p class="cap">{cap}</p>')
+            if rest:
+                body.append(f'<p>{fmt(rest)}</p>')
+            tech_open[0] = True
+            continue
+        if tech_open[0]:
+            # 技術層は空行で閉じる(空行はloop先頭のflushで処理されるためフラグで判定)
+            if re.match(r'^[一二三1-3][\s、.]|^・', line) or len(line) < 120:
+                body.append(f'<p>{fmt(line)}</p>')
+                continue
+        if FINGERS.search(line) and len(line) < 90:
+            flush()
+            body.append(f'<p class="fingers">{fmt(line)}</p>')
+            continue
+        if re.match(r'^記入日', line):
+            flush()
+            body.append(f'<p class="dateline">{fmt(line)}</p>')
+            continue
+        if BLANK.fullmatch(line.strip()):
+            flush()
+            body.append('<div class="blank"></div>')
+            continue
         if re.match(r'^[-*・]\s?', line):
             flush()
             body.append('<p class="recipe">・' + fmt(re.sub(r'^[-*・]\s?', '', line)) + '</p>')
             continue
         para.append(line)
     flush()
+    if tech_open[0]:
+        body.append('</div>')
 
     wheel_html = ''
     wheel_path = os.environ.get('WHEEL_SVG')
