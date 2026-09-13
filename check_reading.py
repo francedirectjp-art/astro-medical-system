@@ -180,13 +180,20 @@ def main(path):
                 issues.append(f'今年の部屋は第{ph}ハウス。本文に第{mm.group(1)}ハウスの記述')
 
         # 1度以内のトランジット接触が本文で未来形にされていないか
+        # 神話版・庭版では天体を別名で呼ぶ。別名も言及とみなす
+        ALIAS = {'太陽': ['アポロン', '主木'], '月': ['アルテミス'], '水星': ['ヘルメス', '風と蜂'],
+                 '金星': ['アフロディーテ'], '火星': ['アレス', '鍬'], '木星': ['ゼウス', '実り'],
+                 '土星': ['クロノス', '支柱'], '天王星': ['ウラノス'], '海王星': ['ポセイドン', '朝霧'],
+                 '冥王星': ['ハデス']}
+        def _named(p):
+            return p in flat or any(a in flat for a in ALIAS.get(p, []))
         for m in re.finditer(r'T(\S+?) → N(\S+?): (\S+?)（オーブ([\d.]+)度）★', ct):
             t1, t2 = m.group(1), m.group(2)
-            if t1 in flat and t2 in flat:
+            if _named(t1) and _named(t2):
                 seg = re.search(r'[^。]{0,60}' + re.escape(t1) + r'[^。]{0,60}' + re.escape(t2) + r'[^。]{0,60}。', flat)
                 if seg and re.search(r'やがて|いずれ(?!も|に[せし])|数年のうちに|これから訪れ|近いうちに', seg.group(0)):
                     issues.append(f'T{t1}→N{t2}はオーブ{m.group(4)}度（すでに接触中）。本文が未来形')
-            elif t1 not in flat:
+            elif not _named(t1):
                 issues.append(f'T{t1}→N{t2}がオーブ{m.group(4)}度で接触中だが、本文に{t1}の言及なし')
 
         (fail if issues else ok).append('本文とデータの整合: ' +
