@@ -278,7 +278,79 @@ def solar_arc_contacts(natal, prog):
     return arc, contacts
 
 
+
+# ---- エッセンシャルディグニティ（城主＝ディグニティコードをコードで確定する） ----
+DOMICILE = {'太陽': ['獅子座'], '月': ['蟹座'], '水星': ['双子座', '乙女座'],
+            '金星': ['牡牛座', '天秤座'], '火星': ['牡羊座', '蠍座'],
+            '木星': ['射手座', '魚座'], '土星': ['山羊座', '水瓶座']}
+EXALT = {'太陽': '牡羊座', '月': '牡牛座', '水星': '乙女座', '金星': '魚座',
+         '火星': '山羊座', '木星': '蟹座', '土星': '天秤座'}
+DETRIMENT = {'太陽': ['水瓶座'], '月': ['山羊座'], '水星': ['射手座', '魚座'],
+             '金星': ['蠍座', '牡羊座'], '火星': ['天秤座', '牡牛座'],
+             '木星': ['双子座', '乙女座'], '土星': ['蟹座', '獅子座']}
+FALL = {'太陽': '天秤座', '月': '蠍座', '水星': '魚座', '金星': '乙女座',
+        '火星': '蟹座', '木星': '山羊座', '土星': '牡羊座'}
+ELEM_OF = {'牡羊座': '火', '獅子座': '火', '射手座': '火', '牡牛座': '土', '乙女座': '土',
+           '山羊座': '土', '双子座': '風', '天秤座': '風', '水瓶座': '風',
+           '蟹座': '水', '蠍座': '水', '魚座': '水'}
+TRIPL = {'火': ('太陽', '木星'), '土': ('金星', '月'), '風': ('土星', '水星'), '水': ('火星', '火星')}
+TRAD7 = ['太陽', '月', '水星', '金星', '火星', '木星', '土星']
+ANGULAR = (1, 4, 7, 10)
+
+
+def dignity_score(planet, sign, is_day):
+    """リリー式。ドミサイル+5 / エグザルテーション+4 / トリプリシティ+3 /
+       デトリメント-5 / フォール-4 / いずれも無ければペレグリン-5"""
+    marks, sc = [], 0
+    if sign in DOMICILE.get(planet, []):
+        sc += 5; marks.append('自分の城')
+    if EXALT.get(planet) == sign:
+        sc += 4; marks.append('賓客の上座')
+    tri = TRIPL[ELEM_OF[sign]][0 if is_day else 1]
+    if tri == planet:
+        sc += 3; marks.append('親戚の家')
+    if not marks:
+        if sign in DETRIMENT.get(planet, []):
+            sc = -5; marks.append('敵地')
+        elif FALL.get(planet) == sign:
+            sc = -4; marks.append('崖から落とされた')
+        else:
+            sc = -5; marks.append('旅先')
+    return sc, '＋'.join(marks)
+
+
+def decide_lord(natal_jp, is_day, year_ruler):
+    """ディグニティコード(城主)を機械的に決める。
+       ①点数最高 ②同点ならアングル ③ASC/MC/太陽/月と合(3度以内) ④年主星 ⑤伝統順"""
+    rows = []
+    for pl in TRAD7:
+        v = natal_jp.get(pl)
+        if not v:
+            continue
+        sc, mark = dignity_score(pl, v['sign'], is_day)
+        rows.append({'p': pl, 'score': sc, 'mark': mark, 'sign': v['sign'],
+                     'house': v['house'], 'lon': v['lon']})
+    rows.sort(key=lambda r: -r['score'])
+    top = [r for r in rows if r['score'] == rows[0]['score']]
+    reason = '点数最高'
+    if len(top) > 1:
+        cand = [r for r in top if r['house'] in ANGULAR]
+        if len(cand) == 1:
+            top, reason = cand, '同点→アングル配置'
+        elif cand:
+            top = cand
+    if len(top) > 1 and year_ruler:
+        cand = [r for r in top if r['p'] == year_ruler]
+        if len(cand) == 1:
+            top, reason = cand, '同点→今年の年主星'
+    if len(top) > 1:
+        top = sorted(top, key=lambda r: TRAD7.index(r['p']))[:1]
+        reason = '同点→伝統的な天体順'
+    return rows, top[0], reason
+
+
 def build_chart_text(p, natal, prog, trans, sr, sa_arc, sa_contacts):
+    _ctx = {'is_day': None, 'year_ruler': None}
     t = f"# {p['name']}さんの占星術データ（鑑定用）\n\n"
     t += "## 基本情報\n"
     t += f"- 生年月日: {p['y']}年{p['mo']}月{p['d']}日 {p['h']}時{p['mi']}分\n"
@@ -366,6 +438,7 @@ def build_chart_text(p, natal, prog, trans, sr, sa_arc, sa_contacts):
     sun_house = natal['planets'].get('Sun', {}).get('house')
     if sun_house:
         sect = '昼生まれ' if 7 <= sun_house <= 12 else '夜生まれ'
+        _ctx['is_day'] = (sect == '昼生まれ')
         t += f"\n## セクト（計算済み・この値をそのまま使うこと）\n- 太陽が第{sun_house}ハウス → {sect}\n"
         pof_lon, pof_sign, pof_deg, pof_h = part_of_fortune(natal, sect == '昼生まれ')
         pd_, psym = sabian_of(pof_sign, pof_deg)
@@ -383,6 +456,7 @@ def build_chart_text(p, natal, prog, trans, sr, sa_arc, sa_contacts):
         t += f"- 起動ハウス: 第{ph}ハウス\n"
         t += f"- 起動サイン: {SIGNS_JP[si]}\n"
         t += f"- 年主星（今年、鍵を預かる星）: {RULERS_JP[si]}\n"
+        _ctx['year_ruler'] = RULERS_JP[si]
         t += f"- 同じ部屋が前回起動した年齢: {age - 12}歳\n"
     if sr.get('planets'):
         t += "\n## ソーラーリターン図（裏取り専用・本文で言及しない）\n"
@@ -408,6 +482,21 @@ def build_chart_text(p, natal, prog, trans, sr, sa_arc, sa_contacts):
         t += f"\n## ご本人からの近況とご相談（参考）\n{p['consult']}\n"
     else:
         t += "\n## ご相談\n- 記載なし（「あなたの問いへ」の章は省略し、その分を第5章と第9章に配分）\n"
+    # ---- エッセンシャルディグニティ（城主をここで確定し、AIに選ばせない） ----
+    natal_jp = {}
+    for key, pl in natal['planets'].items():
+        jp = PJP.get(key, key)
+        if jp in TRAD7 and not pl.get('error'):
+            natal_jp[jp] = {'sign': pl['signJP'], 'house': pl['house'],
+                            'lon': pl['longitude']}
+    if natal_jp and _ctx['is_day'] is not None:
+        rows, lord, reason = decide_lord(natal_jp, _ctx['is_day'], _ctx['year_ruler'])
+        t += "\n## エッセンシャルディグニティ（計算済み・城主はこの値で確定。選び直さないこと）\n"
+        t += "※リリー式。自分の城+5／賓客の上座+4／親戚の家+3／敵地-5／崖から落とされた-4／旅先-5\n"
+        for r in rows:
+            t += f"- {r['p']}: {r['sign']} 第{r['house']}ハウス　{r['mark']}　{r['score']:+d}\n"
+        t += f"- ★城主（ディグニティコード）: {lord['p']}（{lord['sign']}・第{lord['house']}ハウス・{lord['score']:+d}・{reason}）\n"
+        t += "- この城主を第7章の中心に据え、王の香りもこの星で処方する。\n"
     t += f"\n---\n{P1_TAIL}\n"
     return t
 
