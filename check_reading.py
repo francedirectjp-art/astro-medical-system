@@ -62,7 +62,7 @@ def main(path):
     # 6 三点セット (存在する章数に連動させる)
     nch = len(set(re.findall(r'第(\d+)章[｜|]', raw)))
     need = min(nch, 10)
-    for label, pat in [('星を読まれる方へ','星を読まれる方へ'),('いかがでしょうか','いかがでしょうか')]:
+    for label, pat in [('星を読まれる方へ','星を読まれる方へ'),('思い当たることはありませんか','思い当たることはありませんか')]:
         cc = flat.count(pat)
         (ok if cc >= need else fail).append(f'{label}: {cc}箇所 / 本文の章数{nch}に対し{need}必要')
 

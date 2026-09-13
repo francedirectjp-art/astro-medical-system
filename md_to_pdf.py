@@ -14,16 +14,16 @@ except ImportError:
 # 章扉に差し込む図(コード側で確定配置する。モデルにマーカーを書かせない)
 FIG_BEFORE = {
     '第2章': ('elements', 'あなたの炉の火加減。器の満ち方が、生まれつきの体質です。'),
-    '一葉｜太陽と月': ('sunmoon', '王と王妃。育てていきたい方向と、心が安心する条件。'),
+    '中庭｜太陽と月': ('sunmoon', '王と王妃。育てていきたい方向と、心が安心する条件。'),
     '第3章': ('castle',   'あなたの王国の間取り。どの官が、どの部屋に住んでいるか。'),
     '第8章': ('timeline', '心の季節と、現実の季節。そして今年の部屋と、時代の波。'),
 }
 # 章末に置く指の回収図(その章まででいくつ灯ったか)
 HANDS_AFTER = {'第1章': 2, '第3章': 5, '第4章': 8, '第5章': 10}
 
-CHAPTER = re.compile(r'^(はじめに|序章|第[0-9１-９十]+章|終章|第[一二]葉|一葉|次の扉|王国の宮廷)([｜|]|$)')
+CHAPTER = re.compile(r'^(はじめに|序章|第[0-9１-９十]+章|終章|中庭|第[一二]葉|一葉|次の扉|王国の宮廷)([｜|]|$)')
 METHOD = re.compile(r'^[【\[]\s*(星を読まれる方へ|読みの手順)\s*[】\]]')
-HOLD = re.compile(r'^[【\[]\s*(いかがでしょうか|ここで私が決めなかったこと|判断を止めた場所)\s*[】\]]')
+HOLD = re.compile(r'^[【\[]\s*(思い当たることはありませんか？|思い当たることはありませんか|いかがでしょうか|ここで私が決めなかったこと|判断を止めた場所)\s*[】\]]')
 FINGERS = re.compile(r'^.{0,60}(戻りました|揃いました|入りました|弾き方です)。$')
 BLANK = re.compile(r'[（(][\s　]{4,}[）)]')
 
@@ -121,7 +121,7 @@ def md_to_html(md_path, title, meta, out_html, cover=True):
         line = re.sub(r'^\*\*\s*([【\[][^】\]]*[】\]])\s*\*\*', r'\1', line)
         line = re.sub(r'^\*\*?[^*\n]{0,24}(章末|葉末)\*\*?[\s　]+', '', line)
         # モデルが三点セットの見出しを # 形式で書く揺れを【】形式へ正規化する
-        line = re.sub(r'^#+\s*(星を読まれる方へ|読みの手順|いかがでしょうか|ここで私が決めなかったこと)\s*$',
+        line = re.sub(r'^#+\s*(星を読まれる方へ|読みの手順|思い当たることはありませんか？|思い当たることはありませんか|いかがでしょうか|ここで私が決めなかったこと)\s*$',
                       r'【\1】', line)
         line = line.replace('**', '')   # 本文に太字は置かない
         if re.match(r'^[（(]『?(はい|続けて)', line):
@@ -153,7 +153,7 @@ def md_to_html(md_path, title, meta, out_html, cover=True):
                 if '――' in ti:
                     ti, sub = ti.split('――', 1)
                 cls = 'gatefold tall' if kind == 'castle' else (
-                    'gatefold leaf' if not no.startswith('第') or '葉' in no else 'gatefold')
+                    'gatefold leaf' if not no.startswith('第') or no == '中庭' else 'gatefold')
                 body.append('<div class="' + cls + '"><div class="no">' + fmt(no) + '</div>'
                             '<div class="ti">' + fmt(ti) + '</div><div class="sub">' + fmt(sub) + '</div>'
                             '<div class="fig">' + svg(kind) + '</div>'
@@ -168,7 +168,7 @@ def md_to_html(md_path, title, meta, out_html, cover=True):
         if METHOD.match(line) or HOLD.match(line):
             flush()
             is_tech = bool(METHOD.match(line))
-            cap = '星を読まれる方へ' if is_tech else 'いかがでしょうか'
+            cap = '星を読まれる方へ' if is_tech else '思い当たることはありませんか？'
             rest = re.sub(r'^[【\[][^】\]]*[】\]]\s*', '', line)
             body.append(f'<div class="{"tech" if is_tech else "ask"}"><p class="cap">{cap}</p>')
             tech_open[0] = True
