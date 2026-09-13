@@ -48,7 +48,8 @@ def main(path):
     (fail if par else ok).append('括弧内否定: ' + ('; '.join(par) if par else 'なし'))
 
     # 5 弱い推量 (章ごと)
-    chaps = re.split(r'(序章[｜|]|第\d+章[｜|]|終章[｜|]|あなたの問いへ)', raw)
+    chaps = re.split(r'(はじめに|序章[｜|]|第\d+章[｜|]|中庭[｜|]|終章[｜|]|'
+                     r'あなたの問いへ|次の扉|王国の宮廷)', raw)
     counts = {}
     for i in range(1, len(chaps), 2):
         title = chaps[i].strip('｜|')
