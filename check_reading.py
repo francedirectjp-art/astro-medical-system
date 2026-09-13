@@ -85,7 +85,8 @@ def main(path):
     (fail if t else ok).append('禁止術語: ' + (', '.join(t) if t else 'なし'))
 
     # 9 メタ発言・偽見出しの断片
-    meta = re.findall(r'[（(]※[^）)]{0,40}[）)]|申し訳|先ほどの章|書き直し|訂正します', flat)
+    meta = re.findall(r'[（(]※[^）)]{0,40}[）)]|申し訳(?:ありません|ございません)|先ほどの章|'
+                      r'章を書き直|訂正します|以下に書き直|失礼しました', flat)
     (fail if meta else ok).append('メタ発言: ' + ('; '.join(meta[:3]) if meta else 'なし'))
 
     # 9b 停止案内・便の継ぎ目の漏れ
@@ -123,14 +124,29 @@ def main(path):
         houses = {m.group(1): int(m.group(2))
                   for m in re.finditer(r'^- (\S+?): \S+?座 \d+°\d+′.*?\[第(\d+)ハウス\]', natal, re.M)}
         PLN = '太陽|月|水星|金星|火星|木星|土星|天王星|海王星|冥王星|ドラゴンヘッド|キローン'
-        for pl, h in houses.items():
-            # 「進行の」「Tの」「SRの」はネイタルではない。間に別の天体名が挟まる文も対象外
-            for m in re.finditer(r'(?<!進行の)(?<!進行)' + re.escape(pl) + r'((?:(?!' + PLN + r').){0,20}?)第(\d+)ハウス', flat):
-                if '進行' in m.group(1) or 'ソーラー' in m.group(1):
-                    continue
-                if int(m.group(2)) != h:
-                    issues.append(f'{pl}は第{h}ハウス。本文に第{m.group(2)}ハウスの記述')
-                    break
+        # 「第Nハウス」ごとに、直前で最も近い天体名を主語とみなして照合する
+        seen = set()
+        for m in re.finditer(r'第(\d+)ハウス', flat):
+            head = flat[max(0, m.start() - 30):m.start()]
+            cands = list(re.finditer(PLN, head))
+            if not cands:
+                continue
+            last = cands[-1]
+            pl = last.group(0)
+            # 進行・トランジット・SRの天体はネイタルと比較しない
+            # 指示語で受ける文（「この月が」等）は、さらに前方まで遡って主語を判定する
+            wide = flat[max(0, m.start() - 220):m.start()]
+            if re.search(r'(進行|プログレス|ソーラー|SR|今の空|トランジット)', wide[-120:]) \
+               and re.search(r'(この|その)' + re.escape(pl), head):
+                continue
+            ctx = head[max(0, last.start() - 8):]
+            if re.search(r'進行|プログレス|ソーラー|SR|今の空|移動し|入り', ctx):
+                continue
+            if pl in seen or pl not in houses:
+                continue
+            if int(m.group(1)) != houses[pl]:
+                issues.append(f'{pl}は第{houses[pl]}ハウス。本文に第{m.group(1)}ハウスの記述')
+                seen.add(pl)
 
         # 進行の月・太陽の在室ハウス
         for label, pat in [('進行の月', r'プログレス月: \S+? \d+°\d+′\s*［?\[?ネイタル第(\d+)ハウス'),
@@ -138,9 +154,10 @@ def main(path):
             mm = re.search(pat, ct)
             if mm:
                 h = int(mm.group(1))
-                for m in re.finditer(re.escape(label) + r'[^。]{0,40}?第(\d+)ハウス', flat):
-                    if int(m.group(1)) != h:
-                        issues.append(f'{label}はネイタル第{h}ハウス。本文に第{m.group(1)}ハウスの記述')
+                other = '進行の太陽' if label == '進行の月' else '進行の月'
+                for m in re.finditer(re.escape(label) + r'((?:(?!' + re.escape(other) + r').){0,30}?)第(\d+)ハウス', flat):
+                    if int(m.group(2)) != h:
+                        issues.append(f'{label}はネイタル第{h}ハウス。本文に第{m.group(2)}ハウスの記述')
                         break
 
         # 今年のプロフェクション（年齢と部屋）
