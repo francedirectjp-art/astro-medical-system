@@ -53,7 +53,10 @@ def main(path):
     for i in range(1, len(chaps), 2):
         title = chaps[i].strip('｜|')
         body = chaps[i+1] if i+1 < len(chaps) else ''
-        c = sum(body.count(h) for h in ['ではないでしょうか','かもしれません','だと思います'])
+        # 十本の指について「これまで何本使ってきたか」を断定しないための配慮形は数えない
+        #（プロンプト5-0の規定。自信のなさではなく読者の領分を侵さないための節度）
+        body_x = re.sub(r'[^。]{0,80}(指|ピアノ)[^。]{0,80}かもしれません。', '', body)
+        c = sum(body_x.count(h) for h in ['ではないでしょうか','かもしれません','だと思います'])
         counts[title] = c
     over = {k:v for k,v in counts.items() if v > 1}
     total = sum(flat.count(h) for h in ['ではないでしょうか','かもしれません','だと思います'])
