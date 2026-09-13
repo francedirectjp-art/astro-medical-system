@@ -3,6 +3,7 @@
 チャートテキストを読み、章扉に差し込むSVGを返す。データ差し込みのみで、
 図の構造そのものは全冊共通のテンプレート。
 """
+import os
 import re
 
 INK, GOLD, LINE, PALE, BG = '#2b2a26', '#b49a6c', '#c9bb9a', '#efe9dd', '#faf8f4'
@@ -13,7 +14,11 @@ GLYPH = {'太陽': '☉', '月': '☽', '水星': '☿', '金星': '♀', '火�
          'ドラゴンヘッド': '☊', 'キローン': '⚷'}
 # 指の割り当て(全冊固定のテンプレート)
 LEFT = [('月', '王妃'), ('金星', '担当官'), ('木星', '大臣'), ('海王星', '来訪者'), ('冥王星', '恵みの主')]
+LEFT_G = [('月', '下草'), ('金星', '花'), ('木星', '大樹'), ('海王星', '朝霧'), ('冥王星', '地下の根')]
 RIGHT = [('太陽', '王'), ('水星', '使者'), ('火星', '将軍'), ('土星', '長老'), ('天王星', '革命家')]
+RIGHT_G = [('太陽', '主木'), ('水星', 'ハーブ'), ('火星', '棘の木'), ('土星', '石組み'), ('天王星', '飛んできた種')]
+if os.environ.get('GARDEN'):
+    LEFT, RIGHT = LEFT_G, RIGHT_G
 LIT = {2: {'太陽', '月'},
        5: {'太陽', '月', '水星', '火星', '土星'},
        8: {'太陽', '月', '水星', '火星', '土星', '金星', '木星', '海王星'},
@@ -21,6 +26,12 @@ LIT = {2: {'太陽', '月'},
 ROOMS = {1: '城門', 2: '蔵', 3: '使いの道', 4: '魂の根', 5: '喜びの庭', 6: '作業場',
          7: '対面の広間', 8: '継承の地下', 9: '遠見の塔', 10: '天職の塔',
          11: '仲間の広間', 12: '奥の静室'}
+# 庭版の区画名（GARDEN=1 で切り替える）
+ROOMS_GARDEN = {1: '門', 2: '蔵と実り', 3: '小道', 4: '奥の土', 5: '花壇', 6: '作業場',
+                7: '向かいの垣根', 8: '地下と堆肥', 9: '高台', 10: '日向の頂',
+                11: '広場', 12: '奥の木陰'}
+if os.environ.get('GARDEN'):
+    ROOMS = ROOMS_GARDEN
 CELL = {1: (0, 2), 2: (0, 3), 3: (1, 3), 4: (2, 3), 5: (3, 3), 6: (3, 2),
         7: (3, 1), 8: (3, 0), 9: (2, 0), 10: (1, 0), 11: (0, 0), 12: (0, 1)}
 
@@ -141,8 +152,8 @@ def fig_castle(houses, asc='', mc=''):
     cx, cy = P + S, P + S
     o.append(f'<rect x="{cx}" y="{cy}" width="{S*2}" height="{S*2}" fill="{PALE}" stroke="{LINE}"/>')
     o.append(f'<text x="{cx+S}" y="{cy+S-16}" text-anchor="middle" font-size="11" fill="{BROWN}" letter-spacing="3">あなたの王国</text>')
-    o.append(f'<text x="{cx+S}" y="{cy+S+8}" text-anchor="middle" font-size="9" fill="{INK}">城門　{asc}</text>')
-    o.append(f'<text x="{cx+S}" y="{cy+S+24}" text-anchor="middle" font-size="9" fill="{INK}">天職の塔　{mc}</text>')
+    o.append(f'<text x="{cx+S}" y="{cy+S+8}" text-anchor="middle" font-size="9" fill="{INK}">門　{asc}</text>' if os.environ.get('GARDEN') else f'<text x="{cx+S}" y="{cy+S+8}" text-anchor="middle" font-size="9" fill="{INK}">城門　{asc}</text>')
+    o.append(f'<text x="{cx+S}" y="{cy+S+24}" text-anchor="middle" font-size="9" fill="{INK}">日向の頂　{mc}</text>' if os.environ.get('GARDEN') else f'<text x="{cx+S}" y="{cy+S+24}" text-anchor="middle" font-size="9" fill="{INK}">天職の塔　{mc}</text>')
     o.append('</svg>')
     return ''.join(o)
 

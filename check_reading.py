@@ -180,7 +180,7 @@ def main(path):
             t1, t2 = m.group(1), m.group(2)
             if t1 in flat and t2 in flat:
                 seg = re.search(r'[^。]{0,60}' + re.escape(t1) + r'[^。]{0,60}' + re.escape(t2) + r'[^。]{0,60}。', flat)
-                if seg and re.search(r'やがて|いずれ|数年のうちに|これから訪れ', seg.group(0)):
+                if seg and re.search(r'やがて|いずれ(?!も|に[せし])|数年のうちに|これから訪れ|近いうちに', seg.group(0)):
                     issues.append(f'T{t1}→N{t2}はオーブ{m.group(4)}度（すでに接触中）。本文が未来形')
             elif t1 not in flat:
                 issues.append(f'T{t1}→N{t2}がオーブ{m.group(4)}度で接触中だが、本文に{t1}の言及なし')

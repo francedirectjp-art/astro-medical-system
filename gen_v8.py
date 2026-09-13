@@ -25,7 +25,8 @@ from anthropic import Anthropic
 
 BASE = 'http://localhost:5000'
 DIR = '/private/tmp/claude-501/-Users-oda/cc5c59e7-fce2-43a3-a323-8dc218c6a19c/scratchpad'
-GEM = open('/Users/oda/CCAGI/astro-medical-system/gem_narrative_astrologer_v8.md', encoding='utf-8').read()
+GEM_PATH = os.environ.get('GEM_PATH', '/Users/oda/CCAGI/astro-medical-system/gem_narrative_astrologer_v8.md')
+GEM = open(GEM_PATH, encoding='utf-8').read()
 SABIAN = json.load(open('/Users/oda/CCAGI/astro-medical-system/reading/sabian360.json', encoding='utf-8'))
 SIGN_EN = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
            'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']
@@ -79,8 +80,9 @@ GUARD = ('章は必ず番号順に書き、順序の言い直しや（※〜）�
          '説明より先に情景を出すと、占星術を知らない読者には固有名詞が唐突に現れたように見えます。'
          '厚く描く情景は一章にひとつだけ。第1章の初出時のみ、サビアンとは何かを一文で説明してください。'
          '★各章・各葉の冒頭には、必ず # を付けた章題行を独立した一行として置いてください。'
-         '例: 「# はじめに」「# 序章｜私信のはじまり」「# 第1章｜王と王妃と城門――太陽・月・ASC」'
-         '「# 中庭｜心当たり」「# 第11章｜三つの香り」「# 終章｜扉」「# 次の扉」「# 王国の宮廷」。'
+         '章題は第5節の章構成に書かれているとおりに一字一句写してください。'
+         '旧版の章題を記憶から書かないこと。'
+         '例: 「# はじめに」「# 序章｜私信のはじまり」「# 中庭｜心当たり」「# 終章｜扉」「# 次の扉」。'
          '章題は第5節の表記どおりに書き、本文と地続きにしないでください。章題行がないとPDFの章扉が作れません。'
          '指の回収の行頭に「第1章末」のような欄外ラベルを書かず、回収の一文だけを書いてください。')
 
