@@ -13,19 +13,22 @@ except ImportError:
 
 # 章扉に差し込む図(コード側で確定配置する。モデルにマーカーを書かせない)
 _G = bool(os.environ.get('GARDEN'))
+_M = bool(os.environ.get('MYTH'))
 FIG_BEFORE = {
     '第2章': ('elements', 'あなたの土の質。四つの器の満ち方が、生まれつきの体質です。' if _G
                           else 'あなたの炉の火加減。器の満ち方が、生まれつきの体質です。'),
-    '中庭｜太陽と月': ('sunmoon', '主木と下草。育てていきたい方向と、心が安心する条件。' if _G
+    '中庭｜太陽と月': ('sunmoon', '昼と夜。育てていきたい方向と、心が安心する条件。' if _M
+                                  else '主木と下草。育てていきたい方向と、心が安心する条件。' if _G
                                   else '王と王妃。育てていきたい方向と、心が安心する条件。'),
-    '第3章': ('castle',   'あなたの庭の見取り図。どの草木が、どの区画に育っているか。' if _G
+    '第3章': ('castle',   '十二の領域。どの神が、どの領域で働いているか。' if _M
+                          else 'あなたの庭の見取り図。どの草木が、どの区画に育っているか。' if _G
                           else 'あなたの王国の間取り。どの官が、どの部屋に住んでいるか。'),
     '第8章': ('timeline', '心の季節と、現実の季節。そして今年の部屋と、時代の波。'),
 }
 # 章末に置く指の回収図(その章まででいくつ灯ったか)
 HANDS_AFTER = {'第1章': 2, '第3章': 5, '第4章': 8, '第5章': 10}
 
-CHAPTER = re.compile(r'^(はじめに|序章|第[0-9１-９十]+章|終章|中庭|第[一二]葉|一葉|次の扉|王国の宮廷|庭の見取り図)([｜|]|$)')
+CHAPTER = re.compile(r'^(はじめに|序章|第[0-9１-９十]+章|終章|中庭|第[一二]葉|一葉|次の扉|王国の宮廷|庭の見取り図|十柱の一覧)([｜|]|$)')
 METHOD = re.compile(r'^[【\[]\s*(星を読まれる方へ|読みの手順)\s*[】\]]')
 HOLD = re.compile(r'^[【\[]\s*(思い当たることはありませんか？|思い当たることはありませんか|いかがでしょうか|ここで私が決めなかったこと|判断を止めた場所)\s*[】\]]')
 FINGERS = re.compile(r'^.{0,60}(戻りました|揃いました|入りました|弾き方です)。$')
@@ -142,7 +145,7 @@ def md_to_html(md_path, title, meta, out_html, cover=True):
         if re.match(r'^#+\s', line) and (CHAPTER.match(heading) or len(heading) <= 24):
             flush()
             close_chapter()
-            if D is not None and heading.startswith(('王国の宮廷', '庭の見取り図')):
+            if D is not None and heading.startswith(('王国の宮廷', '庭の見取り図', '十柱の一覧')):
                 body.append(f'<h2>{fmt(heading)}</h2>')
                 body.append('<div class="handfig big">' + FIG.fig_hands(10, labels=True) + '</div>')
                 prev_ch[0] = None
