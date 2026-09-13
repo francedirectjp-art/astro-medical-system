@@ -136,6 +136,10 @@ def main(path):
             pl = last.group(0)
             # 進行・トランジット・SRの天体はネイタルと比較しない
             # 指示語で受ける文（「この月が」等）は、さらに前方まで遡って主語を判定する
+            # プロフェクション文脈(今年/年/月から月にかけて)はネイタルの在室ではない
+            near = flat[max(0, m.start() - 60):m.start()]
+            if re.search(r'今年|年\d+月|にかけて|灯りがついて|起動', near):
+                continue
             wide = flat[max(0, m.start() - 220):m.start()]
             if re.search(r'(進行|プログレス|ソーラー|SR|今の空|トランジット)', wide[-120:]) \
                and re.search(r'(この|その)' + re.escape(pl), head):
