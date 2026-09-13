@@ -122,10 +122,14 @@ def main(path):
         natal = ct.split('### 天体の配置')[-1].split('### アングル')[0]
         houses = {m.group(1): int(m.group(2))
                   for m in re.finditer(r'^- (\S+?): \S+?座 \d+°\d+′.*?\[第(\d+)ハウス\]', natal, re.M)}
+        PLN = '太陽|月|水星|金星|火星|木星|土星|天王星|海王星|冥王星|ドラゴンヘッド|キローン'
         for pl, h in houses.items():
-            for m in re.finditer(r'(?:' + re.escape(pl) + r')[^。]{0,24}?第(\d+)ハウス', flat):
-                if int(m.group(1)) != h:
-                    issues.append(f'{pl}は第{h}ハウス。本文に第{m.group(1)}ハウスの記述')
+            # 「進行の」「Tの」「SRの」はネイタルではない。間に別の天体名が挟まる文も対象外
+            for m in re.finditer(r'(?<!進行の)(?<!進行)' + re.escape(pl) + r'((?:(?!' + PLN + r').){0,20}?)第(\d+)ハウス', flat):
+                if '進行' in m.group(1) or 'ソーラー' in m.group(1):
+                    continue
+                if int(m.group(2)) != h:
+                    issues.append(f'{pl}は第{h}ハウス。本文に第{m.group(2)}ハウスの記述')
                     break
 
         # 進行の月・太陽の在室ハウス
