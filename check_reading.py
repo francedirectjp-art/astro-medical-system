@@ -194,6 +194,11 @@ def main(path):
     else:
         warn.append('本文とデータの整合: CHART_TXT 未指定のため検査せず')
 
+    # 13 サビアンの転換文（型と個別性の区切り）
+    nsab = len(set(re.findall(r'第(\d+)章[｜|]', raw)))
+    trans = len(re.findall(r'どなたにも当てはま|同じ配置|あなたの度数だけ|ここからが、あなただけのもの', flat))
+    (fail if trans < 4 else ok).append(f'サビアンの転換文: {trans}箇所（絵を出す章ごとに必要。最低4）')
+
     # 出力
     print(f'\n=== 検品: {os.path.basename(path)} ===\n')
     for label, items, mark in [('NG', fail, '✗'), ('要確認', warn, '!'), ('OK', ok, '✓')]:
