@@ -62,14 +62,15 @@ def main(path):
     # 6 三点セット (存在する章数に連動させる)
     nch = len(set(re.findall(r'第(\d+)章[｜|]', raw)))
     need = min(nch, 10)
-    for label, pat in [('読みの手順','読みの手順'),('判断の保留','決めなかったこと')]:
+    for label, pat in [('星を読まれる方へ','星を読まれる方へ'),('いかがでしょうか','いかがでしょうか')]:
         cc = flat.count(pat)
         (ok if cc >= need else fail).append(f'{label}: {cc}箇所 / 本文の章数{nch}に対し{need}必要')
 
     # 7 香り三処方の重複(中心植物の重複を主判定にする)
-    centers = re.findall(r'([ァ-ヶー・]+)\s*3滴', flat)
+    flatn = flat.translate(str.maketrans('一二三四五六七八九', '123456789'))
+    centers = re.findall(r'([ァ-ヶー・]+)\s*(?:を)?\s*3滴', flatn)
     # 城主と年主星が同一天体なら中心は同じになりうる。全4種が完全一致した場合だけ誤りとする
-    recipes = re.findall(r'精油[：:]\s*((?:[ァ-ヶー・]+\d滴[、,]?\s*)+)', flat)
+    recipes = re.findall(r'精油[：:]\s*((?:[ァ-ヶー・]+\d滴[、,]?\s*)+)', flatn)
     norm = [tuple(sorted(re.findall(r'([ァ-ヶー・]+)(\d)滴', r))) for r in recipes]
     dupc = [r for r,k in collections.Counter(norm).items() if k > 1 and r]
     (fail if dupc else ok).append(f'香り: 中心={centers} / 処方{len(recipes)}件 ' +
@@ -103,7 +104,10 @@ def main(path):
 
     # 11 記入欄
     blanks = len(re.findall(r'[（(]\s{4,}[）)]|（　+）', raw))
-    (ok if blanks >= 5 else fail).append(f'記入欄: {blanks}箇所 (最低5必要)')
+    if path.lower().endswith('.pdf'):
+        warn.append(f'記入欄: PDFでは罫線に変換されるため判定不可（原稿mdで確認すること）')
+    else:
+        (ok if blanks >= 5 else fail).append(f'記入欄: {blanks}箇所 (最低5必要)')
 
     # 出力
     print(f'\n=== 検品: {os.path.basename(path)} ===\n')

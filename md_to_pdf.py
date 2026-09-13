@@ -22,8 +22,8 @@ FIG_BEFORE = {
 HANDS_AFTER = {'第1章': 2, '第3章': 5, '第4章': 8, '第5章': 10}
 
 CHAPTER = re.compile(r'^(はじめに|序章|第[0-9１-９十]+章|終章|第[一二]葉|一葉|次の扉|王国の宮廷)([｜|]|$)')
-METHOD = re.compile(r'^[【\[]\s*読みの手順\s*[】\]]')
-HOLD = re.compile(r'^[【\[]\s*(ここで私が決めなかったこと|判断を止めた場所)\s*[】\]]')
+METHOD = re.compile(r'^[【\[]\s*(星を読まれる方へ|読みの手順)\s*[】\]]')
+HOLD = re.compile(r'^[【\[]\s*(いかがでしょうか|ここで私が決めなかったこと|判断を止めた場所)\s*[】\]]')
 FINGERS = re.compile(r'^.{0,60}(戻りました|揃いました|入りました|弾き方です)。$')
 BLANK = re.compile(r'[（(][\s　]{4,}[）)]')
 
@@ -48,6 +48,12 @@ p.recipe { margin-bottom: 0.4em; padding-left: 1em; }
 .tech .cap { font-size: 8.5pt; letter-spacing: 0.12em; color: #9a7b42;
              margin: 0 0 0.5em; font-weight: 600; }
 .tech p { font-size: 9pt; line-height: 1.75; margin: 0 0 0.35em; color: #4a463e; }
+/* 読者への問いかけ: 技術欄とは別の見た目にする(温度を上げる) */
+.ask { margin: 1.8em 0 1.2em; padding: 3.5mm 6mm; border-top: 1px solid #ded5c4;
+       border-bottom: 1px solid #ded5c4; page-break-inside: avoid; }
+.ask .cap { font-size: 9pt; letter-spacing: 0.14em; color: #7a5c2e;
+            margin: 0 0 0.6em; font-weight: 600; text-align: center; }
+.ask p { font-size: 10pt; line-height: 1.95; margin: 0 0 0.35em; color: #2b2a26; }
 .fingers { margin: 1.2em 0 2.4em; padding-top: 0.7em; border-top: 1px solid #e4ddd0;
            font-size: 9.5pt; letter-spacing: 0.05em; color: #7a5c2e; text-align: right; }
 /* 記入欄: 読者が実際に書き込む罫線 */
@@ -78,7 +84,7 @@ p.recipe { margin-bottom: 0.4em; padding-left: 1em; }
 def md_to_html(md_path, title, meta, out_html, cover=True):
     body = []
     para = []
-    tech_open = [False]
+    tech_open = [False, 0]   # [開いているか, 箱に入れた本文の数]
     chart = os.environ.get('CHART_TXT')
     D = FIG.parse_chart(chart) if (FIG and chart and os.path.exists(chart)) else None
     prev_ch = [None]
@@ -113,13 +119,17 @@ def md_to_html(md_path, title, meta, out_html, cover=True):
         line = raw.strip()
         # モデルが太字で包む / 欄外ラベルを本文化する揺れを吸収する
         line = re.sub(r'^\*\*\s*([【\[][^】\]]*[】\]])\s*\*\*', r'\1', line)
-        line = re.sub(r'^\*\*[^*]{0,24}(章末|葉末)\*\*[\s　]*', '', line)
+        line = re.sub(r'^\*\*?[^*\n]{0,24}(章末|葉末)\*\*?[\s　]+', '', line)
+        # モデルが三点セットの見出しを # 形式で書く揺れを【】形式へ正規化する
+        line = re.sub(r'^#+\s*(星を読まれる方へ|読みの手順|いかがでしょうか|ここで私が決めなかったこと)\s*$',
+                      r'【\1】', line)
         line = line.replace('**', '')   # 本文に太字は置かない
         if re.match(r'^[（(]『?(はい|続けて)', line):
             continue
         if not line or line == '---':
             flush()
-            if tech_open[0]:
+            # 見出し直後の空行では閉じない。本文が1つ以上入ってから閉じる
+            if tech_open[0] and tech_open[1] > 0:
                 body.append('</div>')
                 tech_open[0] = False
             continue
@@ -157,18 +167,24 @@ def md_to_html(md_path, title, meta, out_html, cover=True):
             continue
         if METHOD.match(line) or HOLD.match(line):
             flush()
-            cap = '読みの手順' if METHOD.match(line) else 'ここで私が決めなかったこと'
+            is_tech = bool(METHOD.match(line))
+            cap = '星を読まれる方へ' if is_tech else 'いかがでしょうか'
             rest = re.sub(r'^[【\[][^】\]]*[】\]]\s*', '', line)
-            body.append(f'<div class="tech"><p class="cap">{cap}</p>')
+            body.append(f'<div class="{"tech" if is_tech else "ask"}"><p class="cap">{cap}</p>')
+            tech_open[0] = True
+            tech_open[1] = 0
             if rest:
                 body.append(f'<p>{fmt(rest)}</p>')
-            tech_open[0] = True
+                tech_open[1] += 1
             continue
         if tech_open[0]:
-            # 技術層は空行で閉じる(空行はloop先頭のflushで処理されるためフラグで判定)
-            if re.match(r'^[一二三1-3][\s、.]|^・', line) or len(line) < 120:
+            # 箱の中身。長い段落も取りこぼさない（2本まで）
+            if tech_open[1] < 2:
                 body.append(f'<p>{fmt(line)}</p>')
+                tech_open[1] += 1
                 continue
+            body.append('</div>')
+            tech_open[0] = False
         if FINGERS.match(line):
             flush()
             body.append(f'<p class="fingers">{fmt(line)}</p>')
@@ -189,6 +205,7 @@ def md_to_html(md_path, title, meta, out_html, cover=True):
     flush()
     if tech_open[0]:
         body.append('</div>')
+        tech_open[0] = False
     close_chapter()
 
     wheel_html = ''
