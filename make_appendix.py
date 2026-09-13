@@ -72,6 +72,11 @@ def parse(path):
             d[k] = m.group(1)
     m = re.search(r'現在の年齢: (\d+)歳', t)
     d['age'] = m.group(1) if m else ''
+    dg = t.split('## エッセンシャルディグニティ')[-1].split('\n## ')[0]
+    d['dignity'] = [(m.group(1), f'{m.group(2)} 第{m.group(3)}ハウス', m.group(4), m.group(5))
+                    for m in re.finditer(r'^- (\S+?): (\S+?座) 第(\d+)ハウス\s+(\S+?)\s+([+-]\d+)$', dg, re.M)]
+    m = re.search(r'★城主（ディグニティコード）: (\S+?)（(.+?)）', dg)
+    d['lord'] = (m.group(1), m.group(2)) if m else None
     return d
 
 
@@ -147,7 +152,12 @@ def tables(d, trans):
     sr = [(k, v, '') for k, v in [('有効期間', d['sr'].get('period', '')), ('SR-ASC', d['sr'].get('asc', '')),
                                   ('SR-MC', d['sr'].get('mc', '')), ('SR太陽の部屋', d['sr'].get('sun_h', '')),
                                   ('SR月', d['sr'].get('moon', ''))] if v]
-    return (tb('ネイタル天体', nat) + tb('プロフェクション（今年の部屋）', pf)
+    dg = [(f'{PG.get(n,"")} {n}', pos, f'{mark}　{sc}') for n, pos, mark, sc in d.get('dignity', [])]
+    if d.get('lord'):
+        dg.append(('★城主（ディグニティコード）', d['lord'][0], d['lord'][1]))
+    return (tb('ネイタル天体', nat)
+            + (tb('エッセンシャルディグニティ（城主の判定根拠）', dg) if dg else '')
+            + tb('プロフェクション（今年の部屋）', pf)
             + tb('プログレス（進行図）', pr) + tb('トランジット（鑑定日の空）', tr)
             + (tb('ソーラーリターン（今年の図）', sr) if sr else ''))
 

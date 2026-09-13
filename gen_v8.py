@@ -189,6 +189,58 @@ def element_balance(natal):
     return elem, mode, rows, order
 
 
+def element_verdict(elem):
+    """同点を同点として扱い、「乏しい」と呼べる閾値を機械的に決める。
+       総量に対する比率で判定する（均等配分は25%）。
+       18%未満=際立って乏しい / 18〜22%=やや少ない / それ以外=偏りとは呼ばない"""
+    total = sum(elem.values()) or 1
+    hi = max(elem.values())
+    lo = min(elem.values())
+    tops = [e for e, v in elem.items() if v == hi]
+    lows = [e for e, v in elem.items() if v == lo]
+    pct = lo / total * 100
+    if pct < 18:
+        grade = '際立って乏しい'
+    elif pct < 22:
+        grade = 'やや少ない'
+    else:
+        grade = '目立った不足とは言えない'
+    lines = []
+    if len(tops) > 1:
+        lines.append(f"優勢な元素: {'と'.join(tops)}が同点（各{hi}）。"
+                     f"どちらか一方を『優勢』と書かず、二つが拮抗していると書くこと")
+    else:
+        lines.append(f"優勢な元素: {tops[0]}（{hi}）")
+    if len(lows) > 1:
+        lines.append(f"最も少ない元素: {'と'.join(lows)}が同点（各{lo}・全体の{pct:.0f}%）。"
+                     f"一方だけを『最も弱い』と書かないこと")
+    else:
+        lines.append(f"最も少ない元素: {lows[0]}（{lo}・全体の{pct:.0f}%）")
+    lines.append(f"不足の程度: {grade}。"
+                 f"『驚くほど乏しい』『ほとんど無い』といった強い言い方は、際立って乏しい（18%未満）のときだけ許される")
+    return lines
+
+
+def transit_to_natal(natal, trans_pos):
+    """トランジット外惑星→ネイタル天体・アングルの接触（オーブ3度以内）。
+       計算して渡さないとモデルが見落とす。第7版でオーブ56分の合を落とした"""
+    pts = [(PJP[k], v['longitude']) for k, v in natal['planets'].items()
+           if 'longitude' in v and k in PJP]
+    pts.append(('ASC', natal['houses']['ascendant']['longitude']))
+    pts.append(('MC', natal['houses']['midheaven']['longitude']))
+    rows = []
+    for tname, tlon in trans_pos:
+        for nname, nlon in pts:
+            d = angdiff(tlon, nlon)
+            for ang, label in ASPECTS_DEF:
+                orb = abs(d - ang)
+                if orb <= 3.0:
+                    tight = '★接触中（1度以内・最重要）' if orb <= 1.0 else ''
+                    rows.append(f"T{tname} → N{nname}: {label}（オーブ{orb:.1f}度）{tight}")
+                    break
+    return sorted(rows, key=lambda r: float(r.split('オーブ')[1].split('度')[0]))
+
+
 SEASON = {'火': '春', '土': '夏', '風': '秋', '水': '冬'}
 
 
@@ -419,7 +471,8 @@ def build_chart_text(p, natal, prog, trans, sr, sa_arc, sa_contacts):
     t += "- 各点の元素: " + "、".join(erows) + "\n"
     t += f"- 重み付き合計（太陽・月・ASC=3、個人天体=2、社会・外惑星=1）: "
     t += "、".join(f"{e}={elem[e]}" for e in ELEM_JP) + "\n"
-    t += f"- 優勢な元素: {eorder[0]}（次点: {eorder[1]}） ／ 最も弱い元素: {eorder[-1]}\n"
+    for _l in element_verdict(elem):
+        t += f"- {_l}\n"
     t += "- 3区分（同じ重み付け）: " + "、".join(f"{m}={mode[m]}" for m in MODE_JP) + "\n"
     t += "\n## サビアンシンボル（計算済み・検証済み原文）\n"
     t += "※占星術の慣例により、度数表記◯°◯′は「切り上げた度数」のシンボルに正式に対応する（例: 獅子座8°32′→獅子座9度）。\n"
@@ -448,10 +501,21 @@ def build_chart_text(p, natal, prog, trans, sr, sa_arc, sa_contacts):
     t += "\n## トランジット\n"
     if trans.get('outer_planets'):
         t += f"\n### 外惑星の現在位置（{CURRENT_DATE}時点）\n"
-        for key in ('Uranus', 'Neptune', 'Pluto'):
+        _tpos = []
+        for key in ('Uranus', 'Neptune', 'Pluto', 'Saturn', 'Jupiter'):
             pl = trans['outer_planets'].get(key)
             if pl:
-                t += f"- {PJP[key]}: {pl['signJP']} {fdeg(pl['degree'])}{' ℞' if pl.get('retrograde') else ''}\n"
+                if key in ('Uranus', 'Neptune', 'Pluto'):
+                    t += f"- {PJP[key]}: {pl['signJP']} {fdeg(pl['degree'])}{' ℞' if pl.get('retrograde') else ''}\n"
+                if 'longitude' in pl:
+                    _tpos.append((PJP[key], pl['longitude']))
+        _tc = transit_to_natal(natal, _tpos) if _tpos else []
+        if _tc:
+            t += ("\n### 今の空からネイタルへの接触（計算済み・オーブ3度以内・この表を使い自分で探さない）\n"
+                  "※★印は1度以内。いま最も効いている接触なので、未来形（やがて・数年のうちに）で書かず、"
+                  "すでに起きていることとして扱うこと\n")
+            for r in _tc:
+                t += f"- {r}\n"
     for label, arr in (('木星', trans.get('jupiter_transits')), ('土星', trans.get('saturn_transits'))):
         if arr:
             t += f"\n### {label}のサイン移動（今後3年）\n"
@@ -476,7 +540,14 @@ def build_chart_text(p, natal, prog, trans, sr, sa_arc, sa_contacts):
         si = int(natal['houses']['cusps'][ph - 1] // 30)
         t += "\n## プロフェクション（計算済み・この値をそのまま使うこと）\n"
         t += f"- 現在の年齢: {age}歳\n"
-        t += f"- 起動ハウス: 第{ph}ハウス\n"
+        _bd = f"{p['mo']}月{p['d']}日"
+        _y0 = p['y'] + age
+        t += f"- 今年の期間: {_y0}年{_bd} 〜 {_y0 + 1}年{_bd}（この期間が「今年」。鑑定日はこの中にある）\n"
+        _pph = ((age - 1) % 12) + 1
+        _psi = int(natal['houses']['cusps'][_pph - 1] // 30)
+        t += (f"- ひとつ前の期間: {_y0 - 1}年{_bd} 〜 {_y0}年{_bd}（{age - 1}歳・第{_pph}ハウス・"
+              f"年主星{RULERS_JP[_psi]}）。これは既に終わっている。「今この瞬間まで」と書かないこと\n"
+              f"- 起動ハウス: 第{ph}ハウス\n")
         t += f"- 起動サイン: {SIGNS_JP[si]}\n"
         t += f"- 年主星（今年、鍵を預かる星）: {RULERS_JP[si]}\n"
         _ctx['year_ruler'] = RULERS_JP[si]

@@ -112,6 +112,62 @@ def main(path):
     else:
         (ok if blanks >= 5 else fail).append(f'記入欄: {blanks}箇所 (最低5必要)')
 
+    # 12 本文とチャートデータの整合（第8版で最も効く検品。形式ではなく中身を見る）
+    chart_path = os.environ.get('CHART_TXT')
+    if chart_path and os.path.exists(chart_path):
+        ct = open(chart_path, encoding='utf-8').read()
+        issues = []
+
+        # 天体の在室ハウスが本文と食い違っていないか
+        natal = ct.split('### 天体の配置')[-1].split('### アングル')[0]
+        houses = {m.group(1): int(m.group(2))
+                  for m in re.finditer(r'^- (\S+?): \S+?座 \d+°\d+′.*?\[第(\d+)ハウス\]', natal, re.M)}
+        for pl, h in houses.items():
+            for m in re.finditer(r'(?:' + re.escape(pl) + r')[^。]{0,24}?第(\d+)ハウス', flat):
+                if int(m.group(1)) != h:
+                    issues.append(f'{pl}は第{h}ハウス。本文に第{m.group(1)}ハウスの記述')
+                    break
+
+        # 進行の月・太陽の在室ハウス
+        for label, pat in [('進行の月', r'プログレス月: \S+? \d+°\d+′\s*［?\[?ネイタル第(\d+)ハウス'),
+                           ('進行の太陽', r'プログレス太陽: \S+? \d+°\d+′\s*［?\[?ネイタル第(\d+)ハウス')]:
+            mm = re.search(pat, ct)
+            if mm:
+                h = int(mm.group(1))
+                for m in re.finditer(re.escape(label) + r'[^。]{0,40}?第(\d+)ハウス', flat):
+                    if int(m.group(1)) != h:
+                        issues.append(f'{label}はネイタル第{h}ハウス。本文に第{m.group(1)}ハウスの記述')
+                        break
+
+        # 今年のプロフェクション（年齢と部屋）
+        pf = ct.split('## プロフェクション（計算済み')[-1]
+        ma = re.search(r'現在の年齢: (\d+)歳', pf)
+        mh = re.search(r'起動ハウス: 第(\d+)ハウス', pf)
+        if ma and mh:
+            age, ph = int(ma.group(1)), int(mh.group(1))
+            for m in re.finditer(r'(\d+)歳[^。]{0,30}?(?:から)?[^。]{0,20}?今[^。]{0,20}?まで', flat):
+                if int(m.group(1)) != age:
+                    issues.append(f'今年は{age}歳。本文に「{m.group(1)}歳から今まで」型の記述')
+                    break
+            mm = re.search(r'今年[^。]{0,24}?第(\d+)ハウス', flat)
+            if mm and int(mm.group(1)) != ph:
+                issues.append(f'今年の部屋は第{ph}ハウス。本文に第{mm.group(1)}ハウスの記述')
+
+        # 1度以内のトランジット接触が本文で未来形にされていないか
+        for m in re.finditer(r'T(\S+?) → N(\S+?): (\S+?)（オーブ([\d.]+)度）★', ct):
+            t1, t2 = m.group(1), m.group(2)
+            if t1 in flat and t2 in flat:
+                seg = re.search(r'[^。]{0,60}' + re.escape(t1) + r'[^。]{0,60}' + re.escape(t2) + r'[^。]{0,60}。', flat)
+                if seg and re.search(r'やがて|いずれ|数年のうちに|これから訪れ', seg.group(0)):
+                    issues.append(f'T{t1}→N{t2}はオーブ{m.group(4)}度（すでに接触中）。本文が未来形')
+            elif t1 not in flat:
+                issues.append(f'T{t1}→N{t2}がオーブ{m.group(4)}度で接触中だが、本文に{t1}の言及なし')
+
+        (fail if issues else ok).append('本文とデータの整合: ' +
+            (f'{len(issues)}件の食い違い ／ ' + ' ／ '.join(issues[:4]) if issues else '食い違いなし'))
+    else:
+        warn.append('本文とデータの整合: CHART_TXT 未指定のため検査せず')
+
     # 出力
     print(f'\n=== 検品: {os.path.basename(path)} ===\n')
     for label, items, mark in [('NG', fail, '✗'), ('要確認', warn, '!'), ('OK', ok, '✓')]:
