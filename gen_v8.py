@@ -707,7 +707,8 @@ for bi, blk in enumerate(BLOCKS):
                        ('この城は', 'この神は'), ('この城が', 'この神が'),
                        ('城の力', 'その力'), ('区画', '領域')]:
             text = text.replace(_o, _n)
-        text = re.sub(r'(?<![女帝])王(?![国妃])', 'アポロン', text)
+        # 天王星・海王星・冥王星を壊さないこと（海アポロン星 事故）
+        text = re.sub(r'(?<![女帝天海冥])王(?![国妃星])', 'アポロン', text)
 
     blocks.append(text)
     messages.append({'role': 'assistant', 'content': text})

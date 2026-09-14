@@ -206,6 +206,11 @@ def main(path):
     trans = len(re.findall(r'どなたにも当てはま|同じ配置|あなたの度数だけ|ここからが、あなただけのもの', flat))
     (fail if trans < 4 else ok).append(f'サビアンの転換文: {trans}箇所（絵を出す章ごとに必要。最低4）')
 
+    # 14 天体名の破損（後処理の置換事故を検出する）
+    broken = re.findall(r'[天海冥][ァ-ヶ]{2,6}星|[ァ-ヶ]{2,6}王星(?!)', flat)
+    broken = [b for b in set(broken) if b not in ('天王星', '海王星', '冥王星')]
+    (fail if broken else ok).append('天体名の破損: ' + (', '.join(broken) if broken else 'なし'))
+
     # 出力
     print(f'\n=== 検品: {os.path.basename(path)} ===\n')
     for label, items, mark in [('NG', fail, '✗'), ('要確認', warn, '!'), ('OK', ok, '✓')]:
