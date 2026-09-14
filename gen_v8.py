@@ -621,6 +621,9 @@ def build_chart_text(p, natal, prog, trans, sr, sa_arc, sa_contacts):
             t += f"- {r['p']}: {r['sign']} 第{r['house']}ハウス　{r['mark']}　{r['score']:+d}\n"
         t += f"- ★城主（ディグニティコード）: {lord['p']}（{lord['sign']}・第{lord['house']}ハウス・{lord['score']:+d}・{reason}）\n"
         t += "- この城主を第7章の中心に据え、王の香りもこの星で処方する。\n"
+    _bp = os.environ.get('BRIEF_PATH')
+    if _bp and os.path.exists(_bp):
+        t += open(_bp, encoding='utf-8').read()
     t += f"\n---\n{P1_TAIL}\n"
     return t
 
