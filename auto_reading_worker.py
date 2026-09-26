@@ -16,7 +16,14 @@ import time
 import traceback
 from datetime import datetime
 
-SCENARIO_ID = os.environ.get('AUTO_READING_SCENARIO', 'N2hq9AJ5')
+# 見に行くシナリオ。カンマ区切りで複数指定できる。
+# ★2026-09-26: 現行の申込フォーム(01uEm1wR)が対象に入っておらず、
+#   そちらのお申し込みが自動生成されないまま溜まっていた(16名)。
+#   フォームを作り替えても取りこぼさないよう、複数を見る形にする。
+SCENARIO_IDS = [s.strip() for s in
+                os.environ.get('AUTO_READING_SCENARIO', 'N2hq9AJ5,01uEm1wR').split(',')
+                if s.strip()]
+SCENARIO_ID = SCENARIO_IDS[0]  # ログ表示用
 POLL_SEC = int(os.environ.get('AUTO_READING_POLL_SEC', '180'))
 STORE = os.environ.get('READING_STORE',
                        os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -247,15 +254,38 @@ class Worker:
         self._save_state()
         log(f"完了: {sid} → {url} ({len(reading_md)}字)")
 
+    def _fetch_all(self, my, scenario_id):
+        """そのシナリオの登録者を全部取る。
+        ★2026-09-26: これまで limit=50 の1ページだけを見ていた。
+          登録者が50名を超えると、ページに載らない方が永久に処理されない。
+          1,100名規模になっているので、全ページを見るようにする。"""
+        out, seen = [], set()
+        for page in range(1, 41):  # 100件×40ページ = 4,000名まで
+            res = my.call('search_subscribers',
+                          {'scenario_id': scenario_id, 'limit': 100, 'page': page})
+            subs = (res.get('subscribers') if isinstance(res, dict) else res) or []
+            fresh = [s for s in subs
+                     if str(s.get('subscriber_id') or s.get('id')) not in seen]
+            for s in fresh:
+                seen.add(str(s.get('subscriber_id') or s.get('id')))
+            out.extend(fresh)
+            if len(subs) < 100 or not fresh:
+                break
+        return out
+
     def cycle(self):
         log('cycle: connect')
         my = self.MyASP().connect()
-        log('cycle: search')
-        res = my.call('search_subscribers',
-                      {'scenario_id': SCENARIO_ID, 'limit': 50})
-        subs = res.get('subscribers') if isinstance(res, dict) else res
-        subs = subs or []
-        log(f'cycle: {len(subs)}件 / state={list(self.state)[:5]}')
+        for scenario_id in SCENARIO_IDS:
+            self._cycle_one(my, scenario_id)
+
+    def _cycle_one(self, my, scenario_id):
+        log(f'cycle: search {scenario_id}')
+        subs = self._fetch_all(my, scenario_id)
+        todo = [s for s in subs
+                if not {it.get('field_key'): it.get('value')
+                        for it in (s.get('free_fields') or []) if isinstance(it, dict)}.get('free10')]
+        log(f'cycle[{scenario_id}]: {len(subs)}件 / 鑑定書まだ {len(todo)}件')
         for sub in subs:
             sid = str(sub.get('subscriber_id') or sub.get('id'))
             ent = self.state.get(sid)
@@ -284,7 +314,7 @@ class Worker:
                 self._save_state()
 
     def run_forever(self):
-        log(f"worker start: scenario={SCENARIO_ID} poll={POLL_SEC}s store={STORE}")
+        log(f"worker start: scenarios={','.join(SCENARIO_IDS)} poll={POLL_SEC}s store={STORE}")
         while True:
             try:
                 self.cycle()
