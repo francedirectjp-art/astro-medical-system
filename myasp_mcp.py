@@ -30,7 +30,15 @@ class MyASP:
             h["Mcp-Session-Id"] = self.sid
         req = urllib.request.Request(MCP_URL, data=json.dumps(payload).encode(), headers=h)
         with urllib.request.urlopen(req, timeout=90) as r:
-            return r.headers.get("mcp-session-id"), r.read().decode()
+            # ★2026-09-26: read() 一発だと Railway 上で応答が途中で切れることがあり、
+            #   壊れたJSON ("Unterminated string") になっていた。最後まで読み切る。
+            buf = bytearray()
+            while True:
+                chunk = r.read(65536)
+                if not chunk:
+                    break
+                buf.extend(chunk)
+            return r.headers.get("mcp-session-id"), bytes(buf).decode("utf-8", "replace")
 
     def connect(self):
         sid, _ = self._post({"jsonrpc": "2.0", "id": 1, "method": "initialize",
