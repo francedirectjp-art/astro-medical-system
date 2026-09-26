@@ -255,22 +255,27 @@ class Worker:
         log(f"完了: {sid} → {url} ({len(reading_md)}字)")
 
     def _fetch_all(self, my, scenario_id):
-        """そのシナリオの登録者を全部取る。
-        ★2026-09-26: これまで limit=50 の1ページだけを見ていた。
-          登録者が50名を超えると、ページに載らない方が永久に処理されない。
-          1,100名規模になっているので、全ページを見るようにする。"""
+        """そのシナリオの登録者を、新しい順に数ページぶん取る。
+
+        ★2026-09-26 に分かったこと
+          ・search_subscribers は新しい順に返る（1ページ目の先頭が最新の登録者）
+          ・1回の応答を大きくすると Railway 上で受け取りが途中で切れ、
+            壊れたJSON ("Unterminated string") になる。20件までなら安定して通る
+          → 小さく刻んで、新しい方から PAGES ページぶんだけ見る。
+            鑑定書がまだの方は必ず新しい側にいるので、これで取りこぼさない。
+        """
+        per, pages = 20, int(os.environ.get('AUTO_READING_PAGES', '6'))
         out, seen = [], set()
-        # 1ページを大きくすると応答が巨大になり読み取りが不安定になるので 50 に留める
-        for page in range(1, 81):  # 50件×80ページ = 4,000名まで
+        for page in range(1, pages + 1):
             res = my.call('search_subscribers',
-                          {'scenario_id': scenario_id, 'limit': 50, 'page': page})
+                          {'scenario_id': scenario_id, 'limit': per, 'page': page})
             subs = (res.get('subscribers') if isinstance(res, dict) else res) or []
             fresh = [s for s in subs
                      if str(s.get('subscriber_id') or s.get('id')) not in seen]
             for s in fresh:
                 seen.add(str(s.get('subscriber_id') or s.get('id')))
             out.extend(fresh)
-            if len(subs) < 50 or not fresh:
+            if len(subs) < per or not fresh:
                 break
         return out
 
