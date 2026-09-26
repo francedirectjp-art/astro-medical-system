@@ -14,6 +14,7 @@ import secrets
 import threading
 import time
 import traceback
+import unicodedata
 from datetime import datetime
 
 # 見に行くシナリオ。カンマ区切りで複数指定できる。
@@ -125,10 +126,21 @@ def log(msg):
     print(f"[auto-reading {datetime.now():%H:%M:%S}] {msg}", flush=True)
 
 
+def normalize_digits(raw):
+    """全角の数字・記号を半角にそろえる。
+
+    ★2026-09-27: 申込フォームに '１９６５.10,13' のような入力があり、
+      全角の年('１９')が (19|20) にあたらず、区切りの ',' も想定外で落ちていた。
+      入口でそろえてしまえば、以降の書式ゆれは既存の正規表現で拾える。
+    """
+    return unicodedata.normalize('NFKC', str(raw or ''))
+
+
 def parse_birth(raw):
-    """'1979.8.1' '1979-08-01' '19790801' '1979年8月1日' → (y, m, d)"""
-    s = str(raw).strip()
-    m = re.search(r'(19|20)(\d{2})[年./\-]\s*(\d{1,2})[月./\-]\s*(\d{1,2})', s)
+    """'1979.8.1' '1979-08-01' '19790801' '1979年8月1日' '１９６５.10,13' → (y, m, d)"""
+    s = normalize_digits(raw).strip()
+    sep = r'[年月./\-,、 　]'
+    m = re.search(r'(19|20)(\d{2})' + sep + r'\s*(\d{1,2})' + sep + r'\s*(\d{1,2})', s)
     if m:
         return int(m.group(1) + m.group(2)), int(m.group(3)), int(m.group(4))
     m = re.fullmatch(r'((?:19|20)\d{2})(\d{2})(\d{2})', re.sub(r'\D', '', s))
@@ -139,7 +151,7 @@ def parse_birth(raw):
 
 def parse_time(raw):
     """'18:04' '1804' '18時4分' '朝' '不明' → (h, m, estimated)"""
-    s = str(raw or '').strip()
+    s = normalize_digits(raw).strip()
     m = re.search(r'(\d{1,2})[:：時]\s*(\d{1,2})?', s)
     if m:
         h = int(m.group(1))
