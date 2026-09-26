@@ -260,16 +260,17 @@ class Worker:
           登録者が50名を超えると、ページに載らない方が永久に処理されない。
           1,100名規模になっているので、全ページを見るようにする。"""
         out, seen = [], set()
-        for page in range(1, 41):  # 100件×40ページ = 4,000名まで
+        # 1ページを大きくすると応答が巨大になり読み取りが不安定になるので 50 に留める
+        for page in range(1, 81):  # 50件×80ページ = 4,000名まで
             res = my.call('search_subscribers',
-                          {'scenario_id': scenario_id, 'limit': 100, 'page': page})
+                          {'scenario_id': scenario_id, 'limit': 50, 'page': page})
             subs = (res.get('subscribers') if isinstance(res, dict) else res) or []
             fresh = [s for s in subs
                      if str(s.get('subscriber_id') or s.get('id')) not in seen]
             for s in fresh:
                 seen.add(str(s.get('subscriber_id') or s.get('id')))
             out.extend(fresh)
-            if len(subs) < 100 or not fresh:
+            if len(subs) < 50 or not fresh:
                 break
         return out
 

@@ -44,10 +44,26 @@ class MyASP:
     def call(self, name, args):
         _, raw = self._post({"jsonrpc": "2.0", "id": 2, "method": "tools/call",
                              "params": {"name": name, "arguments": args}})
-        datas = [l[6:] for l in raw.splitlines() if l.startswith("data: ")]
-        if datas:  # SSE(複数dataラインは結合)
-            raw = "".join(datas)
-        d = json.loads(raw)
+        # SSE は 1イベント = 1 data 行。進捗通知などが混ざることがあるので、
+        # 1行ずつ読んで「応答(result か error を持つもの)」を拾う。
+        # ★2026-09-26: 全部を連結していたため、行が増えると壊れたJSONになり
+        #   "Unterminated string" で落ちていた (件数の多いシナリオで発生)。
+        lines = [l[6:] for l in raw.splitlines() if l.startswith("data: ")]
+        cands = []
+        for l in lines:
+            try:
+                cands.append(json.loads(l))
+            except Exception:  # noqa: BLE001
+                continue
+        if not cands:
+            try:
+                cands.append(json.loads("".join(lines) if lines else raw))
+            except Exception as e:  # noqa: BLE001
+                raise RuntimeError(f"MyASP の応答を読めませんでした: {e}") from e
+        d = next((c for c in cands
+                  if isinstance(c, dict) and ("result" in c or "error" in c)), None)
+        if d is None:
+            raise RuntimeError("MyASP の応答に result がありませんでした")
         if "error" in d:
             raise RuntimeError(str(d["error"])[:300])
         content = d["result"]["content"][0]["text"]
