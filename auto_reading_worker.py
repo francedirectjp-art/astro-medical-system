@@ -242,9 +242,35 @@ class Worker:
             'name': name, 'y': y, 'mo': mo, 'd': d, 'h': h, 'mi': mi,
             'lat': lat, 'lon': lon, 'pref': pref, 'place': place,
             'time_estimated': approx or '不明' in str(fv('free2')),
-            'questions': {'future': fv('free4'), 'challenge': fv('free5'),
-                          'today': fv('free6')},
+            'questions': self._questions(sub, fv),
         }
+
+    # ★2026-09-27: 申込フォームが締まったあと、ChatWork 等で直接いただく方が出てきた。
+    #   MyASP に登録し直しても、設問の free4/5/6 は textarea で editable=false のため
+    #   API から書けない。設問が空のまま鑑定書を作ると中身が薄くなるので、
+    #   manual_questions.json に置いた分をここで差し込む。
+    #   (キーは subscriber_id。フォームから入った方には影響しない)
+    _MANUAL = None
+
+    def _questions(self, sub, fv):
+        q = {'future': fv('free4'), 'challenge': fv('free5'), 'today': fv('free6')}
+        if any(q.values()):
+            return q
+        if type(self)._MANUAL is None:
+            path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                'manual_questions.json')
+            try:
+                with open(path, encoding='utf-8') as f:
+                    type(self)._MANUAL = json.load(f)
+            except Exception:
+                type(self)._MANUAL = {}
+        sid = str(sub.get('subscriber_id') or sub.get('id'))
+        m = type(self)._MANUAL.get(sid)
+        if not m:
+            return q
+        log(f'設問を manual_questions.json から補いました: {sid} {m.get("name", "")}')
+        return {'future': m.get('future', ''), 'challenge': m.get('challenge', ''),
+                'today': m.get('today', '')}
 
     def process_one(self, sub, token=None):
         sid = str(sub.get('subscriber_id') or sub.get('id'))
