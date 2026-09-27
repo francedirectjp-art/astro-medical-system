@@ -1,0 +1,379 @@
+# -*- coding: utf-8 -*-
+"""自動鑑定書ワーカー
+
+MyASPシナリオ(星の鑑定書)の新規登録者をポーリングし、
+第7版の鑑定書を生成→PDF化→トークンURLで公開→MyASPの自由項目(free10)に書き戻す。
+ステップメール(登録30分後)が %free10% を差し込んで配信する。
+
+有効化: 環境変数 AUTO_READING=1, MYASP_API_KEY, ANTHROPIC_API_KEY
+"""
+import json
+import os
+import re
+import secrets
+import threading
+import time
+import traceback
+import unicodedata
+from datetime import datetime
+
+# 見に行くシナリオ。カンマ区切りで複数指定できる。
+# ★2026-09-26: 現行の申込フォーム(01uEm1wR)が対象に入っておらず、
+#   そちらのお申し込みが自動生成されないまま溜まっていた(16名)。
+#   フォームを作り替えても取りこぼさないよう、複数を見る形にする。
+SCENARIO_IDS = [s.strip() for s in
+                os.environ.get('AUTO_READING_SCENARIO', 'N2hq9AJ5,01uEm1wR').split(',')
+                if s.strip()]
+SCENARIO_ID = SCENARIO_IDS[0]  # ログ表示用
+POLL_SEC = int(os.environ.get('AUTO_READING_POLL_SEC', '180'))
+STORE = os.environ.get('READING_STORE',
+                       os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                    'generated_readings'))
+PUBLIC_BASE = os.environ.get('PUBLIC_BASE_URL',
+                             'https://grand-vision-production-48ec.up.railway.app')
+
+PREFECTURES = {
+    '北海道': (43.0642, 141.3469), '青森県': (40.8244, 140.7400), '岩手県': (39.7036, 141.1527),
+    '宮城県': (38.2682, 140.8721), '秋田県': (39.7186, 140.1022), '山形県': (38.2404, 140.3633),
+    '福島県': (37.7503, 140.4677), '茨城県': (36.3418, 140.4468), '栃木県': (36.5658, 139.8836),
+    '群馬県': (36.3906, 139.0608), '埼玉県': (35.8617, 139.6455), '千葉県': (35.6074, 140.1065),
+    '東京都': (35.6762, 139.6503), '神奈川県': (35.4478, 139.6425), '新潟県': (37.9026, 139.0232),
+    '富山県': (36.6959, 137.2137), '石川県': (36.5946, 136.6256), '福井県': (36.0652, 136.2216),
+    '山梨県': (35.6642, 138.5681), '長野県': (36.6513, 138.1809), '岐阜県': (35.3912, 136.7223),
+    '静岡県': (34.9756, 138.3827), '愛知県': (35.1802, 136.9066), '三重県': (34.7302, 136.5086),
+    '滋賀県': (35.0045, 135.8686), '京都府': (35.0211, 135.7556), '大阪府': (34.6937, 135.5023),
+    '兵庫県': (34.6913, 135.1830), '奈良県': (34.6851, 135.8048), '和歌山県': (34.2261, 135.1675),
+    '鳥取県': (35.5038, 134.2378), '島根県': (35.4723, 133.0505), '岡山県': (34.6618, 133.9346),
+    '広島県': (34.3963, 132.4596), '山口県': (34.1861, 131.4707), '徳島県': (34.0658, 134.5593),
+    '香川県': (34.3401, 134.0430), '愛媛県': (33.8416, 132.7658), '高知県': (33.5597, 133.5311),
+    '福岡県': (33.6064, 130.4181), '佐賀県': (33.2494, 130.2989), '長崎県': (32.7503, 129.8779),
+    '熊本県': (32.7898, 130.7417), '大分県': (33.2382, 131.6126), '宮崎県': (31.9077, 131.4202),
+    '鹿児島県': (31.5602, 130.5581), '沖縄県': (26.2124, 127.6792),
+}
+
+
+# 主要市区町村→都道府県(フォームに県名が無い場合の解決用)
+CITY2PREF = {
+    '札幌': '北海道', '旭川': '北海道', '函館': '北海道',
+    '仙台': '宮城県', '青森': '青森県', '盛岡': '岩手県', '秋田': '秋田県',
+    '山形': '山形県', '福島': '福島県', '郡山': '福島県',
+    'さいたま': '埼玉県', '川口': '埼玉県', '八潮': '埼玉県', '川越': '埼玉県', '所沢': '埼玉県',
+    '千葉': '千葉県', '船橋': '千葉県', '柏': '千葉県', '松戸': '千葉県',
+    '横浜': '神奈川県', '川崎': '神奈川県', '相模原': '神奈川県', '藤沢': '神奈川県',
+    '新潟': '新潟県', '富山': '富山県', '金沢': '石川県', '穴水': '石川県', '鳳珠': '石川県',
+    '輪島': '石川県', '七尾': '石川県', '福井': '福井県', '甲府': '山梨県', '長野': '長野県',
+    '松本': '長野県', '岐阜': '岐阜県', '静岡': '静岡県', '浜松': '静岡県',
+    '名古屋': '愛知県', '豊田': '愛知県', '岡崎': '愛知県', '津': '三重県', '四日市': '三重県',
+    '大津': '滋賀県', '京都': '京都府', '大阪': '大阪府', '堺': '大阪府', '大東': '大阪府',
+    '東大阪': '大阪府', '豊中': '大阪府', '吹田': '大阪府', '枚方': '大阪府',
+    '神戸': '兵庫県', '姫路': '兵庫県', '西宮': '兵庫県', '尼崎': '兵庫県',
+    '奈良': '奈良県', '和歌山': '和歌山県', '鳥取': '鳥取県', '松江': '島根県', '出雲': '島根県',
+    '岡山': '岡山県', '倉敷': '岡山県', '広島': '広島県', '福山': '広島県',
+    '下関': '山口県', '徳島': '徳島県', '高松': '香川県', '土庄': '香川県', '小豆': '香川県',
+    '松山': '愛媛県', '高知': '高知県',
+    '福岡': '福岡県', '北九州': '福岡県', '久留米': '福岡県',
+    '佐賀': '佐賀県', '長崎': '長崎県', '佐世保': '長崎県', '熊本': '熊本県',
+    '大分': '大分県', '宮崎': '宮崎県', '鹿児島': '鹿児島県', '鹿屋': '鹿児島県',
+    '那覇': '沖縄県', '宮古島': '沖縄県', '石垣': '沖縄県',
+    '世田谷': '東京都', '杉並': '東京都', '中野': '東京都', '江戸川': '東京都', '八王子': '東京都',
+    '水戸': '茨城県', '土浦': '茨城県', 'つくば': '茨城県', '日立': '茨城県', '取手': '茨城県',
+    '古河': '茨城県', '牛久': '茨城県', 'ひたちなか': '茨城県', '龍ケ崎': '茨城県',
+    '宇都宮': '栃木県', '小山': '栃木県', '足利': '栃木県', '栃木': '栃木県', '日光': '栃木県',
+    '前橋': '群馬県', '高崎': '群馬県', '太田': '群馬県', '伊勢崎': '群馬県', '桐生': '群馬県',
+    '越谷': '埼玉県', '草加': '埼玉県', '春日部': '埼玉県', '熊谷': '埼玉県', '上尾': '埼玉県',
+    '浦和': '埼玉県', '大宮': '埼玉県', '市川': '千葉県', '市原': '千葉県', '習志野': '千葉県',
+    '浦安': '千葉県', '木更津': '千葉県', '横須賀': '神奈川県', '鎌倉': '神奈川県',
+    '小田原': '神奈川県', '平塚': '神奈川県', '厚木': '神奈川県', '茅ヶ崎': '神奈川県',
+    '長岡': '新潟県', '上越': '新潟県', '柏崎': '新潟県', '高岡': '富山県', '沼津': '静岡県',
+    '一宮': '愛知県', '豊橋': '愛知県', '春日井': '愛知県', '鈴鹿': '三重県', '伊勢': '三重県',
+    '宇治': '京都府', '舞鶴': '京都府', '高槻': '大阪府', '茨木': '大阪府', '八尾': '大阪府',
+    '明石': '兵庫県', '加古川': '兵庫県', '宝塚': '兵庫県', '芦屋': '兵庫県',
+    '呉': '広島県', '尾道': '広島県', '宇部': '山口県', '今治': '愛媛県',
+    '飯塚': '福岡県', '大牟田': '福岡県', '別府': '大分県', '都城': '宮崎県', '沖縄市': '沖縄県',
+    '苫小牧': '北海道', '釧路': '北海道', '帯広': '北海道', '小樽': '北海道', '八戸': '青森県',
+    '弘前': '青森県', '石巻': '宮城県', 'いわき': '福島県', '会津': '福島県',
+    '練馬': '東京都', '大田区': '東京都', '足立': '東京都', '板橋': '東京都', '町田': '東京都',
+    '府中': '東京都', '調布': '東京都', '三鷹': '東京都', '武蔵野': '東京都', '立川': '東京都',
+    '品川': '東京都', '目黒': '東京都', '渋谷': '東京都', '新宿': '東京都', '文京': '東京都',
+    '豊島': '東京都', '北区': '東京都', '荒川': '東京都', '台東': '東京都', '墨田': '東京都',
+    '江東': '東京都', '葛飾': '東京都', '港区': '東京都', '千代田': '東京都', '中央区': '東京都',
+}
+
+
+def resolve_pref(city_text):
+    """自由記述の出生地から都道府県を推定"""
+    t = (city_text or '').strip()
+    for p in PREFECTURES:
+        if p in t or p.rstrip('都道府県') in t[:4]:
+            if p in t:
+                return p
+    for p in PREFECTURES:
+        if p in t:
+            return p
+    # 「大阪」「兵庫」のような県名の省略形
+    for p in PREFECTURES:
+        short = p.rstrip('都道府県')
+        if t.startswith(short):
+            return p
+    # 長い地名から照合する(「津」が「大津」「沼津」に、「伊勢」が「伊勢崎」に先に当たるのを防ぐ)
+    for city in sorted(CITY2PREF, key=len, reverse=True):
+        if city in t:
+            return CITY2PREF[city]
+    return None
+
+
+def log(msg):
+    print(f"[auto-reading {datetime.now():%H:%M:%S}] {msg}", flush=True)
+
+
+def normalize_digits(raw):
+    """全角の数字・記号を半角にそろえる。
+
+    ★2026-09-27: 申込フォームに '１９６５.10,13' のような入力があり、
+      全角の年('１９')が (19|20) にあたらず、区切りの ',' も想定外で落ちていた。
+      入口でそろえてしまえば、以降の書式ゆれは既存の正規表現で拾える。
+    """
+    return unicodedata.normalize('NFKC', str(raw or ''))
+
+
+def parse_birth(raw):
+    """'1979.8.1' '1979-08-01' '19790801' '1979年8月1日' '１９６５.10,13' → (y, m, d)"""
+    s = normalize_digits(raw).strip()
+    sep = r'[年月./\-,、 　]'
+    m = re.search(r'(19|20)(\d{2})' + sep + r'\s*(\d{1,2})' + sep + r'\s*(\d{1,2})', s)
+    if m:
+        return int(m.group(1) + m.group(2)), int(m.group(3)), int(m.group(4))
+    m = re.fullmatch(r'((?:19|20)\d{2})(\d{2})(\d{2})', re.sub(r'\D', '', s))
+    if m:
+        return int(m.group(1)), int(m.group(2)), int(m.group(3))
+    raise ValueError(f'生年月日を解釈できない: {raw!r}')
+
+
+def parse_time(raw):
+    """'18:04' '1804' '18時4分' '朝' '不明' → (h, m, estimated)"""
+    s = normalize_digits(raw).strip()
+    m = re.search(r'(\d{1,2})[:：時]\s*(\d{1,2})?', s)
+    if m:
+        h = int(m.group(1))
+        mi = int(m.group(2) or 0)
+        approx = ('頃' in s) or ('ごろ' in s) or ('約' in s)
+        if 0 <= h <= 23 and 0 <= mi <= 59:
+            return h, mi, approx
+    digits = re.sub(r'\D', '', s)
+    if len(digits) in (3, 4):
+        h, mi = int(digits[:-2]), int(digits[-2:])
+        if 0 <= h <= 23 and 0 <= mi <= 59:
+            return h, mi, False
+    for word, hh in (('朝', 7), ('午前', 9), ('昼', 12), ('午後', 15),
+                     ('夕', 17), ('夜', 21), ('深夜', 0)):
+        if word in s:
+            return hh, 0, True
+    return 12, 0, True  # 不明
+
+
+class Worker:
+    def __init__(self, flask_app):
+        from anthropic import Anthropic
+        from myasp_mcp import MyASP
+        from reading_engine import ReadingEngine
+        self.app = flask_app
+        self.engine = ReadingEngine(flask_app, Anthropic())
+        self.MyASP = MyASP
+        os.makedirs(STORE, exist_ok=True)
+        self.state_path = os.path.join(STORE, '_state.json')
+        self.state = {}
+        if os.path.exists(self.state_path):
+            try:
+                self.state = json.load(open(self.state_path, encoding='utf-8'))
+            except Exception:  # noqa: BLE001
+                self.state = {}
+        # 再デプロイ時は失敗マークを掃除して再挑戦させる
+        for k in list(self.state):
+            v = self.state[k]
+            if k.startswith('fail_') or (isinstance(v, dict) and v.get('token') in ('failed', 'external')):
+                del self.state[k]
+
+    def _save_state(self):
+        json.dump(self.state, open(self.state_path, 'w', encoding='utf-8'),
+                  ensure_ascii=False, indent=0)
+
+    def _ai_pref(self, city):
+        """対応表に無い地名の都道府県をHaikuに判定させる。47都道府県名以外の答えは捨てる"""
+        if not city:
+            return None
+        try:
+            res = self.engine.client.messages.create(
+                model='claude-haiku-4-5-20251001', max_tokens=20,
+                messages=[{'role': 'user', 'content':
+                           f'日本の地名「{city}」はどの都道府県にありますか。'
+                           '都道府県名だけを1語で答えてください（例: 茨城県）。'}])
+            ans = ''.join(b.text for b in res.content if getattr(b, 'type', '') == 'text')
+        except Exception as e:
+            log(f"都道府県のAI判定に失敗: {city!r} {e}")
+            return None
+        for p in PREFECTURES:
+            if p in ans:
+                log(f"都道府県をAI判定: {city!r} → {p}")
+                return p
+        return None
+
+    def _person_from_subscriber(self, sub):
+        free = sub.get('free_fields') or []
+        if isinstance(free, dict):
+            fmap = {k: (v.get('value') if isinstance(v, dict) else v) for k, v in free.items()}
+        else:
+            fmap = {it.get('field_key'): it.get('value') for it in free if isinstance(it, dict)}
+        def fv(k):
+            v = fmap.get(k)
+            return v.strip() if isinstance(v, str) else (v or '')
+        name = f"{sub.get('name1') or ''}{sub.get('name2') or ''}".strip() or 'お客'
+        y, mo, d = parse_birth(fv('free1'))
+        h, mi, approx = parse_time(fv('free2'))
+        pref = (sub.get('pref') or '').lstrip('*')
+        city = fv('free3')
+        if pref not in PREFECTURES:
+            pref = resolve_pref(city) or self._ai_pref(city)
+            if not pref:
+                log(f"出生地から都道府県を特定できず東京都で計算: {city!r}")
+                pref = '東京都'
+        lat, lon = PREFECTURES[pref]
+        place = f"{pref}{city}" if city and not city.startswith(pref) else (city or pref)
+        return {
+            'name': name, 'y': y, 'mo': mo, 'd': d, 'h': h, 'mi': mi,
+            'lat': lat, 'lon': lon, 'pref': pref, 'place': place,
+            'time_estimated': approx or '不明' in str(fv('free2')),
+            'questions': self._questions(sub, fv),
+        }
+
+    # ★2026-09-27: 申込フォームが締まったあと、ChatWork 等で直接いただく方が出てきた。
+    #   MyASP に登録し直しても、設問の free4/5/6 は textarea で editable=false のため
+    #   API から書けない。設問が空のまま鑑定書を作ると中身が薄くなるので、
+    #   manual_questions.json に置いた分をここで差し込む。
+    #   (キーは subscriber_id。フォームから入った方には影響しない)
+    _MANUAL = None
+
+    def _questions(self, sub, fv):
+        q = {'future': fv('free4'), 'challenge': fv('free5'), 'today': fv('free6')}
+        if any(q.values()):
+            return q
+        if type(self)._MANUAL is None:
+            path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                'manual_questions.json')
+            try:
+                with open(path, encoding='utf-8') as f:
+                    type(self)._MANUAL = json.load(f)
+            except Exception:
+                type(self)._MANUAL = {}
+        sid = str(sub.get('subscriber_id') or sub.get('id'))
+        m = type(self)._MANUAL.get(sid)
+        if not m:
+            return q
+        log(f'設問を manual_questions.json から補いました: {sid} {m.get("name", "")}')
+        return {'future': m.get('future', ''), 'challenge': m.get('challenge', ''),
+                'today': m.get('today', '')}
+
+    def process_one(self, sub, token=None):
+        sid = str(sub.get('subscriber_id') or sub.get('id'))
+        person = self._person_from_subscriber(sub)
+        log(f"生成開始: {sid} {person['name']} ({person['y']}-{person['mo']}-{person['d']}) pref={person['pref']}")
+        reading_md, data = self.engine.generate(person)
+        token = token or secrets.token_urlsafe(16)
+        pdf_path = os.path.join(STORE, f'{token}.pdf')
+        from reading_pdf import build_pdf
+        build_pdf(person, reading_md, data, pdf_path)
+        with open(os.path.join(STORE, f'{token}.md'), 'w', encoding='utf-8') as f:
+            f.write(reading_md)
+        url = f'{PUBLIC_BASE}/r/{token}.pdf'
+        my = self.MyASP().connect()
+        my.call('update_subscriber',
+                {'subscriber_id': sid,
+                 'free_fields': [{'field_key': 'free10', 'value': url}]})
+        self.state[sid] = {'token': token, 'done': time.time(), 'name': person['name']}
+        self._save_state()
+        log(f"完了: {sid} → {url} ({len(reading_md)}字)")
+
+    def _fetch_all(self, my, scenario_id):
+        """そのシナリオの登録者を、新しい順に数ページぶん取る。
+
+        ★2026-09-26 に分かったこと
+          ・search_subscribers は新しい順に返る（1ページ目の先頭が最新の登録者）
+          ・1回の応答を大きくすると Railway 上で受け取りが途中で切れ、
+            壊れたJSON ("Unterminated string") になる。20件までなら安定して通る
+          → 小さく刻んで、新しい方から PAGES ページぶんだけ見る。
+            鑑定書がまだの方は必ず新しい側にいるので、これで取りこぼさない。
+        """
+        per, pages = 20, int(os.environ.get('AUTO_READING_PAGES', '6'))
+        out, seen = [], set()
+        for page in range(1, pages + 1):
+            res = my.call('search_subscribers',
+                          {'scenario_id': scenario_id, 'limit': per, 'page': page})
+            subs = (res.get('subscribers') if isinstance(res, dict) else res) or []
+            fresh = [s for s in subs
+                     if str(s.get('subscriber_id') or s.get('id')) not in seen]
+            for s in fresh:
+                seen.add(str(s.get('subscriber_id') or s.get('id')))
+            out.extend(fresh)
+            if len(subs) < per or not fresh:
+                break
+        return out
+
+    def cycle(self):
+        log('cycle: connect')
+        my = self.MyASP().connect()
+        for scenario_id in SCENARIO_IDS:
+            self._cycle_one(my, scenario_id)
+
+    def _cycle_one(self, my, scenario_id):
+        log(f'cycle: search {scenario_id}')
+        subs = self._fetch_all(my, scenario_id)
+        todo = [s for s in subs
+                if not {it.get('field_key'): it.get('value')
+                        for it in (s.get('free_fields') or []) if isinstance(it, dict)}.get('free10')]
+        log(f'cycle[{scenario_id}]: {len(subs)}件 / 鑑定書まだ {len(todo)}件')
+        for sub in subs:
+            sid = str(sub.get('subscriber_id') or sub.get('id'))
+            ent = self.state.get(sid)
+            prev_token = ent.get('token') if isinstance(ent, dict) else None
+            if prev_token in ('external', 'failed'):
+                prev_token = None
+            # 一覧のfree_fieldsで判定(空なら再処理=同トークン上書き)
+            free = sub.get('free_fields') or []
+            fmap = {it.get('field_key'): it.get('value') for it in free if isinstance(it, dict)}
+            if fmap.get('free10'):
+                if not isinstance(ent, dict):
+                    self.state[sid] = {'token': 'external', 'done': time.time()}
+                    self._save_state()
+                continue
+            detail = my.call('get_subscriber_details', {'subscriber_id': sid})
+            try:
+                self.process_one(detail, token=prev_token)
+            except Exception as e:  # noqa: BLE001
+                log(f"ERROR {sid}: {e}\n{traceback.format_exc()[:500]}")
+                fails = self.state.get(f'fail_{sid}', 0)
+                if isinstance(fails, dict):
+                    fails = fails.get('n', 0)
+                self.state[f'fail_{sid}'] = fails + 1 if isinstance(fails, int) else 1
+                if isinstance(fails, int) and fails + 1 >= 3:
+                    self.state[sid] = {'token': 'failed', 'done': time.time()}
+                self._save_state()
+
+    def run_forever(self):
+        log(f"worker start: scenarios={','.join(SCENARIO_IDS)} poll={POLL_SEC}s store={STORE}")
+        while True:
+            try:
+                self.cycle()
+            except Exception as e:  # noqa: BLE001
+                log(f"cycle error: {e}")
+            time.sleep(POLL_SEC)
+
+
+def start_worker(flask_app):
+    if os.environ.get('AUTO_READING') != '1':
+        return None
+    if not os.environ.get('MYASP_API_KEY') or not os.environ.get('ANTHROPIC_API_KEY'):
+        log('AUTO_READING=1 だが MYASP_API_KEY / ANTHROPIC_API_KEY が無いため起動しない')
+        return None
+    w = Worker(flask_app)
+    t = threading.Thread(target=w.run_forever, daemon=True, name='auto-reading')
+    t.start()
+    return t
