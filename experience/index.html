@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>2026年 未来の航海図 ｜ 占星術AI GEM</title>
+    <!-- ベースのデザインはプロンプトジェネレーターを流用 -->
+    <link rel="stylesheet" href="/prompt-generator/styles.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>2026年<br>未来の航海図</h1>
+            <p class="brand-sub">あなた専用の2万文字の鑑定書を、<br>星のデータから受け取ってください。</p>
+        </header>
+
+        <main>
+            <!-- 解説動画 -->
+            <section class="video-section">
+                <h2>▶ 鑑定書の受け取り方・読み解き方</h2>
+                <div class="video-wrap">
+                    <iframe src="https://www.youtube.com/embed/7xTwrRpI0Hw"
+                            title="解説セミナー" loading="lazy"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen></iframe>
+                </div>
+            </section>
+
+            <!-- 入力フォーム（プロンプトジェネレーター準拠） -->
+            <section class="input-section">
+                <h2>📝 出生情報の入力</h2>
+
+                <div class="form-group">
+                    <label for="name">お名前</label>
+                    <input type="text" id="name" placeholder="例: 山田花子" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="year">生年月日</label>
+                        <div class="date-inputs">
+                            <input type="number" id="year" placeholder="年" min="1900" max="2100" required><span>年</span>
+                            <input type="number" id="month" placeholder="月" min="1" max="12" required><span>月</span>
+                            <input type="number" id="day" placeholder="日" min="1" max="31" required><span>日</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="hour">出生時間</label>
+                        <div class="time-inputs">
+                            <input type="number" id="hour" placeholder="時" min="0" max="23" required><span>時</span>
+                            <input type="number" id="minute" placeholder="分" min="0" max="59" required><span>分</span>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="timeUnknown">
+                            <label for="timeUnknown">出生時間不明（12:00に設定）</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="prefecture">出生地（都道府県）</label>
+                    <select id="prefecture" required><option value="">選択してください</option></select>
+                </div>
+
+                <button type="button" id="generateBtn" class="btn-primary">✦ 鑑定書を受け取る</button>
+            </section>
+
+            <!-- ローディング -->
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Swiss Ephemeris による超高精度天体計算中...</p>
+                <p style="font-size: 0.9rem; color: #cbd5e1;">精度: ±0.001度 | 12天体 | Placidusハウス</p>
+            </div>
+
+            <!-- 出力（生成チャートを表示） -->
+            <section class="output-section" id="outputSection" style="display: none;">
+                <h2>🌟 あなたの鑑定データ（天体配置）</h2>
+
+                <div class="gem-receive">
+                    <button type="button" id="openGemBtn" class="btn-primary big-gem">🔮 GEMで鑑定を受け取る</button>
+                    <p class="gem-status" id="copyStatus"></p>
+                    <div class="gem-steps" id="gemSteps" style="display: none;">
+                        鑑定文を<strong>自動コピー</strong>し、GEM を新しいタブで開きました。<br>
+                        GEM のチャット欄に<strong>貼り付け → 送信</strong>で鑑定が始まります。「<strong>続けて</strong>」で次の章へ。
+                    </div>
+                </div>
+
+                <div class="output-text" id="outputText"></div>
+
+                <div class="output-controls">
+                    <button type="button" id="copyBtn" class="btn-secondary">📋 もう一度コピー</button>
+                    <button type="button" id="downloadBtn" class="btn-secondary">💾 テキストで保存</button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Metaphysica / NEXUS &copy; 2026 ｜ 織田 剛</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

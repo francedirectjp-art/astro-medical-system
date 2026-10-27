@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>未来の航海図 ｜ Metaphysica</title>
+    <!--
+      単一自己完結版（CSS / JS インライン）。デザイン世界観は Metaphysica (herb-fasting.info/Metaphysica) 準拠。
+      天体計算は Railway バックエンド (CORS 全許可) を絶対URLで呼ぶため、どのサーバーに置いても動作します。
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=Noto+Serif+JP:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+    :root {
+        --gold: #c4a35a;
+        --gold-dim: #8b7440;
+        --gold-soft: rgba(196, 163, 90, 0.4);
+        --gold-faint: rgba(196, 163, 90, 0.14);
+        --paper: #e8e3d6;
+        --paper-dim: #aaa499;
+        --bg: #0a0908;
+        --bg-warm: #14110d;
+        --ink: #d9d3c4;
+        --serif-en: 'Cormorant Garamond', serif;
+        --serif-jp: 'Noto Serif JP', serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+        background: var(--bg);
+        background-image:
+            radial-gradient(ellipse at top, rgba(196, 163, 90, 0.07) 0%, transparent 60%),
+            radial-gradient(ellipse at bottom, rgba(196, 163, 90, 0.045) 0%, transparent 60%);
+        background-attachment: fixed;
+        color: var(--ink);
+        font-family: var(--serif-jp);
+        font-weight: 300;
+        line-height: 2.2;
+        letter-spacing: 0.04em;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overflow-x: hidden;
+    }
+
+    /* ── 星空 ─────────────────────────────────── */
+    #starfield {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+    }
+    .star {
+        position: absolute;
+        border-radius: 50%;
+        background: var(--paper);
+        opacity: 0;
+        animation: twinkle linear infinite;
+    }
+    @keyframes twinkle {
+        0%, 100% { opacity: 0; }
+        50% { opacity: var(--max, 0.7); }
+    }
+
+    .container {
+        position: relative;
+        z-index: 1;
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 70px 32px 110px;
+    }
+
+    /* ── HERO ─────────────────────────────────── */
+    .hero {
+        text-align: center;
+        padding: 60px 0 56px;
+        border-bottom: 1px solid var(--gold-soft);
+        margin-bottom: 70px;
+    }
+    .hero-eyebrow {
+        font-family: var(--serif-en);
+        font-style: italic;
+        font-weight: 400;
+        font-size: 0.95rem;
+        letter-spacing: 0.42em;
+        color: var(--gold);
+        text-transform: uppercase;
+        margin-bottom: 36px;
+        opacity: 0.9;
+    }
+    .hero-title {
+        font-family: var(--serif-jp);
+        font-weight: 400;
+        font-size: clamp(2rem, 6vw, 3.1rem);
+        letter-spacing: 0.16em;
+        line-height: 1.55;
+        color: var(--paper);
+        margin-bottom: 40px;
+    }
+    .hero-meta {
+        font-family: var(--serif-en);
+        font-size: 0.92rem;
+        letter-spacing: 0.32em;
+        color: var(--gold-dim);
+        text-transform: uppercase;
+    }
+    .hero-meta-sub {
+        display: block;
+        margin-top: 14px;
+        font-family: var(--serif-jp);
+        font-size: 0.98rem;
+        letter-spacing: 0.12em;
+        line-height: 2;
+        color: var(--ink);
+        text-transform: none;
+    }
+
+    /* ── OPENING ──────────────────────────────── */
+    .opening { margin-bottom: 24px; text-align: center; }
+    .opening p {
+        font-size: 1.05rem;
+        line-height: 2.5;
+        margin-bottom: 1.4em;
+        color: var(--ink);
+    }
+
+    /* ── DIVIDER ──────────────────────────────── */
+    .divider {
+        text-align: center;
+        margin: 64px 0;
+        color: var(--gold);
+        font-size: 0.85rem;
+        letter-spacing: 0.9em;
+        opacity: 0.55;
+    }
+
+    /* ── BLOCK ────────────────────────────────── */
+    .block { margin-bottom: 8px; }
+    .section-label {
+        font-family: var(--serif-en);
+        font-style: italic;
+        font-weight: 400;
+        font-size: 0.95rem;
+        letter-spacing: 0.35em;
+        color: var(--gold);
+        text-transform: uppercase;
+        text-align: center;
+        margin-bottom: 14px;
+    }
+    .block-title {
+        font-family: var(--serif-jp);
+        font-weight: 400;
+        font-size: clamp(1.35rem, 3vw, 1.7rem);
+        letter-spacing: 0.16em;
+        line-height: 1.6;
+        color: var(--paper);
+        text-align: center;
+        margin-bottom: 36px;
+    }
+
+    /* ── 動画 ─────────────────────────────────── */
+    .video-wrap {
+        position: relative;
+        width: 100%;
+        padding-top: 56.25%;
+        border: 1px solid var(--gold-soft);
+        border-radius: 4px;
+        overflow: hidden;
+        box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
+        background: #000;
+    }
+    .video-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+    /* ── フォーム ─────────────────────────────── */
+    .form-group { margin-bottom: 26px; }
+    label {
+        display: block;
+        margin-bottom: 10px;
+        font-family: var(--serif-jp);
+        font-weight: 400;
+        font-size: 0.92rem;
+        letter-spacing: 0.18em;
+        color: var(--gold-dim);
+    }
+    input[type="text"], input[type="number"], select {
+        width: 100%;
+        padding: 13px 14px;
+        border: 1px solid var(--gold-soft);
+        border-radius: 3px;
+        background: rgba(20, 17, 13, 0.55);
+        color: var(--paper);
+        font-family: var(--serif-jp);
+        font-weight: 300;
+        font-size: 1rem;
+        letter-spacing: 0.04em;
+        transition: border-color 0.4s, box-shadow 0.4s;
+    }
+    input::placeholder { color: var(--paper-dim); opacity: 0.6; }
+    input[type="text"]:focus, input[type="number"]:focus, select:focus {
+        outline: none;
+        border-color: var(--gold);
+        box-shadow: 0 0 0 1px var(--gold-faint);
+    }
+    select option { background: var(--bg-warm); color: var(--paper); }
+    .date-inputs, .time-inputs { display: flex; align-items: center; gap: 10px; }
+    .date-inputs input, .time-inputs input { flex: 1; min-width: 0; }
+    .date-inputs span, .time-inputs span { color: var(--gold-dim); font-size: 0.9rem; }
+    .checkbox-group { display: flex; align-items: center; gap: 9px; margin-top: 14px; }
+    .checkbox-group input[type="checkbox"] { width: auto; accent-color: var(--gold); }
+    .checkbox-group label { margin: 0; color: var(--paper-dim); letter-spacing: 0.08em; font-size: 0.88rem; }
+
+    /* ── ボタン ───────────────────────────────── */
+    .btn-gold, .btn-outline {
+        display: inline-block;
+        width: 100%;
+        padding: 16px 28px;
+        border-radius: 3px;
+        font-family: var(--serif-jp);
+        font-weight: 500;
+        font-size: 1.02rem;
+        letter-spacing: 0.18em;
+        cursor: pointer;
+        transition: all 0.4s ease;
+    }
+    .btn-gold {
+        border: 1px solid var(--gold);
+        background: linear-gradient(135deg, #cdab60 0%, #9c8044 100%);
+        color: #1a160e;
+        margin-top: 14px;
+    }
+    .btn-gold:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(196, 163, 90, 0.28);
+    }
+    .btn-gold:disabled { opacity: 0.55; cursor: default; transform: none; box-shadow: none; }
+    .btn-outline {
+        border: 1px solid var(--gold-soft);
+        background: transparent;
+        color: var(--gold);
+        margin-top: 12px;
+    }
+    .btn-outline:hover { border-color: var(--gold); background: rgba(196, 163, 90, 0.08); }
+    .big { font-size: 1.1rem; padding: 18px; letter-spacing: 0.2em; }
+
+    /* ── ローディング ─────────────────────────── */
+    .loading { text-align: center; padding: 56px 20px; }
+    .spinner {
+        width: 42px; height: 42px;
+        margin: 0 auto 22px;
+        border: 1px solid var(--gold-faint);
+        border-top: 1px solid var(--gold);
+        border-radius: 50%;
+        animation: spin 1.1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading p { color: var(--paper-dim); letter-spacing: 0.12em; font-size: 0.95rem; line-height: 2; }
+    .loading .fine { font-size: 0.82rem; color: var(--gold-dim); }
+
+    /* ── 出力 ─────────────────────────────────── */
+    .output-section { margin-top: 8px; }
+    .gem-receive { text-align: center; margin: 6px 0 30px; }
+    .gem-note { color: var(--paper-dim); font-size: 0.92rem; letter-spacing: 0.08em; margin-bottom: 14px; }
+    .gem-status { min-height: 1.4em; margin-top: 14px; color: var(--gold); font-size: 0.92rem; letter-spacing: 0.12em; }
+    .gem-steps {
+        margin-top: 18px;
+        padding: 18px 20px;
+        background: rgba(20, 17, 13, 0.6);
+        border: 1px solid var(--gold-soft);
+        border-radius: 4px;
+        text-align: left;
+        line-height: 2.1;
+        font-size: 0.92rem;
+        color: var(--ink);
+    }
+    .gem-steps strong { color: var(--gold); font-weight: 500; }
+    .output-text {
+        background: rgba(20, 17, 13, 0.7);
+        padding: 26px;
+        border: 1px solid var(--gold-faint);
+        border-radius: 4px;
+        white-space: pre-wrap;
+        font-family: 'SFMono-Regular', 'Courier New', monospace;
+        font-size: 0.84rem;
+        line-height: 1.95;
+        letter-spacing: 0.02em;
+        color: var(--ink);
+        max-height: 560px;
+        overflow-y: auto;
+    }
+    .output-text::-webkit-scrollbar { width: 7px; }
+    .output-text::-webkit-scrollbar-track { background: transparent; }
+    .output-text::-webkit-scrollbar-thumb { background: var(--gold-soft); border-radius: 4px; }
+    .output-text::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+    .output-controls { display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+    .output-controls button { flex: 1; min-width: 200px; margin-top: 0; }
+
+    /* ── フッター ─────────────────────────────── */
+    .footer {
+        margin-top: 110px;
+        padding-top: 50px;
+        border-top: 1px solid var(--gold-soft);
+        text-align: center;
+    }
+    .footer-mark {
+        font-family: var(--serif-en);
+        font-style: italic;
+        font-size: 1.5rem;
+        letter-spacing: 0.3em;
+        color: var(--gold);
+        margin-bottom: 16px;
+    }
+    .footer-credit {
+        font-family: var(--serif-en);
+        font-size: 0.82rem;
+        letter-spacing: 0.32em;
+        color: var(--gold-dim);
+        text-transform: uppercase;
+    }
+
+    /* ── reveal ───────────────────────────────── */
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity 1.4s ease, transform 1.4s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 640px) {
+        .container { padding: 50px 22px 90px; }
+        .hero { padding: 40px 0 44px; margin-bottom: 56px; }
+        .divider { margin: 52px 0; }
+        .output-controls button { width: 100%; min-width: 0; }
+        .output-text { padding: 18px; }
+    }
+    </style>
+</head>
+<body>
+    <div id="starfield"></div>
+
+    <div class="container">
+        <header class="hero">
+            <div class="hero-eyebrow">Metaphysica</div>
+            <h1 class="hero-title">未来の航海図</h1>
+            <div class="hero-meta">
+                Astrological Reading
+                <span class="hero-meta-sub">あなた専用の2万文字の鑑定書を、<br>星のデータから受け取る。</span>
+            </div>
+        </header>
+
+        <main>
+            <section class="opening reveal">
+                <p>生まれた瞬間、空にあった星々の配置が、<br>あなたという物語の最初の一行を記している。</p>
+                <p>出生のデータから太陽・月・惑星の座標を導き、<br>一篇の鑑定書としてあなたの手に渡す。</p>
+            </section>
+
+            <div class="divider reveal">✦ ✦ ✦</div>
+
+            <!-- 解説動画 -->
+            <section class="block reveal">
+                <div class="section-label">Guide</div>
+                <h2 class="block-title">鑑定書の受け取り方・読み解き方</h2>
+                <div class="video-wrap">
+                    <iframe src="https://www.youtube.com/embed/7xTwrRpI0Hw"
+                            title="解説セミナー" loading="lazy"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen></iframe>
+                </div>
+            </section>
+
+            <div class="divider reveal">✦ ✦ ✦</div>
+
+            <!-- 入力フォーム -->
+            <section class="block reveal">
+                <div class="section-label">Your Birth Data</div>
+                <h2 class="block-title">出生情報の入力</h2>
+
+                <div class="form-group">
+                    <label for="name">お名前</label>
+                    <input type="text" id="name" placeholder="例: 山田花子" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="year">生年月日</label>
+                    <div class="date-inputs">
+                        <input type="number" id="year" placeholder="年" min="1900" max="2100" required><span>年</span>
+                        <input type="number" id="month" placeholder="月" min="1" max="12" required><span>月</span>
+                        <input type="number" id="day" placeholder="日" min="1" max="31" required><span>日</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="hour">出生時間</label>
+                    <div class="time-inputs">
+                        <input type="number" id="hour" placeholder="時" min="0" max="23" required><span>時</span>
+                        <input type="number" id="minute" placeholder="分" min="0" max="59" required><span>分</span>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="timeUnknown">
+                        <label for="timeUnknown">出生時間不明（12:00に設定）</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="prefecture">出生地（都道府県）</label>
+                    <select id="prefecture" required><option value="">選択してください</option></select>
+                </div>
+
+                <button type="button" id="generateBtn" class="btn-gold">✦ 鑑定書を受け取る</button>
+            </section>
+
+            <!-- ローディング -->
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Swiss Ephemeris による超高精度天体計算中</p>
+                <p class="fine">精度 ±0.001度 ｜ 12天体 ｜ Placidus ハウス</p>
+            </div>
+
+            <!-- 出力 -->
+            <section class="output-section block reveal" id="outputSection" style="display: none;">
+                <div class="section-label">Your Chart</div>
+                <h2 class="block-title">あなたの鑑定データ（天体配置）</h2>
+
+                <div class="gem-receive">
+                    <p class="gem-note">鑑定文を自動コピーして、GEM で受け取れます。</p>
+                    <button type="button" id="openGemBtn" class="btn-gold big">✦ GEMで鑑定を受け取る</button>
+                    <p class="gem-status" id="copyStatus"></p>
+                    <div class="gem-steps" id="gemSteps" style="display: none;">
+                        鑑定文を<strong>自動コピー</strong>し、GEM を新しいタブで開きました。<br>
+                        GEM のチャット欄に<strong>貼り付け → 送信</strong>で鑑定が始まります。「<strong>続けて</strong>」で次の章へ。
+                    </div>
+                </div>
+
+                <div class="output-text" id="outputText"></div>
+
+                <div class="output-controls">
+                    <button type="button" id="copyBtn" class="btn-outline">もう一度コピー</button>
+                    <button type="button" id="downloadBtn" class="btn-outline">テキストで保存</button>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-mark">✦</div>
+            <div class="footer-credit">Metaphysica / NEXUS — 織田 剛</div>
+        </footer>
+    </div>
+
+    <script>
+    // ===== 星空生成 =====
+    (function () {
+        const field = document.getElementById('starfield');
+        const N = 70;
+        let html = '';
+        for (let i = 0; i < N; i++) {
+            const size = (Math.random() * 1.6 + 0.6).toFixed(2);
+            const top = (Math.random() * 100).toFixed(2);
+            const left = (Math.random() * 100).toFixed(2);
+            const dur = (Math.random() * 4 + 3).toFixed(2);
+            const delay = (Math.random() * 5).toFixed(2);
+            const max = (Math.random() * 0.5 + 0.25).toFixed(2);
+            const gold = Math.random() < 0.35;
+            html += `<span class="star" style="width:${size}px;height:${size}px;top:${top}%;left:${left}%;`
+                 + `animation-duration:${dur}s;animation-delay:${delay}s;--max:${max};`
+                 + (gold ? 'background:#c4a35a;' : '') + `"></span>`;
+        }
+        field.innerHTML = html;
+    })();
+
+    // ===== スクロールリビール =====
+    (function () {
+        const els = document.querySelectorAll('.reveal');
+        const obs = new IntersectionObserver((entries) => {
+            entries.forEach((e) => {
+                if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+            });
+        }, { threshold: 0.05, rootMargin: '0px 0px -60px 0px' });
+        els.forEach((el) => obs.observe(el));
+    })();
+
+    // ===== 設定 =====
+    // 天体計算 API のホスト（Railway バックエンド）。CORS 全許可済みなので別ドメインからでも動く。
+    const API_BASE_URL = 'https://grand-vision-production-48ec.up.railway.app';
+    const GEM_URL = 'https://gemini.google.com/gem/1NgB6OizsXJSo8kfeq4suOksYprUgN2io?usp=sharing';
+
+    const PREFECTURES = {
+        '北海道': { lat: 43.0642, lon: 141.3469 }, '青森県': { lat: 40.8244, lon: 140.7400 },
+        '岩手県': { lat: 39.7036, lon: 141.1527 }, '宮城県': { lat: 38.2682, lon: 140.8721 },
+        '秋田県': { lat: 39.7186, lon: 140.1022 }, '山形県': { lat: 38.2404, lon: 140.3633 },
+        '福島県': { lat: 37.7503, lon: 140.4677 }, '茨城県': { lat: 36.3418, lon: 140.4468 },
+        '栃木県': { lat: 36.5658, lon: 139.8836 }, '群馬県': { lat: 36.3906, lon: 139.0608 },
+        '埼玉県': { lat: 35.8617, lon: 139.6455 }, '千葉県': { lat: 35.6074, lon: 140.1065 },
+        '東京都': { lat: 35.6762, lon: 139.6503 }, '神奈川県': { lat: 35.4478, lon: 139.6425 },
+        '新潟県': { lat: 37.9026, lon: 139.0232 }, '富山県': { lat: 36.6959, lon: 137.2137 },
+        '石川県': { lat: 36.5946, lon: 136.6256 }, '福井県': { lat: 36.0652, lon: 136.2216 },
+        '山梨県': { lat: 35.6642, lon: 138.5681 }, '長野県': { lat: 36.6513, lon: 138.1809 },
+        '岐阜県': { lat: 35.3912, lon: 136.7223 }, '静岡県': { lat: 34.9756, lon: 138.3827 },
+        '愛知県': { lat: 35.1802, lon: 136.9066 }, '三重県': { lat: 34.7302, lon: 136.5086 },
+        '滋賀県': { lat: 35.0045, lon: 135.8686 }, '京都府': { lat: 35.0211, lon: 135.7556 },
+        '大阪府': { lat: 34.6937, lon: 135.5023 }, '兵庫県': { lat: 34.6913, lon: 135.1830 },
+        '奈良県': { lat: 34.6851, lon: 135.8048 }, '和歌山県': { lat: 34.2261, lon: 135.1675 },
+        '鳥取県': { lat: 35.5038, lon: 134.2378 }, '島根県': { lat: 35.4723, lon: 133.0505 },
+        '岡山県': { lat: 34.6618, lon: 133.9346 }, '広島県': { lat: 34.3963, lon: 132.4596 },
+        '山口県': { lat: 34.1861, lon: 131.4707 }, '徳島県': { lat: 34.0658, lon: 134.5593 },
+        '香川県': { lat: 34.3401, lon: 134.0430 }, '愛媛県': { lat: 33.8416, lon: 132.7658 },
+        '高知県': { lat: 33.5597, lon: 133.5311 }, '福岡県': { lat: 33.6064, lon: 130.4181 },
+        '佐賀県': { lat: 33.2494, lon: 130.2989 }, '長崎県': { lat: 32.7503, lon: 129.8779 },
+        '熊本県': { lat: 32.7898, lon: 130.7417 }, '大分県': { lat: 33.2382, lon: 131.6126 },
+        '宮崎県': { lat: 31.9077, lon: 131.4202 }, '鹿児島県': { lat: 31.5602, lon: 130.5581 },
+        '沖縄県': { lat: 26.2124, lon: 127.6792 }
+    };
+    const SIGNS_JP = ['牡羊座', '牡牛座', '双子座', '蟹座', '獅子座', '乙女座',
+        '天秤座', '蠍座', '射手座', '山羊座', '水瓶座', '魚座'];
+    const PLANETS_JP = {
+        'Sun': '太陽', 'Moon': '月', 'Mercury': '水星', 'Venus': '金星', 'Mars': '火星',
+        'Jupiter': '木星', 'Saturn': '土星', 'Uranus': '天王星', 'Neptune': '海王星',
+        'Pluto': '冥王星', 'TrueNode': 'ドラゴンヘッド', 'Chiron': 'キローン'
+    };
+
+    let lastPrompt = '';
+
+    function formatDeg(d) {
+        let deg = Math.floor(d);
+        let min = Math.round((d - deg) * 60);
+        if (min === 60) { deg += 1; min = 0; }
+        return `${deg}°${String(min).padStart(2, '0')}′`;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const pref = document.getElementById('prefecture');
+        Object.keys(PREFECTURES).forEach((p) => {
+            const o = document.createElement('option');
+            o.value = p; o.textContent = p; pref.appendChild(o);
+        });
+        document.getElementById('timeUnknown').addEventListener('change', (e) => {
+            const h = document.getElementById('hour'), m = document.getElementById('minute');
+            if (e.target.checked) { h.value = 12; m.value = 0; h.disabled = true; m.disabled = true; }
+            else { h.disabled = false; m.disabled = false; }
+        });
+        document.getElementById('generateBtn').addEventListener('click', onGenerate);
+        document.getElementById('openGemBtn').addEventListener('click', () => openAI(GEM_URL));
+        document.getElementById('copyBtn').addEventListener('click', copyPrompt);
+        document.getElementById('downloadBtn').addEventListener('click', downloadPrompt);
+    });
+
+    async function onGenerate() {
+        const name = document.getElementById('name').value.trim();
+        const year = parseInt(document.getElementById('year').value);
+        const month = parseInt(document.getElementById('month').value);
+        const day = parseInt(document.getElementById('day').value);
+        const hour = parseInt(document.getElementById('hour').value);
+        const minute = parseInt(document.getElementById('minute').value);
+        const prefecture = document.getElementById('prefecture').value;
+
+        if (!name || !year || !month || !day || isNaN(hour) || isNaN(minute) || !prefecture) {
+            alert('すべての項目を入力してください');
+            return;
+        }
+        const loc = PREFECTURES[prefecture];
+        const btn = document.getElementById('generateBtn');
+        btn.disabled = true; btn.textContent = '星を計算しています…';
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('outputSection').style.display = 'none';
+        document.getElementById('gemSteps').style.display = 'none';
+        document.getElementById('copyStatus').textContent = '';
+        try {
+            const natalChart = await calcChart(year, month, day, hour, minute, loc.lat, loc.lon);
+            let progressions = null, transits = null;
+            try { progressions = await calcProgressions(year, month, day, hour, minute); } catch (e) {}
+            try { transits = await calcTransits(); } catch (e) {}
+            lastPrompt = buildPromptText(name, year, month, day, hour, minute, prefecture, natalChart, progressions, transits);
+            document.getElementById('outputText').textContent = lastPrompt;
+            const out = document.getElementById('outputSection');
+            out.style.display = 'block';
+            out.classList.add('visible');
+            out.scrollIntoView({ behavior: 'smooth' });
+        } catch (err) {
+            alert('計算でエラーが発生しました: ' + err.message);
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+            btn.disabled = false; btn.textContent = '✦ 鑑定書を受け取る';
+        }
+    }
+
+    async function calcChart(year, month, day, hour, minute, latitude, longitude) {
+        const r = await fetch(`${API_BASE_URL}/api/calculate-chart`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ year, month, day, hour, minute, latitude, longitude })
+        });
+        if (!r.ok) throw new Error('chart ' + r.status);
+        const d = await r.json();
+        if (!d.success) throw new Error(d.error || 'chart failed');
+        return d;
+    }
+    async function calcProgressions(y, mo, d, h, mi) {
+        const cur = new Date().toISOString().split('T')[0];
+        const r = await fetch(`${API_BASE_URL}/api/calculate-progressions`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ birth_year: y, birth_month: mo, birth_day: d, birth_hour: h, birth_minute: mi, current_date: cur })
+        });
+        const data = await r.json();
+        if (!data.success) throw new Error('prog');
+        return data;
+    }
+    async function calcTransits() {
+        const cur = new Date().toISOString().split('T')[0];
+        const r = await fetch(`${API_BASE_URL}/api/calculate-transits`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ start_date: cur, years: 3 })
+        });
+        const data = await r.json();
+        if (!data.success) throw new Error('transit');
+        return data;
+    }
+
+    function buildPromptText(name, year, month, day, hour, minute, prefecture, natalChart, progressions, transits) {
+        let p = `# 【完全版】${name}さんの占星術データ\n\n`;
+        p += `## 基本情報\n- 生年月日: ${year}年${month}月${day}日 ${hour}時${minute}分\n- 出生地: ${prefecture}\n\n`;
+        p += `## 🌟 ネイタルチャート（出生図）\n\n### 天体の配置\n`;
+        for (const [k, pd] of Object.entries(natalChart.planets)) {
+            if (pd.error) continue;
+            const r = pd.retrograde ? ' ℞（逆行）' : '';
+            p += `- **${PLANETS_JP[k] || k}**: ${pd.signJP} ${formatDeg(pd.degree)}${r} [第${pd.house}ハウス]\n`;
+        }
+        const h = natalChart.houses;
+        p += `\n### アングル（重要な感受点）\n`;
+        p += `- **ASC（アセンダント）**: ${h.ascendant.signJP} ${formatDeg(h.ascendant.degree)}\n`;
+        p += `- **MC（天頂）**: ${h.midheaven.signJP} ${formatDeg(h.midheaven.degree)}\n`;
+        p += `\n### ハウスシステム（Placidus式）\n`;
+        h.cusps.forEach((cusp, i) => {
+            p += `- 第${i + 1}ハウス: ${SIGNS_JP[Math.floor(cusp / 30)]} ${formatDeg(cusp % 30)}\n`;
+        });
+        if (progressions && progressions.p_sun) {
+            p += `\n## 📈 プログレス（セカンダリー進行図）\n- 基準日: ${new Date().toISOString().split('T')[0]}\n`;
+            p += `- **プログレス太陽**: ${progressions.p_sun.signJP} ${formatDeg(progressions.p_sun.degree)}\n`;
+            p += `- **プログレス月**: ${progressions.p_moon.signJP} ${formatDeg(progressions.p_moon.degree)}\n\n`;
+        }
+        if (transits && transits.jupiter_transits) {
+            p += `## 🔮 トランジット（今後3年間の主要移動）\n\n### 木星のサイン移動\n`;
+            transits.jupiter_transits.forEach((t) => { p += `- ${t.date}: ${t.signJP}入り\n`; });
+            p += `\n### 土星のサイン移動\n`;
+            transits.saturn_transits.forEach((t) => { p += `- ${t.date}: ${t.signJP}入り\n`; });
+            if (transits.outer_planets) {
+                const o = transits.outer_planets;
+                p += `\n### 外惑星の現在位置\n`;
+                if (o.Uranus) p += `- **天王星**: ${o.Uranus.signJP} ${formatDeg(o.Uranus.degree)}${o.Uranus.retrograde ? ' ℞' : ''}\n`;
+                if (o.Neptune) p += `- **海王星**: ${o.Neptune.signJP} ${formatDeg(o.Neptune.degree)}${o.Neptune.retrograde ? ' ℞' : ''}\n`;
+                if (o.Pluto) p += `- **冥王星**: ${o.Pluto.signJP} ${formatDeg(o.Pluto.degree)}${o.Pluto.retrograde ? ' ℞' : ''}\n`;
+            }
+        }
+        p += `\n---\n**生成日時**: ${new Date().toLocaleString('ja-JP')}\n`;
+        return p;
+    }
+
+    async function copyPrompt() {
+        try {
+            await navigator.clipboard.writeText(lastPrompt);
+            flashCopied();
+        } catch (e) {
+            const tmp = document.createElement('textarea');
+            tmp.value = lastPrompt; document.body.appendChild(tmp); tmp.select();
+            try { document.execCommand('copy'); } catch (e2) {}
+            document.body.removeChild(tmp);
+            flashCopied();
+        }
+    }
+    function flashCopied() {
+        const s = document.getElementById('copyStatus');
+        s.textContent = '✦ コピーしました';
+        setTimeout(() => { s.textContent = ''; }, 2500);
+    }
+    async function openAI(url) {
+        if (!lastPrompt) { alert('先に「鑑定書を受け取る」で生成してください'); return; }
+        await copyPrompt();
+        document.getElementById('gemSteps').style.display = 'block';
+        window.open(url, '_blank', 'noopener');
+    }
+    function downloadPrompt() {
+        const blob = new Blob([lastPrompt], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `航海図_${new Date().toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    </script>
+</body>
+</html>
