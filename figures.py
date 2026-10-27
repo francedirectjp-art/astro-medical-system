@@ -161,9 +161,9 @@ def fig_castle(houses, asc='', mc=''):
                      f'{GLYPH.get(p, "")}{V} <tspan font-size="8" fill="{BROWN}">{p}</tspan></text>')
     cx, cy = P + S, P + S
     o.append(f'<rect x="{cx}" y="{cy}" width="{S*2}" height="{S*2}" fill="{PALE}" stroke="{LINE}"/>')
-    o.append(f'<text x="{cx+S}" y="{cy+S-16}" text-anchor="middle" font-size="11" fill="{BROWN}" letter-spacing="3">あなたの王国</text>')
-    o.append(f'<text x="{cx+S}" y="{cy+S+8}" text-anchor="middle" font-size="9" fill="{INK}">門　{asc}</text>' if os.environ.get('GARDEN') else f'<text x="{cx+S}" y="{cy+S+8}" text-anchor="middle" font-size="9" fill="{INK}">城門　{asc}</text>')
-    o.append(f'<text x="{cx+S}" y="{cy+S+24}" text-anchor="middle" font-size="9" fill="{INK}">日向の頂　{mc}</text>' if os.environ.get('GARDEN') else f'<text x="{cx+S}" y="{cy+S+24}" text-anchor="middle" font-size="9" fill="{INK}">天職の塔　{mc}</text>')
+    o.append(f'<text x="{cx+S}" y="{cy+S-16}" text-anchor="middle" font-size="11" fill="{BROWN}" letter-spacing="3">{"十二の領域" if os.environ.get("MYTH") else "あなたの王国"}</text>')
+    o.append(f'<text x="{cx+S}" y="{cy+S+8}" text-anchor="middle" font-size="9" fill="{INK}">門　{asc}</text>' if os.environ.get('GARDEN') else f'<text x="{cx+S}" y="{cy+S+8}" text-anchor="middle" font-size="9" fill="{INK}">{"立ち現れる姿" if os.environ.get("MYTH") else "城門"}　{asc}</text>')
+    o.append(f'<text x="{cx+S}" y="{cy+S+24}" text-anchor="middle" font-size="9" fill="{INK}">日向の頂　{mc}</text>' if os.environ.get('GARDEN') else f'<text x="{cx+S}" y="{cy+S+24}" text-anchor="middle" font-size="9" fill="{INK}">{"天頂" if os.environ.get("MYTH") else "天職の塔"}　{mc}</text>')
     o.append('</svg>')
     return ''.join(o)
 
@@ -212,7 +212,7 @@ def fig_timeline(d):
             if i == 0 or g[key] != hist[i-1][key]:
                 o.append(f'<text x="{X(g["y"])+4:.1f}" y="{yy+16}" font-size="9" fill="#fff">{g[key]}</text>')
     yy = 110
-    o.append(f'<text x="0" y="{yy+14}" font-size="8.5" fill="{BROWN}">今年の部屋</text>')
+    o.append(f'<text x="0" y="{yy+14}" font-size="8.5" fill="{BROWN}">{"今年の領域" if os.environ.get("MYTH") else "今年の部屋"}</text>')
     now = hist[-1]['y']
     o.append(f'<rect x="{X(now):.1f}" y="{yy}" width="{X(now+1)-X(now):.1f}" height="22" fill="{BROWN}" opacity="0.85"/>')
     o.append(f'<text x="{X(now)+2:.1f}" y="{yy-5}" font-size="8.5" fill="{BROWN}">'

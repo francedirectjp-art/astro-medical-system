@@ -66,7 +66,7 @@ def parse(path):
         if m:
             d['sr'][k] = m.group(1)
     for k, pat in [('pf_house', r'起動ハウス: 第(\d+)ハウス'), ('pf_sign', r'起動サイン: (\S+座)'),
-                   ('pf_ruler', r'年主星[^:：]*[:：]\s*(\S+?)\s*$'), ('pf_prev', r'前回起動した年齢: (\d+)歳')]:
+                   ('pf_ruler', r'^- 年主星[^:：\n]*[:：]\s*(\S+?)\s*$'), ('pf_prev', r'前回起動した年齢: (\d+)歳')]:
         m = re.search(pat, t.split('## プロフェクション（計算済み')[-1], re.M)
         if m:
             d[k] = m.group(1)
@@ -145,7 +145,7 @@ def tables(d, trans):
     pf = [('現在の年齢', f'{d.get("age","")}歳', ''),
           ('起動ハウス', f'第{d.get("pf_house","")}ハウス（{d.get("pf_sign","")}）', ''),
           ('年主星（鍵を預かる星）', d.get('pf_ruler', ''), ''),
-          ('同じ部屋の前回起動', f'{d.get("pf_prev","")}歳', '')]
+          ('同じ領域の前回起動' if os.environ.get('MYTH') else '同じ部屋の前回起動', f'{d.get("pf_prev","")}歳', '')]
     pr = [('進行の太陽', d['prog']['太陽']['txt'], f'ネイタル第{d["prog"]["太陽"]["house"]}ハウス'),
           ('進行の月', d['prog']['月']['txt'], f'ネイタル第{d["prog"]["月"]["house"]}ハウス')]
     tr = [(f'{PG.get(n,"")} {n}', deg_txt(l), '') for n, l in trans]
@@ -154,10 +154,10 @@ def tables(d, trans):
                                   ('SR月', d['sr'].get('moon', ''))] if v]
     dg = [(f'{PG.get(n,"")} {n}', pos, f'{mark}　{sc}') for n, pos, mark, sc in d.get('dignity', [])]
     if d.get('lord'):
-        dg.append(('★城主（ディグニティコード）', d['lord'][0], d['lord'][1]))
+        dg.append(('★主神（ディグニティコード）' if os.environ.get('MYTH') else '★城主（ディグニティコード）', d['lord'][0], d['lord'][1]))
     return (tb('ネイタル天体', nat)
-            + (tb('エッセンシャルディグニティ（城主の判定根拠）', dg) if dg else '')
-            + tb('プロフェクション（今年の部屋）', pf)
+            + (tb('エッセンシャルディグニティ（主神の判定根拠）' if os.environ.get('MYTH') else 'エッセンシャルディグニティ（城主の判定根拠）', dg) if dg else '')
+            + tb('プロフェクション（今年の領域）' if os.environ.get('MYTH') else 'プロフェクション（今年の部屋）', pf)
             + tb('プログレス（進行図）', pr) + tb('トランジット（鑑定日の空）', tr)
             + (tb('ソーラーリターン（今年の図）', sr) if sr else ''))
 

@@ -309,7 +309,7 @@ def profection_timeline(p, natal, current_age):
     rows = []
     for age in range(max(0, current_age - 24), current_age + 1):
         ph = (age % 12) + 1
-        si = int(natal['houses']['cusps'][ph - 1] // 30)
+        si = (int(natal['houses']['cusps'][0] // 30) + ph - 1) % 12  # ホールサイン（ASCのサインから1年に1サイン）
         y1 = p['y'] + age
         mark = ''
         if ph == 12:
@@ -567,14 +567,14 @@ def build_chart_text(p, natal, prog, trans, sr, sa_arc, sa_contacts):
     if isinstance(sr.get('age'), int):
         age = sr['age']
         ph = (age % 12) + 1
-        si = int(natal['houses']['cusps'][ph - 1] // 30)
+        si = (int(natal['houses']['cusps'][0] // 30) + ph - 1) % 12  # ホールサイン（ASCのサインから1年に1サイン）
         t += "\n## プロフェクション（計算済み・この値をそのまま使うこと）\n"
         t += f"- 現在の年齢: {age}歳\n"
         _bd = f"{p['mo']}月{p['d']}日"
         _y0 = p['y'] + age
         t += f"- 今年の期間: {_y0}年{_bd} 〜 {_y0 + 1}年{_bd}（この期間が「今年」。鑑定日はこの中にある）\n"
         _pph = ((age - 1) % 12) + 1
-        _psi = int(natal['houses']['cusps'][_pph - 1] // 30)
+        _psi = (int(natal['houses']['cusps'][0] // 30) + _pph - 1) % 12
         t += (f"- ひとつ前の期間: {_y0 - 1}年{_bd} 〜 {_y0}年{_bd}（{age - 1}歳・第{_pph}ハウス・"
               f"年主星{RULERS_JP[_psi]}）。これは既に終わっている。「今この瞬間まで」と書かないこと\n"
               f"- 起動ハウス: 第{ph}ハウス\n")

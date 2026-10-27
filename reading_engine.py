@@ -212,7 +212,7 @@ class ReadingEngine:
         rows = []
         for age in range(max(0, current_age - 24), current_age + 1):
             ph = (age % 12) + 1
-            si = int(natal['houses']['cusps'][ph - 1] // 30)
+            si = (int(natal['houses']['cusps'][0] // 30) + ph - 1) % 12  # ホールサイン（ASCのサインから1年に1サイン）
             y1 = p['y'] + age
             mark = ''
             if ph == 12:

@@ -222,31 +222,23 @@ def calculate_progressions():
     try:
         data = request.get_json()
         
-        # 現在日
-        current_date = datetime.fromisoformat(data['current_date'])
-        birth_date = datetime(data['birth_year'], data['birth_month'], data['birth_day'])
-        
-        # プログレス日の計算（1日=1年のセカンダリープログレス）
-        days_since_birth = (current_date - birth_date).days
-        years_elapsed = days_since_birth / 365.25  # 閏年を考慮
-        progressed_days = int(years_elapsed)  # 経過年数 = プログレス日数
-        
-        # プログレス日 = 出生日 + プログレス日数
-        progress_date = birth_date + timedelta(days=progressed_days)
-        
-        # 出生時刻（JST）をプログレス計算に使用
+        # セカンダリープログレス（出生後の1日＝人生の1年）
+        # 2026-10-27 修正：①出生時刻を日本時間のまま世界時として扱っていた（9時間ずれ）
+        # ②経過年数を整数に切り捨てていた（最大1日分＝進行の月が最大13度ずれる）。
+        # 出生の瞬間（世界時）に、経過年数ぶんの日数を小数のまま足す。
         birth_hour = data.get('birth_hour', 12)
         birth_minute = data.get('birth_minute', 0)
-        
-        # 一部ソフトウェアの方式：出生時刻（JST）をそのままUTC時刻として使用
-        # （UTC変換せず、JST時刻をUTCとして扱う）
-        progress_jd = swe.julday(
-            progress_date.year,
-            progress_date.month,
-            progress_date.day,
-            birth_hour + birth_minute / 60.0
-        )
-        
+        tz_offset = float(data.get('tz_offset', 9))  # 出生地の時差（日本は+9）
+        natal_jd = swe.julday(data['birth_year'], data['birth_month'], data['birth_day'],
+                              birth_hour + birth_minute / 60.0 - tz_offset)
+        current_date = datetime.fromisoformat(data['current_date'])
+        current_jd = swe.julday(current_date.year, current_date.month, current_date.day,
+                                current_date.hour + current_date.minute / 60.0)
+        years_elapsed = (current_jd - natal_jd) / 365.2422
+        progress_jd = natal_jd + years_elapsed
+        y, mo, d, h = swe.revjul(progress_jd)
+        progress_date = datetime(y, mo, d) + timedelta(hours=h)
+
         # P-Sun と P-Moon の計算
         p_sun = calculate_planet_position(progress_jd, swe.SUN)
         p_moon = calculate_planet_position(progress_jd, swe.MOON)
